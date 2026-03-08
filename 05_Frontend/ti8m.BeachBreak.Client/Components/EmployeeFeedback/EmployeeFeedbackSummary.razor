@@ -92,6 +92,16 @@
     [Parameter] public Guid EmployeeId { get; set; }
     [Parameter] public int CurrentUserRole { get; set; } = 0; // ApplicationRole
 
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Sections,
+            TranslationCategories.Labels,
+            TranslationCategories.Messages
+        };
+    }
+
     private Dictionary<int, List<EmployeeFeedbackSummaryDto>> feedbackBySource = new();
     private bool isLoading = true;
 

@@ -55,11 +55,11 @@ public partial class QuestionnaireAssignment : AggregateRoot
     public string? ManagerFinalNotes { get; private set; }
     public bool IsLocked => WorkflowState == WorkflowState.Finalized;
 
-    // Predecessor linking (for predecessor functionality)
-    private readonly Dictionary<Guid, Guid> _predecessorLinks = new();
+    // Assignment-wide predecessor linking
+    private Guid? assignmentPredecessorId;
 
-    // Public readonly accessors for query purposes
-    public IReadOnlyDictionary<Guid, Guid> PredecessorLinks => _predecessorLinks;
+    // Public readonly accessor for query purposes
+    public Guid? AssignmentPredecessorId => assignmentPredecessorId;
 
     // Initialization phase properties
     public DateTime? InitializedDate { get; private set; }
@@ -76,6 +76,10 @@ public partial class QuestionnaireAssignment : AggregateRoot
     // Public readonly accessor for feedback links
     public IReadOnlyDictionary<Guid, IReadOnlySet<Guid>> LinkedFeedback =>
         _linkedFeedback.ToDictionary(kvp => kvp.Key, kvp => (IReadOnlySet<Guid>)kvp.Value);
+
+    // Viewer management
+    private readonly List<AssignmentViewer> _viewers = new();
+    public IReadOnlyList<AssignmentViewer> Viewers => _viewers.AsReadOnly();
 
     private QuestionnaireAssignment() { }
 
@@ -683,38 +687,45 @@ public partial class QuestionnaireAssignment : AggregateRoot
     }
 
     // Goal management methods
-    public void LinkPredecessorQuestionnaire(
-        Guid questionId,
+    public void LinkAssignmentPredecessor(
         Guid predecessorAssignmentId,
         ApplicationRole linkedByRole,
         Guid linkedByEmployeeId)
     {
-        if (_predecessorLinks.ContainsKey(questionId))
-            throw new InvalidOperationException($"Question {questionId} already linked to a predecessor questionnaire");
+        if (assignmentPredecessorId.HasValue)
+            throw new InvalidOperationException($"Assignment already linked to a predecessor assignment: {assignmentPredecessorId.Value}");
 
         if (IsLocked)
-            throw new InvalidOperationException("Cannot link predecessor - questionnaire is finalized");
+            throw new InvalidOperationException("Cannot link assignment predecessor - questionnaire is finalized");
 
         if (IsWithdrawn)
-            throw new InvalidOperationException("Cannot link predecessor - assignment is withdrawn");
+            throw new InvalidOperationException("Cannot link assignment predecessor - assignment is withdrawn");
 
         // Validate edit permissions based on role
         if (linkedByRole == ApplicationRole.Employee && !CanEmployeeEdit())
-            throw new InvalidOperationException($"Employee cannot link predecessor in state {WorkflowState}");
+            throw new InvalidOperationException($"Employee cannot link assignment predecessor in state {WorkflowState}");
 
-        if (linkedByRole is ApplicationRole.TeamLead or ApplicationRole.HR or ApplicationRole.HRLead or ApplicationRole.Admin && !CanManagerEdit())
-            throw new InvalidOperationException($"Manager cannot link predecessor in state {WorkflowState}");
+        // Managers can link predecessors during initialization (Assigned, Initialized) or normal edit states
+        var validManagerStates = WorkflowState is
+            WorkflowState.Assigned or
+            WorkflowState.Initialized or
+            WorkflowState.EmployeeInProgress or
+            WorkflowState.ManagerInProgress or
+            WorkflowState.BothInProgress or
+            WorkflowState.EmployeeSubmitted;
+
+        if (linkedByRole is ApplicationRole.TeamLead or ApplicationRole.HR or ApplicationRole.HRLead or ApplicationRole.Admin && !validManagerStates)
+            throw new InvalidOperationException($"Manager cannot link assignment predecessor in state {WorkflowState}");
 
         // Validate role-specific workflow state restrictions
         if (linkedByRole == ApplicationRole.Employee && WorkflowState == WorkflowState.ManagerInProgress)
-            throw new InvalidOperationException("Employee cannot link during ManagerInProgress state");
+            throw new InvalidOperationException("Employee cannot link assignment predecessor during ManagerInProgress state");
 
         if (linkedByRole is ApplicationRole.TeamLead or ApplicationRole.HR or ApplicationRole.HRLead or ApplicationRole.Admin && WorkflowState == WorkflowState.EmployeeInProgress)
-            throw new InvalidOperationException("Manager cannot link during EmployeeInProgress state");
+            throw new InvalidOperationException("Manager cannot link assignment predecessor during EmployeeInProgress state");
 
-        RaiseEvent(new PredecessorQuestionnaireLinked(
+        RaiseEvent(new AssignmentPredecessorLinked(
             predecessorAssignmentId,
-            questionId,
             linkedByRole,
             DateTime.UtcNow,
             linkedByEmployeeId));
@@ -777,6 +788,58 @@ public partial class QuestionnaireAssignment : AggregateRoot
         return _linkedFeedback.TryGetValue(questionId, out var feedbackIds)
             ? feedbackIds
             : new HashSet<Guid>();
+    }
+
+    // Viewer management methods
+    /// <summary>
+    /// Adds a viewer to the assignment with read-only access.
+    /// Only HR/Admin roles can add viewers. Viewers cannot be added to locked or withdrawn assignments.
+    /// </summary>
+    public void AddViewer(Guid viewerEmployeeId, string viewerName, string viewerEmail, Guid addedByEmployeeId)
+    {
+        if (IsLocked)
+            throw new InvalidOperationException("Cannot add viewers to finalized assignment");
+
+        if (IsWithdrawn)
+            throw new InvalidOperationException("Cannot add viewers to withdrawn assignment");
+
+        if (_viewers.Any(v => v.EmployeeId == viewerEmployeeId))
+            throw new InvalidOperationException($"Employee {viewerEmployeeId} is already a viewer");
+
+        if (viewerEmployeeId == EmployeeId)
+            throw new InvalidOperationException("Assignment employee is automatically authorized - cannot add as viewer");
+
+        if (string.IsNullOrWhiteSpace(viewerName))
+            throw new ArgumentException("Viewer name is required", nameof(viewerName));
+
+        if (string.IsNullOrWhiteSpace(viewerEmail))
+            throw new ArgumentException("Viewer email is required", nameof(viewerEmail));
+
+        RaiseEvent(new ViewerAddedToAssignment(
+            viewerEmployeeId,
+            viewerName,
+            viewerEmail,
+            DateTime.UtcNow,
+            addedByEmployeeId));
+    }
+
+    /// <summary>
+    /// Removes a viewer from the assignment, revoking their read-only access.
+    /// Only HR/Admin roles can remove viewers. Cannot remove viewers from locked assignments.
+    /// </summary>
+    public void RemoveViewer(Guid viewerEmployeeId, Guid removedByEmployeeId)
+    {
+        if (IsLocked)
+            throw new InvalidOperationException("Cannot remove viewers from finalized assignment");
+
+        var viewer = _viewers.FirstOrDefault(v => v.EmployeeId == viewerEmployeeId);
+        if (viewer == null)
+            throw new InvalidOperationException($"Employee {viewerEmployeeId} is not a viewer");
+
+        RaiseEvent(new ViewerRemovedFromAssignment(
+            viewerEmployeeId,
+            DateTime.UtcNow,
+            removedByEmployeeId));
     }
 
     private bool IsInProgressState()
@@ -1183,9 +1246,27 @@ public partial class QuestionnaireAssignment : AggregateRoot
     }
 
     // Apply methods for predecessor events
-    public void Apply(PredecessorQuestionnaireLinked @event)
+    public void Apply(AssignmentPredecessorLinked @event)
     {
-        _predecessorLinks[@event.QuestionId] = @event.PredecessorAssignmentId;
+        assignmentPredecessorId = @event.PredecessorAssignmentId;
+    }
+
+    // Apply methods for viewer events
+    public void Apply(ViewerAddedToAssignment @event)
+    {
+        _viewers.Add(new AssignmentViewer(
+            @event.ViewerEmployeeId,
+            @event.ViewerEmployeeName,
+            @event.ViewerEmployeeEmail,
+            @event.AddedDate,
+            @event.AddedByEmployeeId));
+    }
+
+    public void Apply(ViewerRemovedFromAssignment @event)
+    {
+        var viewer = _viewers.FirstOrDefault(v => v.EmployeeId == @event.ViewerEmployeeId);
+        if (viewer != null)
+            _viewers.Remove(viewer);
     }
 
     // Apply methods for employee feedback events

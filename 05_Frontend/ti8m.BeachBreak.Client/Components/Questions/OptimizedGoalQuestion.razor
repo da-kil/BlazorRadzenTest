@@ -7,28 +7,12 @@
 @using ti8m.BeachBreak.Client.Extensions
 @inject GoalService GoalService
 @inject IGoalApiService GoalApiService
-@inject NotificationService NotificationService
 @inject IAuthService AuthService
 @inherits CategoryOptimizedTranslatableComponent
 
 @if (!HideHeader)
 {
     <div class="goal-question">
-        <header class="question-header">
-            <h3 class="question-title">
-                @Section.GetLocalizedTitleWithFallback(CurrentLanguage)
-                <EditedDuringReviewBadge Response="@Response" />
-            </h3>
-
-            @{
-                var questionDescription = Section.GetLocalizedDescriptionWithFallback(CurrentLanguage);
-            }
-            @if (!string.IsNullOrWhiteSpace(questionDescription))
-            {
-                <p class="question-description">@questionDescription</p>
-            }
-        </header>
-
         @RenderTwoSectionGoalContent()
     </div>
 }
@@ -40,7 +24,25 @@ else
 @code {
     private RenderFragment RenderTwoSectionGoalContent() => __builder =>
     {
+        var sectionTitle = Section.GetLocalizedTitleWithFallback(CurrentLanguage);
+        var sectionDescription = Section.GetLocalizedDescriptionWithFallback(CurrentLanguage);
+
         <div class="two-section-goal-content">
+            @* When no predecessor: section header appears at the top *@
+            @if (!HideHeader && !hasPredecessor)
+            {
+                <header class="question-header">
+                    <h3 class="question-title">
+                        @sectionTitle
+                        <EditedDuringReviewBadge Response="@Response" />
+                    </h3>
+                    @if (!string.IsNullOrWhiteSpace(sectionDescription))
+                    {
+                        <p class="question-description">@sectionDescription</p>
+                    }
+                </header>
+            }
+
             @* SECTION 1: Predecessor Goals Assessment (Always First if Available) *@
             @if (hasPredecessor)
             {
@@ -50,7 +52,24 @@ else
                     OnResponseChanged="@NotifyResponseChanged"
                     IsReadOnly="@IsReadOnly"
                     CurrentUserRole="@CurrentUserRole"
+                    SectionData="@SectionData"
+                    AssignmentWorkflowState="@AssignmentWorkflowState"
                     @ref="predecessorSection" />
+
+                @* When predecessor exists: section header appears between the two sub-sections *@
+                @if (!HideHeader)
+                {
+                    <header class="question-header mt-4">
+                        <h3 class="question-title">
+                            @sectionTitle
+                            <EditedDuringReviewBadge Response="@Response" />
+                        </h3>
+                        @if (!string.IsNullOrWhiteSpace(sectionDescription))
+                        {
+                            <p class="question-description">@sectionDescription</p>
+                        }
+                    </header>
+                }
             }
 
             @* SECTION 2: New Goals (Always Second, Collaborative Editing) *@
@@ -80,6 +99,17 @@ else
     [Parameter] public SectionResponse? SectionData { get; set; } // Access to all role responses for review mode
     [Parameter] public int GoalRefreshToken { get; set; } = 0;
 
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Questions,
+            TranslationCategories.Goals,
+            TranslationCategories.Labels,
+            TranslationCategories.Messages
+        };
+    }
+
     // Component references for the two sections
     private NewGoalsCollaborativeSection? newGoalsSection;
     private PredecessorGoalsComparisonSection? predecessorSection;
@@ -89,7 +119,6 @@ else
 
     // Helper properties that delegate to child components
     public bool HasPendingChanges => newGoalsSection?.HasPendingChanges ?? false;
-    public bool HasValidationErrors => predecessorSection?.ValidationErrors?.Any() ?? false;
 
     // Tracking for refresh token to detect when parent requests data reload
     private int lastGoalRefreshToken = 0;
@@ -111,8 +140,11 @@ else
             GoalRefreshToken != lastGoalRefreshToken)
         {
             lastGoalRefreshToken = GoalRefreshToken;
-            LoadBasicGoalData();
         }
+
+        // Always reload - Response may be mutated in place (e.g. PredecessorAssignmentId set
+        // after API call) without the object reference changing.
+        LoadBasicGoalData();
 
         await base.OnParametersSetAsync();
     }

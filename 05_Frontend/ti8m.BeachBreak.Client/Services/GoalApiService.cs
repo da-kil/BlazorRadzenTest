@@ -14,37 +14,11 @@ public class GoalApiService : BaseApiService, IGoalApiService
 {
     private const string QueryEndpoint = "q/api/v1/assignments";
     private const string EmployeeQueryEndpoint = "q/api/v1/employees/me/assignments";
-    private const string CommandEndpoint = "c/api/v1/assignments";
     private readonly IAuthService authService;
 
     public GoalApiService(IHttpClientFactory factory, IAuthService authService) : base(factory)
     {
         this.authService = authService;
-    }
-
-    public async Task<Result> LinkPredecessorAsync(Guid assignmentId, LinkPredecessorQuestionnaireDto dto)
-    {
-        try
-        {
-            var response = await HttpCommandClient.PostAsJsonAsync(
-                $"{CommandEndpoint}/{assignmentId}/goals/link-predecessor",
-                dto);
-
-            if (response.IsSuccessStatusCode)
-            {
-                var result = await response.Content.ReadFromJsonAsync<Result>();
-                return result ?? Result.Success();
-            }
-
-            var errorMessage = await ExtractErrorMessageAsync(response);
-            LogError($"Failed to link predecessor: {errorMessage}", null);
-            return Result.Fail(errorMessage, (int)response.StatusCode);
-        }
-        catch (Exception ex)
-        {
-            LogError("Error linking predecessor questionnaire", ex);
-            return Result.Fail($"Error linking predecessor: {ex.Message}", 500);
-        }
     }
 
     public async Task<Result<IEnumerable<AvailablePredecessorDto>>> GetAvailablePredecessorsAsync(Guid assignmentId)

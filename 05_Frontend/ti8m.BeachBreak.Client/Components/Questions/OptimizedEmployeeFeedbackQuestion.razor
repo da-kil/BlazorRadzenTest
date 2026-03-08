@@ -33,6 +33,18 @@ else
 }
 
 @code {
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Questions,
+            TranslationCategories.Labels,
+            TranslationCategories.Messages,
+            TranslationCategories.Sections,
+            TranslationCategories.Feedback
+        };
+    }
+
     private RenderFragment RenderFeedbackContent() => __builder =>
     {
         <div class="feedback-question-content">

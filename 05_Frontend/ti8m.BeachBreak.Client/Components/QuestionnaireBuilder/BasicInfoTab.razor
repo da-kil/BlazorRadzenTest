@@ -111,6 +111,20 @@
     [Parameter, EditorRequired] public QuestionnaireTemplate Template { get; set; } = null!;
     [Parameter, EditorRequired] public IReadOnlyList<Category> Categories { get; set; } = null!;
 
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Labels,
+            TranslationCategories.Placeholders,
+            TranslationCategories.Sections,
+            TranslationCategories.Buttons,
+            TranslationCategories.Messages,
+            TranslationCategories.Templates,
+            TranslationCategories.ProcessTypes
+        };
+    }
+
     private bool showProcessTypeChangeWarning = false; // For future enhancement: allow changing with warning
 
     protected override Task OnInitializedAsync()

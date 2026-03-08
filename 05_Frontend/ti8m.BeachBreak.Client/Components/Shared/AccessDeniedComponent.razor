@@ -23,4 +23,12 @@
 @code {
     [Parameter] public string RequiredRole { get; set; } = "authorized";
     [Parameter] public string PageName { get; set; } = "requested";
+
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Errors
+        };
+    }
 }

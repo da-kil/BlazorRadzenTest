@@ -161,3 +161,16 @@
     padding-bottom: 0.5rem;
 }
 </style>
+
+@code {
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Dialogs,
+            TranslationCategories.Messages,
+            TranslationCategories.Labels,
+            TranslationCategories.WorkflowStates
+        };
+    }
+}

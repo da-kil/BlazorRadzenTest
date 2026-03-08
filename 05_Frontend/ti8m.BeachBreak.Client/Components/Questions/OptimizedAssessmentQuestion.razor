@@ -112,6 +112,17 @@ else
     [Parameter] public bool IsReadOnly { get; set; } = false;
     [Parameter] public bool HideHeader { get; set; } = false;
 
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Questions,
+            TranslationCategories.Labels,
+            TranslationCategories.Messages,
+            TranslationCategories.Rating
+        };
+    }
+
     private List<EvaluationItem> evaluations = new();
     private int ratingScale = 4;
     private string scaleLowLabel = "Poor";

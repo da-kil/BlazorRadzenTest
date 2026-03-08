@@ -1,7 +1,5 @@
-using ti8m.BeachBreak.Application.Query.Models;
 using ti8m.BeachBreak.Application.Query.Repositories;
-using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
-using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
+using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.ValueObjects;
 
 namespace ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
 
@@ -12,15 +10,18 @@ namespace ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueri
 public class GetGoalQuestionDataQueryHandler : IQueryHandler<GetGoalQuestionDataQuery, Result<GoalQuestionDataDto>>
 {
     private readonly IQuestionnaireAssignmentRepository _repository;
+    private readonly IQuestionnaireResponseRepository _responseRepository;
 
-    public GetGoalQuestionDataQueryHandler(IQuestionnaireAssignmentRepository repository)
+    public GetGoalQuestionDataQueryHandler(
+        IQuestionnaireAssignmentRepository repository,
+        IQuestionnaireResponseRepository responseRepository)
     {
         _repository = repository;
+        _responseRepository = responseRepository;
     }
 
     public async Task<Result<GoalQuestionDataDto>> HandleAsync(GetGoalQuestionDataQuery query, CancellationToken cancellationToken = default)
     {
-        // Load from read model projection instead of replaying event stream
         var assignment = await _repository.GetAssignmentByIdAsync(query.AssignmentId, cancellationToken);
 
         if (assignment == null)
@@ -28,28 +29,63 @@ public class GetGoalQuestionDataQueryHandler : IQueryHandler<GetGoalQuestionData
             return Result<GoalQuestionDataDto>.Fail($"Assignment {query.AssignmentId} not found", 404);
         }
 
-        // Build DTO from aggregate state
         var dto = new GoalQuestionDataDto
         {
             QuestionId = query.QuestionId,
-            WorkflowState = assignment.WorkflowState
+            WorkflowState = assignment.WorkflowState,
+            Goals = new List<GoalDto>()
         };
 
-        // Get predecessor link if exists
-        if (assignment.PredecessorLinksByQuestion.TryGetValue(query.QuestionId, out var predecessorId))
+        if (assignment.AssignmentPredecessorId.HasValue)
         {
-            dto.PredecessorAssignmentId = predecessorId;
+            dto.PredecessorAssignmentId = assignment.AssignmentPredecessorId.Value;
+            dto.PredecessorGoalRatings = await LoadPredecessorGoalStubsAsync(
+                assignment.AssignmentPredecessorId.Value,
+                cancellationToken);
         }
 
-        // Goals are now stored in QuestionnaireResponse.SectionResponses, not in QuestionnaireAssignment
-        // Goals should be read from the main questionnaire response via GetQuestionnaireResponseQuery
-        // This query handler now returns empty goals list - goals are accessed through the response data
-        dto.Goals = new List<GoalDto>();
-
-        // Predecessor goal ratings are now stored in QuestionnaireResponse.SectionResponses alongside goals
-        // No longer stored in QuestionnaireAssignment aggregate
-        dto.PredecessorGoalRatings = new List<GoalRatingDto>();
-
         return Result<GoalQuestionDataDto>.Success(dto);
+    }
+
+    private async Task<List<GoalRatingDto>> LoadPredecessorGoalStubsAsync(
+        Guid predecessorAssignmentId,
+        CancellationToken cancellationToken)
+    {
+        var predecessorResponse = await _responseRepository.GetByAssignmentIdAsync(
+            predecessorAssignmentId, cancellationToken);
+
+        if (predecessorResponse == null)
+            return new List<GoalRatingDto>();
+
+        var stubs = new List<GoalRatingDto>();
+
+        foreach (var sectionKvp in predecessorResponse.SectionResponses)
+        {
+            foreach (var roleKvp in sectionKvp.Value)
+            {
+                if (roleKvp.Value is QuestionResponseValue.GoalResponse goalResponse)
+                {
+                    foreach (var goal in goalResponse.Goals)
+                    {
+                        // Skip duplicates (same goal may appear under multiple role responses)
+                        if (stubs.Any(s => s.SourceGoalId == goal.GoalId))
+                            continue;
+
+                        stubs.Add(new GoalRatingDto
+                        {
+                            SourceAssignmentId = predecessorAssignmentId,
+                            SourceGoalId = goal.GoalId,
+                            RatedByRole = goal.AddedByRole,
+                            DegreeOfAchievement = 0,
+                            Justification = string.Empty,
+                            OriginalObjective = goal.ObjectiveDescription,
+                            OriginalAddedByRole = goal.AddedByRole
+                        });
+                    }
+                }
+            }
+        }
+
+        return stubs;
     }
 }

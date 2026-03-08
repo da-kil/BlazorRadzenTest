@@ -1,3 +1,5 @@
+using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
+
 namespace ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
 
 public class AvailablePredecessorDto
@@ -7,4 +9,5 @@ public class AvailablePredecessorDto
     public DateTime AssignedDate { get; set; }
     public DateTime? CompletedDate { get; set; }
     public int GoalCount { get; set; }
+    public WorkflowState WorkflowState { get; set; }
 }

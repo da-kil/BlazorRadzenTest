@@ -128,6 +128,17 @@
 </style>
 
 @code {
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Sections,
+            TranslationCategories.Messages,
+            TranslationCategories.Placeholders,
+            TranslationCategories.Buttons
+        };
+    }
+
     [Parameter] public string? ExistingEmployeeComments { get; set; }
     [Parameter] public bool IsSubmitting { get; set; }
     [Parameter] public EventCallback<string?> OnSubmit { get; set; }

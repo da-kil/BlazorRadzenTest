@@ -77,6 +77,20 @@
     [Parameter] public bool HideHeader { get; set; } = false;
     [Parameter] public bool HideFilterBar { get; set; } = false;
 
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Pages,
+            TranslationCategories.Buttons,
+            TranslationCategories.Labels,
+            TranslationCategories.Status,
+            TranslationCategories.Filters,
+            TranslationCategories.Messages,
+            TranslationCategories.WorkflowStates
+        };
+    }
+
     private List<QuestionnaireAssignment> allAssignments = new();
     private List<EmployeeDto> employees = new();
     private object? additionalData = null;

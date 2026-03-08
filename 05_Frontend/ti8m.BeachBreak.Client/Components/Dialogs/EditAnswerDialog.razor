@@ -8,7 +8,6 @@
 @using ti8m.BeachBreak.Client.Helpers
 @inherits CategoryOptimizedTranslatableComponent
 @inject DialogService DialogService
-@inject NotificationService NotificationService
 @inject IAuthService AuthService
 
 
@@ -84,6 +83,18 @@
     [Parameter] public ApplicationRole CurrentUserRole { get; set; } = ApplicationRole.Employee;
     [Parameter] public WorkflowState AssignmentWorkflowState { get; set; } = WorkflowState.EmployeeInProgress;
     [Parameter] public string? EvaluationKey { get; set; } // When set, only edit this specific evaluation
+
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Dialogs,
+            TranslationCategories.Buttons,
+            TranslationCategories.Messages,
+            TranslationCategories.Labels,
+            TranslationCategories.Questions
+        };
+    }
 
     private QuestionResponse editResponse = new();
     private OptimizedGoalQuestion? goalQuestionRef;

@@ -173,6 +173,22 @@
     private bool isSaving = false;
     private DateTime? lastSavedTime = null;
 
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Steps,            // For steps.template-information, steps.configure-criteria, etc.
+            TranslationCategories.Buttons,          // For buttons.save-draft, buttons.publish, etc.
+            TranslationCategories.Labels,           // For labels.last-saved, labels.new-status, etc.
+            TranslationCategories.Messages,         // For messages.saving, messages.template-saved-successfully, etc.
+            TranslationCategories.Pages,            // For pages.feedback-template-builder, etc.
+            TranslationCategories.Dialogs,          // For dialogs.archive-template, etc.
+            TranslationCategories.Notifications,    // For notifications.success, notifications.error, etc.
+            TranslationCategories.Templates,        // For template-related translations
+            TranslationCategories.Status            // For template status labels
+        };
+    }
+
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();

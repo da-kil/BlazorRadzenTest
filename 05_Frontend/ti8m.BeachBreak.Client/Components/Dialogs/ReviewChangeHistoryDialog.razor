@@ -3,7 +3,6 @@
 @using ti8m.BeachBreak.Client.Components.Shared
 @using Radzen.Blazor
 @inject IQuestionnaireAssignmentService AssignmentService
-@inject NotificationService NotificationService
 @inherits CategoryOptimizedTranslatableComponent
 
 <RadzenStack Gap="1rem">
@@ -176,6 +175,18 @@
 @code {
     [Parameter]
     public Guid AssignmentId { get; set; }
+
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Dialogs,
+            TranslationCategories.Messages,
+            TranslationCategories.Labels,
+            TranslationCategories.Buttons,
+            TranslationCategories.Sections
+        };
+    }
 
     private List<ReviewChangeDto>? changeLog;
     private bool isLoading = true;

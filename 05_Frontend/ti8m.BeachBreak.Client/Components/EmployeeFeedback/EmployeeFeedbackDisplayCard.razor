@@ -140,6 +140,15 @@
     [Parameter] public EventCallback<EmployeeFeedbackSummaryDto> OnViewDetails { get; set; }
     [Parameter] public EventCallback<EmployeeFeedbackSummaryDto> OnEdit { get; set; }
 
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Labels,
+            TranslationCategories.Buttons
+        };
+    }
+
     private async Task ViewDetails()
     {
         if (OnViewDetails.HasDelegate)

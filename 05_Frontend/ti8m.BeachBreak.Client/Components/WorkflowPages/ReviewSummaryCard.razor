@@ -100,6 +100,16 @@
 </style>
 
 @code {
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Sections,
+            TranslationCategories.Labels,
+            TranslationCategories.Messages
+        };
+    }
+
     [Parameter, EditorRequired] public QuestionnaireAssignment Assignment { get; set; } = null!;
     [Parameter, EditorRequired] public QuestionnaireTemplate Template { get; set; } = null!;
 

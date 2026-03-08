@@ -73,6 +73,19 @@
     [Parameter] public DateTime InitialTimeframeTo { get; set; } = DateTime.Today.AddMonths(6);
     [Parameter] public decimal InitialWeighting { get; set; } = 0;
 
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Dialogs,
+            TranslationCategories.Buttons,
+            TranslationCategories.Forms,
+            TranslationCategories.Labels,
+            TranslationCategories.Validation,
+            TranslationCategories.Placeholders
+        };
+    }
+
     // Helper property to determine if weighting and reason fields should be shown
     private bool IsInReviewMode => AssignmentWorkflowState == WorkflowState.InReview;
 

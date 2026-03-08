@@ -79,6 +79,19 @@ else
 }
 
 @code {
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Pages,
+            TranslationCategories.Navigation,
+            TranslationCategories.Labels,
+            TranslationCategories.Messages,
+            TranslationCategories.Notifications,
+            TranslationCategories.Warnings
+        };
+    }
+
     [Parameter] public Guid AssignmentId { get; set; }
 
     private QuestionnaireAssignment? assignment;

@@ -126,7 +126,8 @@ public class GetAvailablePredecessorsQueryHandler
                 TemplateName = GetLocalizedTemplateName(template, currentLanguage),
                 AssignedDate = assignment.AssignedDate,
                 CompletedDate = assignment.CompletedDate,
-                GoalCount = totalGoals
+                GoalCount = totalGoals,
+                WorkflowState = assignment.WorkflowState
             });
         }
 

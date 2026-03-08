@@ -165,6 +165,17 @@
     [Parameter] public EventCallback<Guid> OnViewAnalytics { get; set; }
     [Parameter] public EventCallback<Guid> OnAssignmentClick { get; set; }
 
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Labels,
+            TranslationCategories.Buttons,
+            TranslationCategories.Status,
+            TranslationCategories.WorkflowStates
+        };
+    }
+
     private int TotalAssignments => Assignments.Count;
     private int AssignedCount => Assignments.Count(a => a.WorkflowState == WorkflowState.Assigned);
     private int InProgressCount => Assignments.Count(a =>

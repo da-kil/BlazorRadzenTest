@@ -84,6 +84,18 @@
     [Parameter]
     public EventCallback OnActionCompleted { get; set; }
 
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Buttons,
+            TranslationCategories.Labels,
+            TranslationCategories.Notifications,
+            TranslationCategories.Messages,
+            TranslationCategories.WorkflowStates
+        };
+    }
+
     private bool isProcessing = false;
 
     private async Task InitiateReview()

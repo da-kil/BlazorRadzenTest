@@ -11,11 +11,6 @@ namespace ti8m.BeachBreak.Client.Services;
 public interface IGoalApiService
 {
     /// <summary>
-    /// Links a predecessor questionnaire to a goal question for rating previous goals.
-    /// </summary>
-    Task<Result> LinkPredecessorAsync(Guid assignmentId, LinkPredecessorQuestionnaireDto dto);
-
-    /// <summary>
     /// Gets available predecessor questionnaires that can be linked for goal rating.
     /// Returns finalized questionnaires for same employee, same category, that have ANY goals.
     /// Works across cloned templates with different question IDs.

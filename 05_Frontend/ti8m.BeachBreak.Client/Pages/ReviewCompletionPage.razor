@@ -14,7 +14,6 @@
 @inject NavigationManager NavigationManager
 @inject IQuestionnaireAssignmentService AssignmentService
 @inject IQuestionnaireTemplateService TemplateService
-@inject NotificationService NotificationService
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IAuthService AuthService
 @inherits CategoryOptimizedTranslatableComponent
@@ -85,6 +84,19 @@ else
 }
 
 @code {
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Pages,
+            TranslationCategories.Navigation,
+            TranslationCategories.Sections,
+            TranslationCategories.Labels,
+            TranslationCategories.Messages,
+            TranslationCategories.Notifications
+        };
+    }
+
     [Parameter] public Guid AssignmentId { get; set; }
 
     private QuestionnaireAssignment? assignment;

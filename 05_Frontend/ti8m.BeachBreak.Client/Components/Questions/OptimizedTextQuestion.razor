@@ -117,6 +117,17 @@ else
     [Parameter] public bool IsReadOnly { get; set; } = false;
     [Parameter] public bool HideHeader { get; set; } = false;
 
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Questions,
+            TranslationCategories.Labels,
+            TranslationCategories.Messages,
+            TranslationCategories.Placeholders
+        };
+    }
+
     private List<TextSection> textSections = new();
 
     // Debounced notifier for text input changes

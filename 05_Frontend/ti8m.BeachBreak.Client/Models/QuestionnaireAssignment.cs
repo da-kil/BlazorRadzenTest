@@ -65,4 +65,10 @@ public class QuestionnaireAssignment
     public string? LastReopenedByEmployeeName { get; set; }
     public string? LastReopenedByRole { get; set; }
     public string? LastReopenReason { get; set; }
+
+    // Viewers
+    public List<Dto.AssignmentViewerDto> Viewers { get; set; } = new();
+
+    // Assignment-wide predecessor linking (for goal ratings)
+    public Guid? AssignmentPredecessorId { get; set; }
 }

@@ -3,6 +3,7 @@
 @using ti8m.BeachBreak.Client.Models.DTOs
 @using ti8m.BeachBreak.Client.Models.Dto
 @using ti8m.BeachBreak.Client.Models.Dto.Shared
+@using ti8m.BeachBreak.Client.Models.Dto.Queries
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Components.Dialogs
 @using ti8m.BeachBreak.Client.Services
@@ -94,6 +95,19 @@
     [Parameter] public WorkflowState AssignmentWorkflowState { get; set; } = WorkflowState.EmployeeInProgress;
     [Parameter] public Guid AssignmentId { get; set; }
     [Parameter] public SectionResponse? SectionData { get; set; } // Access to all role responses for review mode
+
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Goals,
+            TranslationCategories.Buttons,
+            TranslationCategories.Status,
+            TranslationCategories.Messages,
+            TranslationCategories.Labels,
+            TranslationCategories.Dialogs
+        };
+    }
 
     // All current goals (strongly-typed with pending state tracking)
     private List<GoalWithState> allCurrentGoals = new();
@@ -442,7 +456,7 @@
     /// </summary>
     private async Task EditTypedGoal(GoalWithState goal)
     {
-        var result = await DialogService.OpenAsync<EditGoalDialog>("Edit Goal",
+        var result = await DialogService.OpenAsync<EditGoalDialog>(T("dialogs.edit-goal"),
             new Dictionary<string, object>
             {
                 { "AssignmentId", AssignmentId },
@@ -594,7 +608,7 @@
 
     private async Task ShowAddGoalDialog()
     {
-        var result = await DialogService.OpenAsync<AddGoalDialog>("Add New Goal",
+        var result = await DialogService.OpenAsync<AddGoalDialog>(T("dialogs.add-goal"),
             new Dictionary<string, object>
             {
                 { "AssignmentId", AssignmentId },
@@ -736,9 +750,14 @@
         // Check if we already have goal data loaded from the main questionnaire API
         if (Response.ResponseData is GoalResponseDataDto existingGoalData && existingGoalData.Goals.Count > 0)
         {
-            LoadNewGoalsData();
-            await NotifyResponseChanged();
-            return;
+            // Only skip API call if PredecessorAssignmentId is already synced
+            if (existingGoalData.PredecessorAssignmentId.HasValue)
+            {
+                LoadNewGoalsData();
+                await NotifyResponseChanged();
+                return;
+            }
+            // Fall through to API call to fetch PredecessorAssignmentId
         }
 
         // If ResponseData is null or not the right type, the main questionnaire response might have been
@@ -769,8 +788,38 @@
                     goalData = (GoalResponseDataDto)Response.ResponseData;
                 }
 
-                // Update with strongly-typed goals - convert GoalDto to GoalDataDto
-                goalData.Goals = result.Payload.Goals.Select(ConvertGoalDtoToGoalDataDto).ToList();
+                // Only overwrite goals if the API returned them (Goals are now stored in
+                // QuestionnaireResponse, so GetGoalQuestionDataQueryHandler returns an empty list.
+                // Never overwrite existing goals with an empty API response.)
+                if (result.Payload.Goals.Count > 0)
+                {
+                    goalData.Goals = result.Payload.Goals.Select(ConvertGoalDtoToGoalDataDto).ToList();
+                }
+
+                // This ensures OptimizedGoalQuestion knows to render PredecessorGoalsComparisonSection
+                if (result.Payload.PredecessorAssignmentId.HasValue)
+                {
+                    goalData.PredecessorAssignmentId = result.Payload.PredecessorAssignmentId.Value;
+                }
+
+                // Initialize predecessor rating stubs from backend if none exist yet
+                if (result.Payload.PredecessorGoalRatings.Count > 0 && goalData.PredecessorRatings.Count == 0)
+                {
+                    foreach (var stub in result.Payload.PredecessorGoalRatings)
+                    {
+                        goalData.PredecessorRatings.Add(new PredecessorRatingDto
+                        {
+                            SourceAssignmentId = stub.SourceAssignmentId,
+                            SourceGoalId = stub.SourceGoalId,
+                            DegreeOfAchievement = 0,
+                            Justification = string.Empty,
+                            RatedByRole = CurrentUserRole,
+                            OriginalObjective = stub.OriginalObjective,
+                            OriginalAddedByRole = stub.OriginalAddedByRole
+                        });
+                    }
+                }
+
                 Response.LastModified = DateTime.Now;
 
                 LoadNewGoalsData();

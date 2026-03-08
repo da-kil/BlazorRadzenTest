@@ -113,6 +113,19 @@
 @code {
     [Parameter, EditorRequired] public QuestionnaireTemplate Template { get; set; } = null!;
 
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Buttons,
+            TranslationCategories.Labels,
+            TranslationCategories.Messages,
+            TranslationCategories.Tooltips,
+            TranslationCategories.QuestionTypes,
+            TranslationCategories.Sections
+        };
+    }
+
     [Parameter] public EventCallback<QuestionType> OnAddSectionWithType { get; set; }
     [Parameter] public EventCallback<int> OnMoveSectionUp { get; set; }
     [Parameter] public EventCallback<int> OnMoveSectionDown { get; set; }

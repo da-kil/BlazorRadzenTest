@@ -56,6 +56,17 @@
 </PageLayout>
 
 @code {
+	protected override string[] GetRequiredTranslationCategories()
+	{
+		return new[]
+		{
+			TranslationCategories.Navigation,
+			TranslationCategories.Pages,
+			TranslationCategories.Dashboard,
+			TranslationCategories.Messages
+		};
+	}
+
 	// Employee-specific state
 	private List<QuestionnaireAssignment> allAssignments = new();
 	private List<QuestionnaireAssignment> newQuestionnaires = new();

@@ -57,6 +57,20 @@
     [Parameter] public Models.QuestionSection? CurrentSection { get; set; }
     [Parameter] public bool IsGeneralNote { get; set; }
 
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Dialogs,
+            TranslationCategories.Buttons,
+            TranslationCategories.Sections,
+            TranslationCategories.Labels,
+            TranslationCategories.Messages,
+            TranslationCategories.Placeholders,
+            TranslationCategories.Forms
+        };
+    }
+
     private bool isGeneralNote;
 
     protected override void OnInitialized()

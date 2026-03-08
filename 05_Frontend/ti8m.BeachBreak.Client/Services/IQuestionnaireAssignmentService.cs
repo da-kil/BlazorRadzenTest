@@ -35,6 +35,10 @@ public interface IQuestionnaireAssignmentService
     Task<bool> AddCustomSectionsAsync(Guid assignmentId, AddCustomSectionsDto dto);
     Task<List<QuestionSection>> GetCustomSectionsAsync(Guid assignmentId);
     Task<List<QuestionSection>> GetMyCustomSectionsAsync(Guid assignmentId);
+
+    // Assignment-wide predecessor linking
+    Task<Result<List<AvailablePredecessorDto>>> GetAvailableAssignmentPredecessorsAsync(Guid assignmentId);
+    Task<Result> LinkAssignmentPredecessorAsync(Guid assignmentId, LinkAssignmentPredecessorDto dto);
     Task<bool> SubmitEmployeeQuestionnaireAsync(Guid assignmentId, string submittedBy);
     Task<bool> SubmitManagerQuestionnaireAsync(Guid assignmentId, string submittedBy);
     Task<bool> InitiateReviewAsync(Guid assignmentId, string initiatedBy);
@@ -59,4 +63,8 @@ public interface IQuestionnaireAssignmentService
     // Assignment property updates
     Task<bool> UpdateAssignmentPropertiesAsync(Guid assignmentId, DateTime? newDueDate, string? newNotes);
     Task<bool> WithdrawAssignmentAsync(Guid assignmentId, string? withdrawalReason);
+
+    // Viewer management
+    Task<bool> AddViewerAsync(Guid assignmentId, Guid viewerEmployeeId);
+    Task<bool> RemoveViewerAsync(Guid assignmentId, Guid viewerEmployeeId);
 }

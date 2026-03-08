@@ -12,6 +12,16 @@
 
 
 @code {
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Language,
+            TranslationCategories.Notifications,
+            TranslationCategories.Errors
+        };
+    }
+
     private Language selectedLanguage = Language.English;
     private List<LanguageOption> availableLanguages = new();
 

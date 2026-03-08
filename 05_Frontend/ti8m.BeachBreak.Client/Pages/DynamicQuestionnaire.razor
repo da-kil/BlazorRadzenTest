@@ -7,6 +7,7 @@
 @using ti8m.BeachBreak.Client.Components.Questions
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Models.DTOs
+@using ti8m.BeachBreak.Client.Models.Dto.Queries
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Components.Dialogs
@@ -253,6 +254,24 @@ else
 }
 
 @code {
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Pages,
+            TranslationCategories.Navigation,
+            TranslationCategories.Sections,
+            TranslationCategories.Labels,
+            TranslationCategories.Buttons,
+            TranslationCategories.Messages,
+            TranslationCategories.Notifications,
+            TranslationCategories.Status,
+            TranslationCategories.WorkflowStates,
+            TranslationCategories.Roles,
+            TranslationCategories.Warnings
+        };
+    }
+
     [Parameter] public Guid? TemplateId { get; set; }
     [Parameter] public Guid? AssignmentId { get; set; }
 
@@ -803,11 +822,27 @@ else
             };
 
             // Initialize sectionData response for current user's role
-            sectionResponse.RoleResponses[CurrentResponseRole] = new QuestionResponse
+            var questionResponse = new QuestionResponse
             {
                 QuestionId = sectionData.Id,  // sectionData ID is the question ID
                 QuestionType = sectionData.Type
             };
+
+            // For Goal questions, initialize with GoalResponseDataDto and check for assignment predecessor
+            if (sectionData.Type == QuestionType.Goal)
+            {
+                var goalData = new GoalResponseDataDto();
+
+                // If assignment has a predecessor, sync it to the response data
+                if (assignment?.AssignmentPredecessorId != null)
+                {
+                    goalData.PredecessorAssignmentId = assignment.AssignmentPredecessorId;
+                }
+
+                questionResponse.ResponseData = goalData;
+            }
+
+            sectionResponse.RoleResponses[CurrentResponseRole] = questionResponse;
 
             response.SectionResponses[sectionData.Id] = sectionResponse;
         }

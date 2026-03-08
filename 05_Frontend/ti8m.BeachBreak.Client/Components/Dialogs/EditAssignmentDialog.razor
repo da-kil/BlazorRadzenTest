@@ -104,6 +104,18 @@
 @code {
     [Parameter] public QuestionnaireAssignment? Assignment { get; set; }
 
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Dialogs,
+            TranslationCategories.Messages,
+            TranslationCategories.Labels,
+            TranslationCategories.Buttons,
+            TranslationCategories.Placeholders
+        };
+    }
+
     private DateTime? newDueDate;
     private string? newNotes;
 

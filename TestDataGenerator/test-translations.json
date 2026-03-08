@@ -1071,6 +1071,20 @@
         "createdDate":  "2025-12-03T12:17:11.8998645+00:00"
     },
     {
+        "key":  "dialogs.edit-goal",
+        "german":  "Ziel bearbeiten",
+        "english":  "Edit Goal",
+        "category":  "dialogs",
+        "createdDate":  "2026-02-20T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "dialogs.editing-goal",
+        "german":  "Ziel wird bearbeitet...",
+        "english":  "Editing Goal...",
+        "category":  "dialogs",
+        "createdDate":  "2026-02-20T12:00:00.0000000+00:00"
+    },
+    {
         "key":  "dialogs.after-finishing-review-meeting",
         "german":  "Nach dem Abschluss des Bewertungsgesprächs:",
         "english":  "After finishing the review meeting:",
@@ -6608,6 +6622,76 @@
         "createdDate": "2026-02-05T12:00:00.0000000+01:00"
     },
     {
+        "key": "workflow-states.assigned-description",
+        "german": "Fragebogen wurde zugewiesen und wartet auf Initialisierung",
+        "english": "Questionnaire has been assigned and is awaiting initialization",
+        "category": "workflow-states",
+        "createdDate": "2026-03-08T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "workflow-states.initialized-description",
+        "german": "Fragebogen wurde initialisiert und ist bereit zur Bearbeitung",
+        "english": "Questionnaire has been initialized and is ready to be filled out",
+        "category": "workflow-states",
+        "createdDate": "2026-03-08T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "workflow-states.employee-in-progress-description",
+        "german": "Mitarbeiter bearbeitet derzeit den Fragebogen",
+        "english": "Employee is currently working on the questionnaire",
+        "category": "workflow-states",
+        "createdDate": "2026-03-08T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "workflow-states.manager-in-progress-description",
+        "german": "Manager bearbeitet derzeit den Fragebogen",
+        "english": "Manager is currently working on the questionnaire",
+        "category": "workflow-states",
+        "createdDate": "2026-03-08T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "workflow-states.both-in-progress-description",
+        "german": "Mitarbeiter und Manager bearbeiten derzeit den Fragebogen",
+        "english": "Both employee and manager are currently working on the questionnaire",
+        "category": "workflow-states",
+        "createdDate": "2026-03-08T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "workflow-states.employee-submitted-description",
+        "german": "Mitarbeiter hat den Fragebogen eingereicht und wartet auf den Manager",
+        "english": "Employee has submitted the questionnaire and is waiting for the manager",
+        "category": "workflow-states",
+        "createdDate": "2026-03-08T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "workflow-states.manager-submitted-description",
+        "german": "Manager hat den Fragebogen eingereicht und wartet auf den Mitarbeiter",
+        "english": "Manager has submitted the questionnaire and is waiting for the employee",
+        "category": "workflow-states",
+        "createdDate": "2026-03-08T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "workflow-states.both-submitted-description",
+        "german": "Beide haben den Fragebogen eingereicht, bereit zur \u00dcberpr\u00fcfung",
+        "english": "Both have submitted the questionnaire, ready for review",
+        "category": "workflow-states",
+        "createdDate": "2026-03-08T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "workflow-states.in-review-description",
+        "german": "Fragebogen wird derzeit \u00fcberpr\u00fcft",
+        "english": "Questionnaire is currently under review",
+        "category": "workflow-states",
+        "createdDate": "2026-03-08T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "workflow-states.employee-review-confirmed-description",
+        "german": "Mitarbeiter hat die \u00dcberpr\u00fcfung best\u00e4tigt",
+        "english": "Employee has confirmed the review",
+        "category": "workflow-states",
+        "createdDate": "2026-03-08T12:00:00.0000000+01:00"
+    },
+    {
         "key": "actions.hr.cancel-assignment",
         "german": "Aufgabe abbrechen",
         "english": "Cancel Assignment",
@@ -6844,5 +6928,341 @@
         "english": "due",
         "category": "labels",
         "createdDate": "2026-02-07T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.viewers",
+        "german": "Betrachter",
+        "english": "Viewers",
+        "category": "labels",
+        "createdDate": "2026-02-16T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "buttons.manage-viewers",
+        "german": "Betrachter verwalten",
+        "english": "Manage Viewers",
+        "category": "buttons",
+        "createdDate": "2026-02-16T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.no-viewers-yet",
+        "german": "Noch keine Betrachter zugewiesen. Klicken Sie auf 'Betrachter verwalten', um Betrachter hinzuzufügen.",
+        "english": "No viewers assigned yet. Click 'Manage Viewers' to add viewers.",
+        "category": "messages",
+        "createdDate": "2026-02-16T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "placeholders.search-employees",
+        "german": "Mitarbeiter suchen, um sie als Betrachter hinzuzufügen...",
+        "english": "Search employees to add as viewers...",
+        "category": "placeholders",
+        "createdDate": "2026-02-16T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.added",
+        "german": "hinzugefügt",
+        "english": "added",
+        "category": "labels",
+        "createdDate": "2026-02-16T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pages.feedback-template-viewer",
+        "german": "Feedback-Vorlage anzeigen",
+        "english": "Feedback Template Viewer",
+        "category": "pages",
+        "createdDate": "2026-02-18T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "steps.create-new-template",
+        "german": "Neue Vorlage erstellen",
+        "english": "Create new template",
+        "category": "steps",
+        "createdDate": "2026-02-18T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.at-least-one-criterion-required",
+        "german": "Mindestens ein Kriterium oder Textabschnitt ist erforderlich",
+        "english": "At least one criterion or text section is required",
+        "category": "messages",
+        "createdDate": "2026-02-18T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.error-saving-template",
+        "german": "Fehler beim Speichern der Vorlage",
+        "english": "Error saving template",
+        "category": "messages",
+        "createdDate": "2026-02-18T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.save-before-publish",
+        "german": "Speichern Sie zuerst, bevor Sie veröffentlichen",
+        "english": "Save first before publishing",
+        "category": "messages",
+        "createdDate": "2026-02-18T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.error-publishing-template",
+        "german": "Fehler beim Veröffentlichen der Vorlage",
+        "english": "Error publishing template",
+        "category": "messages",
+        "createdDate": "2026-02-18T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.confirm-archive-template",
+        "german": "Sind Sie sicher, dass Sie diese Vorlage archivieren möchten?",
+        "english": "Are you sure you want to archive this template?",
+        "category": "messages",
+        "createdDate": "2026-02-18T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.error-archiving-template",
+        "german": "Fehler beim Archivieren der Vorlage",
+        "english": "Error archiving template",
+        "category": "messages",
+        "createdDate": "2026-02-18T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.viewing-published-template",
+        "german": "Veröffentlichte Vorlage anzeigen",
+        "english": "Viewing published template",
+        "category": "messages",
+        "createdDate": "2026-02-18T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.viewing-archived-template",
+        "german": "Archivierte Vorlage anzeigen",
+        "english": "Viewing archived template",
+        "category": "messages",
+        "createdDate": "2026-02-18T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.template-read-only-mode",
+        "german": "Diese Vorlage ist im schreibgeschützten Modus",
+        "english": "This template is in read-only mode",
+        "category": "messages",
+        "createdDate": "2026-02-18T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.template-read-only",
+        "german": "Vorlage ist schreibgeschützt",
+        "english": "Template is read-only",
+        "category": "messages",
+        "createdDate": "2026-02-18T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.template-draft-status",
+        "german": "Diese Vorlage ist im Entwurfsstatus und kann bearbeitet werden",
+        "english": "This template is in draft status and can be edited",
+        "category": "messages",
+        "createdDate": "2026-02-18T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.template-published-status",
+        "german": "Diese Vorlage ist veröffentlicht und schreibgeschützt",
+        "english": "This template is published and read-only",
+        "category": "messages",
+        "createdDate": "2026-02-18T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.template-archived-status",
+        "german": "Diese Vorlage ist archiviert und schreibgeschützt",
+        "english": "This template is archived and read-only",
+        "category": "messages",
+        "createdDate": "2026-02-18T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "dialogs.link-assignment-predecessor-title",
+        "german": "Vorgänger-Zuweisung verknüpfen",
+        "english": "Link Predecessor Assignment",
+        "category": "dialogs",
+        "createdDate": "2026-02-18T14:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.link-assignment-predecessor-instruction",
+        "german": "Wählen Sie eine vorherige Zuweisung als Vorgänger für diese gesamte Zuweisung. Dies ermöglicht den Zugriff auf Ziele aus dem ausgewählten Fragebogen.",
+        "english": "Select a previous assignment as predecessor for this entire assignment. This will allow access to goals from the selected questionnaire.",
+        "category": "messages",
+        "createdDate": "2026-02-18T14:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.no-eligible-assignment-predecessors",
+        "german": "Keine berechtigten Vorgänger-Zuweisungen verfügbar. Es müssen abgeschlossene Zuweisungen für denselben Mitarbeiter vorhanden sein.",
+        "english": "No eligible predecessor assignments available. There must be completed assignments for the same employee.",
+        "category": "messages",
+        "createdDate": "2026-02-18T14:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.select-predecessor-assignment",
+        "german": "Vorgänger-Zuweisung auswählen",
+        "english": "Select Predecessor Assignment",
+        "category": "labels",
+        "createdDate": "2026-02-18T14:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.no-date",
+        "german": "Kein Datum",
+        "english": "No Date",
+        "category": "labels",
+        "createdDate": "2026-02-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.assignment-predecessor-linked-successfully",
+        "german": "Die Vorgänger-Zuweisung wurde erfolgreich verknüpft. Sie können nun auf Ziele aus dem vorherigen Fragebogen zugreifen.",
+        "english": "The predecessor assignment has been linked successfully. You can now access goals from the previous questionnaire.",
+        "category": "messages",
+        "createdDate": "2026-02-18T14:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.template-validation-success",
+        "german": "Vorlage erfolgreich validiert",
+        "english": "Template validation successful",
+        "category": "messages",
+        "createdDate": "2026-02-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.loading-review-data",
+        "german": "Überprüfungsdaten werden geladen...",
+        "english": "Loading review data...",
+        "category": "messages",
+        "createdDate": "2026-03-08T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.unable-to-load-review-data",
+        "german": "Überprüfungsdaten konnten nicht geladen werden.",
+        "english": "Unable to load questionnaire data for review.",
+        "category": "messages",
+        "createdDate": "2026-03-08T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.failed-to-load-review-data",
+        "german": "Überprüfungsdaten konnten nicht geladen werden",
+        "english": "Failed to load review data",
+        "category": "messages",
+        "createdDate": "2026-03-08T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.failed-to-load-review-data-details",
+        "german": "Überprüfungsdaten konnten nicht geladen werden: {0}",
+        "english": "Failed to load review data: {0}",
+        "category": "messages",
+        "createdDate": "2026-03-08T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.answer-updated-successfully",
+        "german": "Antwort wurde erfolgreich aktualisiert",
+        "english": "Answer updated successfully",
+        "category": "messages",
+        "createdDate": "2026-03-08T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.failed-to-save-answer",
+        "german": "Antwort konnte nicht gespeichert werden",
+        "english": "Failed to save answer",
+        "category": "messages",
+        "createdDate": "2026-03-08T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.failed-to-save-answer-details",
+        "german": "Antwort konnte nicht gespeichert werden: {0}",
+        "english": "Failed to save answer: {0}",
+        "category": "messages",
+        "createdDate": "2026-03-08T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.source-answer-is-empty",
+        "german": "Die Quellantwort ist leer",
+        "english": "Source answer is empty",
+        "category": "messages",
+        "createdDate": "2026-03-08T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.confirm-copy-answer",
+        "german": "Antwort von {0} nach {1} kopieren?",
+        "english": "Copy answer from {0} to {1}?",
+        "category": "messages",
+        "createdDate": "2026-03-08T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.review-mode-manager-info",
+        "german": "Als Manager k\u00F6nnen Sie alle Antworten w\u00E4hrend dieses Gespr\u00E4chs einsehen und bearbeiten. Alle \u00C4nderungen werden nachverfolgt.",
+        "english": "As the manager, you can view and edit all answers during this review meeting. All changes are tracked.",
+        "category": "messages",
+        "createdDate": "2026-03-08T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.unable-validate-manager-access",
+        "german": "Managerzugriff f\u00FCr den \u00DCberpr\u00FCfungsmodus konnte nicht validiert werden: {0}",
+        "english": "Unable to validate manager access for review mode: {0}",
+        "category": "messages",
+        "createdDate": "2026-03-08T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pages.review-meeting",
+        "german": "\u00DCberpr\u00FCfungsgespr\u00E4ch",
+        "english": "Review Meeting",
+        "category": "pages",
+        "createdDate": "2026-03-08T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.reviewing-employee",
+        "german": "\u00FCberpr\u00FCfter Mitarbeiter",
+        "english": "Reviewing Employee",
+        "category": "labels",
+        "createdDate": "2026-03-08T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "buttons.complete-review",
+        "german": "\u00DCberpr\u00FCfung abschlie\u00DFen",
+        "english": "Complete Review",
+        "category": "buttons",
+        "createdDate": "2026-03-08T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "buttons.copy-to-manager",
+        "german": "Zum Manager kopieren",
+        "english": "Copy to Manager",
+        "category": "buttons",
+        "createdDate": "2026-03-08T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "buttons.copy-to-employee",
+        "german": "Zum Mitarbeiter kopieren",
+        "english": "Copy to Employee",
+        "category": "buttons",
+        "createdDate": "2026-03-08T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "buttons.edit-answer",
+        "german": "Antwort bearbeiten",
+        "english": "Edit Answer",
+        "category": "buttons",
+        "createdDate": "2026-03-08T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "buttons.yes-copy",
+        "german": "Ja, kopieren",
+        "english": "Yes, Copy",
+        "category": "buttons",
+        "createdDate": "2026-03-08T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "dialogs.confirm-copy",
+        "german": "Kopieren best\u00E4tigen",
+        "english": "Confirm Copy",
+        "category": "dialogs",
+        "createdDate": "2026-03-08T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "notifications.nothing-to-copy",
+        "german": "Nichts zu kopieren",
+        "english": "Nothing to Copy",
+        "category": "notifications",
+        "createdDate": "2026-03-08T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "notifications.access-error",
+        "german": "Zugriffsfehler",
+        "english": "Access Error",
+        "category": "notifications",
+        "createdDate": "2026-03-08T12:00:00.0000000+01:00"
     }
 ]

@@ -60,6 +60,16 @@
 </AuthorizeView>
 
 @code {
+	protected override string[] GetRequiredTranslationCategories()
+	{
+		return new[]
+		{
+			TranslationCategories.Pages,
+			TranslationCategories.Messages,
+			TranslationCategories.Labels
+		};
+	}
+
 	// HR-specific state
 	private List<QuestionnaireAssignment> allAssignments = new();
 	private List<EmployeeDto> allEmployees = new();

@@ -155,6 +155,20 @@
 </AuthorizeView>
 
 @code {
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Pages,
+            TranslationCategories.Sections,
+            TranslationCategories.Labels,
+            TranslationCategories.Placeholders,
+            TranslationCategories.Buttons,
+            TranslationCategories.Messages,
+            TranslationCategories.Validation
+        };
+    }
+
     // Data binding
     private Guid? selectedEmployeeId;
     private int? selectedSourceType;

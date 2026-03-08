@@ -62,8 +62,8 @@ public class QuestionnaireAssignmentReadModel
     public string? LastReopenedByRole { get; set; }
     public string? LastReopenReason { get; set; }
 
-    // Predecessor data (projection)
-    public Dictionary<Guid, Guid> PredecessorLinksByQuestion { get; set; } = new();
+    // Assignment-wide predecessor data (projection)
+    public Guid? AssignmentPredecessorId { get; set; }
 
     // Initialization phase properties
     public DateTime? InitializedDate { get; set; }
@@ -75,6 +75,9 @@ public class QuestionnaireAssignmentReadModel
 
     // Employee feedback linking data (projection) - multiple feedback records per question
     public Dictionary<Guid, List<Guid>> LinkedFeedbackByQuestion { get; set; } = new();
+
+    // Viewers (projection)
+    public List<Queries.QuestionnaireAssignmentQueries.AssignmentViewerDto> Viewers { get; set; } = new();
 
     // Apply methods for all QuestionnaireAssignment domain events
     public void Apply(QuestionnaireAssignmentAssigned @event)
@@ -334,9 +337,9 @@ public class QuestionnaireAssignmentReadModel
     }
 
     // Apply methods for predecessor events
-    public void Apply(PredecessorQuestionnaireLinked @event)
+    public void Apply(AssignmentPredecessorLinked @event)
     {
-        PredecessorLinksByQuestion[@event.QuestionId] = @event.PredecessorAssignmentId;
+        AssignmentPredecessorId = @event.PredecessorAssignmentId;
     }
 
     // Apply methods for employee feedback events
@@ -388,6 +391,29 @@ public class QuestionnaireAssignmentReadModel
         if (note != null)
         {
             InReviewNotes.Remove(note);
+        }
+    }
+
+    // Apply methods for viewer events
+    public void Apply(ViewerAddedToAssignment @event)
+    {
+        Viewers.Add(new Queries.QuestionnaireAssignmentQueries.AssignmentViewerDto
+        {
+            EmployeeId = @event.ViewerEmployeeId,
+            EmployeeName = @event.ViewerEmployeeName,
+            EmployeeEmail = @event.ViewerEmployeeEmail,
+            AddedDate = @event.AddedDate,
+            AddedByEmployeeId = @event.AddedByEmployeeId,
+            AddedByName = null  // Will be enriched by query service
+        });
+    }
+
+    public void Apply(ViewerRemovedFromAssignment @event)
+    {
+        var viewer = Viewers.FirstOrDefault(v => v.EmployeeId == @event.ViewerEmployeeId);
+        if (viewer != null)
+        {
+            Viewers.Remove(viewer);
         }
     }
 }

@@ -151,6 +151,23 @@
 </AuthorizeView>
 
 @code {
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Pages,
+            TranslationCategories.Steps,
+            TranslationCategories.Labels,
+            TranslationCategories.Buttons,
+            TranslationCategories.Messages,
+            TranslationCategories.Notifications,
+            TranslationCategories.Dialogs,
+            TranslationCategories.QuestionTypes,
+            TranslationCategories.Questions,
+            TranslationCategories.Tooltips
+        };
+    }
+
     [Parameter] public Guid? TemplateId { get; set; }
     [Parameter][SupplyParameterFromQuery] public string? Name { get; set; }
     [Parameter][SupplyParameterFromQuery] public Guid? CategoryId { get; set; }

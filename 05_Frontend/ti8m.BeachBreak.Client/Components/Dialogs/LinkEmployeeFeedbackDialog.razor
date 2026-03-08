@@ -5,7 +5,6 @@
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components.Shared
 @inject DialogService DialogService
-@inject NotificationService NotificationService
 @inject EmployeeFeedbackApiService FeedbackApiService
 @inherits CategoryOptimizedTranslatableComponent
 
@@ -112,6 +111,20 @@
 @code {
     [Parameter] public Guid AssignmentId { get; set; }
     [Parameter] public Guid QuestionId { get; set; }
+
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Dialogs,
+            TranslationCategories.Buttons,
+            TranslationCategories.Messages,
+            TranslationCategories.Sections,
+            TranslationCategories.Labels,
+            TranslationCategories.Columns,
+            TranslationCategories.Notifications
+        };
+    }
 
     private RadzenDataGrid<LinkedEmployeeFeedbackDto>? feedbackGrid;
     private bool isLoading = true;

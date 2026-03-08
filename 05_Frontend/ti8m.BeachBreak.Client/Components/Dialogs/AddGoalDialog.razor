@@ -48,6 +48,19 @@
     [Parameter] public DateTime InitialTimeframeTo { get; set; } = DateTime.Today.AddMonths(6);
     [Parameter] public decimal InitialWeighting { get; set; } = 0;
 
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Dialogs,
+            TranslationCategories.Buttons,
+            TranslationCategories.Labels,
+            TranslationCategories.Validation,
+            TranslationCategories.Placeholders,
+            TranslationCategories.Forms
+        };
+    }
+
     private string objectiveDescription = "";
     private string measurementMetric = "";
     private DateTime? timeframeFrom = DateTime.Today;
