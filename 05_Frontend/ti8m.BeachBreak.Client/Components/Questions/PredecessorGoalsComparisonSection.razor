@@ -207,7 +207,9 @@
         var ratedByRole = rating.RatedByRole.ToString();
 
         // Check if current user can edit this rating
+        // Once in InReview or later, both columns are frozen for comparison — assessments were already submitted
         bool canEdit = !IsReadOnly &&
+                      !IsReviewOrPostReviewState() &&
                       ((perspective == "Employee" && CurrentUserRole == ApplicationRole.Employee) ||
                        (perspective == "Manager" && IsManagerRole(CurrentUserRole)));
 
@@ -396,7 +398,6 @@
 <style>
 
 .predecessor-goals-section .manager-assessment {
-    border-left: 3px solid var(--rz-success);
 }
 
 .predecessor-goal-group {

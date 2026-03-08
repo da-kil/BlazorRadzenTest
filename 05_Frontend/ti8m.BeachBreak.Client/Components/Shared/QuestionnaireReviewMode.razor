@@ -14,7 +14,6 @@
 @inject IQuestionnaireTemplateService TemplateService
 @inject IQuestionnaireResponseService ResponseService
 @inject IQuestionnaireAssignmentService AssignmentService
-@inject NotificationService NotificationService
 @inject DialogService DialogService
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IAuthService AuthService
@@ -25,32 +24,32 @@
 {
     <div class="text-center p-5">
         <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Class="mb-3" />
-        <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">Loading review data...</RadzenText>
+        <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">@T("messages.loading-review-data")</RadzenText>
     </div>
 }
 else if (template == null || response == null)
 {
     <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat">
-        <RadzenText TextStyle="TextStyle.Body1">Unable to load questionnaire data for review.</RadzenText>
+        <RadzenText TextStyle="TextStyle.Body1">@T("messages.unable-to-load-review-data")</RadzenText>
     </RadzenAlert>
 }
 else
 {
     <PageLayout Type="LayoutType.Immersive"
-                          Title="@($"Review Meeting: {template.GetLocalizedNameWithFallback(CurrentLanguage)}")"
+                          Title="@($"{T("pages.review-meeting")}: {template.GetLocalizedNameWithFallback(CurrentLanguage)}")"
                         Description="@template.GetLocalizedDescriptionWithFallback(CurrentLanguage)"
                         ShowDefaultFooter="true">
         <HeaderContent>
             <div class="questionnaire-info-banner">
                 <RadzenIcon Icon="info" />
                 <div>
-                    <strong>Reviewing Employee:</strong> @Assignment.EmployeeName &nbsp;|&nbsp;
-                    As the manager, you can view and edit all answers during this review meeting. All changes are tracked.
+                    <strong>@T("labels.reviewing-employee"):</strong> @Assignment.EmployeeName &nbsp;|&nbsp;
+                    @T("messages.review-mode-manager-info")
                 </div>
             </div>
         </HeaderContent>
         <DefaultFooterContent>
-            <RadzenButton Text="Previous"
+            <RadzenButton Text="@T("buttons.previous")"
                           ButtonStyle="ButtonStyle.Light"
                           Icon="arrow_back"
                           Click="@PreviousSection"
@@ -59,14 +58,14 @@ else
             <div class="navigation-actions d-flex gap-2">
                 @if (currentSectionIndex < template.Sections.Count - 1)
                 {
-                    <RadzenButton Text="Next"
+                    <RadzenButton Text="@T("buttons.next")"
                                   ButtonStyle="ButtonStyle.Primary"
                                   Icon="arrow_forward"
                                   Click="@NextSection" />
                 }
                 else
                 {
-                    <RadzenButton Text="Complete Review"
+                    <RadzenButton Text="@T("buttons.complete-review")"
                                   ButtonStyle="ButtonStyle.Success"
                                   Icon="arrow_forward"
                                   Click="@NavigateToReviewCompletion" />
@@ -78,7 +77,7 @@ else
             <!-- Section Counter - Matches DynamicQuestionnaire -->
             <div class="section-counter mb-4">
                 <RadzenText TextStyle="TextStyle.Body2" Class="text-muted text-end">
-                    Section @(currentSectionIndex + 1) of @template.Sections.Count
+                    @T("sections.section-counter") @(currentSectionIndex + 1) of @template.Sections.Count
                 </RadzenText>
             </div>
 
@@ -144,7 +143,7 @@ else
                                                 <div class="answer-header">
                                                     <span class="answer-label">
                                                         <RadzenIcon Icon="person" Style="font-size: 1rem;" />
-                                                        Employee's Answer
+                                                        @T("labels.employee-answer")
                                                     </span>
                                                 </div>
                                                 <div class="answer-content">
@@ -163,13 +162,13 @@ else
                                                     </div>
                                                 </div>
                                                 <div class="answer-actions">
-                                                    <RadzenButton Text="Copy to Manager →"
+                                                    <RadzenButton Text="@T("buttons.copy-to-manager")"
                                                                   ButtonStyle="ButtonStyle.Light"
                                                                   Icon="content_copy"
                                                                   Size="ButtonSize.Small"
                                                                   Click="@(() => CopyAnswer(currentSection, CompletionRole.Employee, CompletionRole.Manager))"
                                                                   Class="copy-button" />
-                                                    <RadzenButton Text="Edit"
+                                                    <RadzenButton Text="@T("buttons.edit")"
                                                                   ButtonStyle="ButtonStyle.Primary"
                                                                   Icon="edit"
                                                                   Size="ButtonSize.Small"
@@ -182,7 +181,7 @@ else
                                                 <div class="answer-header">
                                                     <span class="answer-label">
                                                         <RadzenIcon Icon="supervisor_account" Style="font-size: 1rem;" />
-                                                        Manager's Answer
+                                                        @T("labels.manager-answer")
                                                     </span>
                                                 </div>
                                                 <div class="answer-content">
@@ -201,13 +200,13 @@ else
                                                     </div>
                                                 </div>
                                                 <div class="answer-actions">
-                                                    <RadzenButton Text="← Copy to Employee"
+                                                    <RadzenButton Text="@T("buttons.copy-to-employee")"
                                                                   ButtonStyle="ButtonStyle.Light"
                                                                   Icon="content_copy"
                                                                   Size="ButtonSize.Small"
                                                                   Click="@(() => CopyAnswer(currentSection, CompletionRole.Manager, CompletionRole.Employee))"
                                                                   Class="copy-button" />
-                                                    <RadzenButton Text="Edit"
+                                                    <RadzenButton Text="@T("buttons.edit")"
                                                                   ButtonStyle="ButtonStyle.Primary"
                                                                   Icon="edit"
                                                                   Size="ButtonSize.Small"
@@ -258,7 +257,7 @@ else
                                         <div class="answer-header">
                                             <span class="answer-label">
                                                 <RadzenIcon Icon="@GetRoleIcon(currentSection.CompletionRole)" Style="font-size: 1rem;" />
-                                                @currentSection.CompletionRole's Answer
+                                                @(currentSection.CompletionRole == CompletionRole.Employee ? T("labels.employee-answer") : T("labels.manager-answer"))
                                             </span>
                                         </div>
                                         <div class="answer-content">
@@ -277,7 +276,7 @@ else
                                             </div>
                                         </div>
                                         <div class="answer-actions">
-                                            <RadzenButton Text="Edit Answer"
+                                            <RadzenButton Text="@T("buttons.edit-answer")"
                                                           ButtonStyle="ButtonStyle.Primary"
                                                           Icon="edit"
                                                           Size="ButtonSize.Medium"
@@ -320,14 +319,17 @@ else
             TranslationCategories.Messages,
             TranslationCategories.Sections,
             TranslationCategories.WorkflowStates,
-            TranslationCategories.Roles
+            TranslationCategories.Roles,
+            TranslationCategories.Pages,
+            TranslationCategories.Dialogs,
+            TranslationCategories.Notifications
         };
     }
 
     private QuestionnaireTemplate? template;
     private QuestionnaireResponse? response;
     private int currentSectionIndex = 0;
-    private bool isLoading = false; // No loading needed since data is passed as parameters
+    private bool isLoading = true;
     private string currentManagerName = string.Empty;
 
     // Token to trigger goal component refresh after assignment response reload
@@ -360,12 +362,12 @@ else
 
             if (template == null || response == null)
             {
-                NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to load review data");
+                NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), T("messages.failed-to-load-review-data"));
             }
         }
         catch (Exception ex)
         {
-            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load review data: {ex.Message}");
+            NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), string.Format(T("messages.failed-to-load-review-data-details"), ex.Message));
         }
         finally
         {
@@ -471,7 +473,7 @@ else
         }
 
         var result = await DialogService.OpenAsync<EditAnswerDialog>(
-            $"Edit Answer: {section.GetLocalizedTitleWithFallback(CurrentLanguage)}",
+            $"{T("buttons.edit-answer")}: {section.GetLocalizedTitleWithFallback(CurrentLanguage)}",
             parameters,
             new DialogOptions { Width = "900px", Height = "600px", Resizable = true, Draggable = true }
         );
@@ -490,7 +492,7 @@ else
             // Validate ResponseData before serialization
             if (questionResponse.ResponseData == null)
             {
-                NotificationService.Notify(NotificationSeverity.Error, "Error", "No response data to save");
+                NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), T("messages.failed-to-save-answer"));
                 return;
             }
 
@@ -515,7 +517,7 @@ else
 
             if (success)
             {
-                NotificationService.Notify(NotificationSeverity.Success, "Saved", "Answer updated successfully");
+                NotificationService.Notify(NotificationSeverity.Success, T("notifications.saved"), T("messages.answer-updated-successfully"));
 
                 // Reload response to show updated answer
                 await LoadReviewData();
@@ -527,12 +529,12 @@ else
             }
             else
             {
-                NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to save answer");
+                NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), T("messages.failed-to-save-answer"));
             }
         }
         catch (Exception ex)
         {
-            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to save answer: {ex.Message}");
+            NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), string.Format(T("messages.failed-to-save-answer-details"), ex.Message));
         }
     }
 
@@ -541,14 +543,14 @@ else
         var sourceAnswer = GetAnswer(section.Id, fromRole);
         if (sourceAnswer == null)
         {
-            NotificationService.Notify(NotificationSeverity.Warning, "Nothing to Copy", "Source answer is empty");
+            NotificationService.Notify(NotificationSeverity.Warning, T("notifications.nothing-to-copy"), T("messages.source-answer-is-empty"));
             return;
         }
 
         var confirmed = await DialogService.Confirm(
-            $"Copy answer from {fromRole} to {toRole}?",
-            "Confirm Copy",
-            new ConfirmOptions { OkButtonText = "Yes, Copy", CancelButtonText = "Cancel" }
+            string.Format(T("messages.confirm-copy-answer"), fromRole, toRole),
+            T("dialogs.confirm-copy"),
+            new ConfirmOptions { OkButtonText = T("buttons.yes-copy"), CancelButtonText = T("buttons.cancel") }
         );
 
         if (confirmed == true)
@@ -659,8 +661,8 @@ else
         catch (Exception ex)
         {
             // Follow principle of least privilege - default to Employee even in error cases
-            NotificationService.Notify(NotificationSeverity.Error, "Access Error",
-                $"Unable to validate manager access for review mode: {ex.Message}");
+            NotificationService.Notify(NotificationSeverity.Error, T("notifications.access-error"),
+                string.Format(T("messages.unable-validate-manager-access"), ex.Message));
 
             // Default to Employee for consistency and security (least privilege principle)
             // The HasManagerPrivileges validation will catch unauthorized access

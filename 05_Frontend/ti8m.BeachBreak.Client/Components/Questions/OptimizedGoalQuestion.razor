@@ -7,7 +7,6 @@
 @using ti8m.BeachBreak.Client.Extensions
 @inject GoalService GoalService
 @inject IGoalApiService GoalApiService
-@inject NotificationService NotificationService
 @inject IAuthService AuthService
 @inherits CategoryOptimizedTranslatableComponent
 
@@ -154,7 +153,6 @@ else
     {
         // Only load basic state needed by parent component
         hasPredecessor = GoalService.GetPredecessorAssignmentId(Response).HasValue;
-
     }
 
     protected override bool HasStateChanged()
