@@ -175,6 +175,7 @@
         TranslationCategories.Validation,
         TranslationCategories.Messages,
         TranslationCategories.ProcessTypes,
+        TranslationCategories.Dialogs,
     };
 
     private string templateName = "";
@@ -182,18 +183,7 @@
     private QuestionnaireProcessType selectedProcessType = QuestionnaireProcessType.PerformanceReview;
     private bool showValidation = false;
 
-    protected override string[] GetRequiredTranslationCategories()
-    {
-        return new[]
-        {
-            TranslationCategories.Labels,
-            TranslationCategories.Placeholders,
-            TranslationCategories.Buttons,
-            TranslationCategories.Messages,
-            TranslationCategories.ProcessTypes,
-            TranslationCategories.Dialogs
-        };
-    }
+
 
     private void Cancel()
     {

@@ -49,6 +49,7 @@
                         </div>
                         <RadzenToggleButton @bind-Value="@showArchivedTemplates"
                                            Text="@T("filters.show-archived")"
+                                           ButtonStyle="ButtonStyle.Light"
                                            Change="@FilterTemplates" />
                     </div>
 
@@ -135,15 +136,15 @@
                                         <AsyncButton ButtonStyle="ButtonStyle.Light" ProcessingText="@T("notifications.cloning")" Icon="content_copy" Size="ButtonSize.Small" Title="@T("buttons.clone")" Click="@(() => CloneTemplate(template))" />
                                         @if (template.Status == TemplateStatus.Draft && CanEditTemplate(template))
                                         {
-                                            <AsyncButton ButtonStyle="ButtonStyle.Success" ProcessingText="@T("buttons.publishing")" Icon="publish" Size="ButtonSize.Small" Title="@T("buttons.publish")" Click="@(() => PublishTemplate(template))" />
+                                            <AsyncButton ButtonStyle="ButtonStyle.Light" ProcessingText="@T("buttons.publishing")" Icon="publish" Size="ButtonSize.Small" Title="@T("buttons.publish")" Click="@(() => PublishTemplate(template))" />
                                         }
                                         @if (CanEditTemplate(template))
                                         {
-                                            <AsyncButton ButtonStyle="@GetToggleButtonStyle(template.Status)" Icon="@GetToggleButtonIcon(template.Status)" Size="ButtonSize.Small" Title="@GetToggleButtonTitle(template.Status)" Click="@(() => ToggleTemplateStatus(template))" />
+                                            <AsyncButton ButtonStyle="ButtonStyle.Light" Icon="@GetToggleButtonIcon(template.Status)" Size="ButtonSize.Small" Title="@GetToggleButtonTitle(template.Status)" Click="@(() => ToggleTemplateStatus(template))" />
                                         }
                                         @if (template.Status != TemplateStatus.Archived && CanEditTemplate(template))
                                         {
-                                            <AsyncButton ButtonStyle="ButtonStyle.Danger" ProcessingText="@T("buttons.deleting")" Icon="delete" Size="ButtonSize.Small" Title="@T("buttons.delete")" Click="@(() => DeleteTemplate(template))" />
+                                            <AsyncButton ButtonStyle="ButtonStyle.Light" ProcessingText="@T("buttons.deleting")" Icon="delete" Size="ButtonSize.Small" Title="@T("buttons.delete")" Click="@(() => DeleteTemplate(template))" />
                                         }
                                     </div>
                                 </Template>
@@ -459,12 +460,6 @@
         TemplateStatus.Draft => BadgeStyle.Warning,
         TemplateStatus.Archived => BadgeStyle.Danger,
         _ => BadgeStyle.Secondary
-    };
-
-    private ButtonStyle GetToggleButtonStyle(TemplateStatus status) => status switch
-    {
-        TemplateStatus.Archived => ButtonStyle.Success,
-        _ => ButtonStyle.Warning
     };
 
     private string GetToggleButtonIcon(TemplateStatus status) => status switch

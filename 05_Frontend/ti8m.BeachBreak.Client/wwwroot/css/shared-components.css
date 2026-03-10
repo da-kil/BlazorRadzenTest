@@ -790,3 +790,11 @@
 .no-shadow {
     box-shadow: none !important;
 }
+
+/* Template action buttons (used in management list pages) */
+.template-actions {
+    display: flex;
+    gap: 0.375rem;
+    justify-content: center;
+    align-items: center;
+}

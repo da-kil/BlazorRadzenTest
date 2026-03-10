@@ -135,17 +135,7 @@
     private bool PeerSelected { get; set; }
     private bool ProjectColleagueSelected { get; set; }
 
-    protected override string[] GetRequiredTranslationCategories()
-    {
-        return new[]
-        {
-            TranslationCategories.Labels,
-            TranslationCategories.Placeholders,
-            TranslationCategories.Sections,
-            TranslationCategories.Messages,
-            TranslationCategories.SourceTypes
-        };
-    }
+
 
     protected override void OnParametersSet()
     {
