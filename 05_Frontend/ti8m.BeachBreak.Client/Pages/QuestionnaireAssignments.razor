@@ -561,10 +561,6 @@
             // Initialize employee filter configuration
             InitializeEmployeeFilterConfiguration();
 
-            NotificationService.Notify(NotificationSeverity.Success,
-                T("notifications.data-loaded"),
-                $"{T("notifications.loaded")} {allEmployees.Count} {T("labels.employees")} ({filteredEmployees.Count} {T("labels.available")}), {allQuestionnaires.Count} {T("labels.questionnaires")} ({filteredQuestionnaires.Count} {T("labels.published")})");
-
             // Force re-render after filter configuration is initialized
             StateHasChanged();
         }
