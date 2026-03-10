@@ -77,7 +77,31 @@ public class QuestionnaireTemplateService : BaseApiService, IQuestionnaireTempla
 
     public async Task<bool> DeleteTemplateAsync(Guid id)
     {
-        return await DeleteAsync(TemplateCommandEndpoint, id);
+        try
+        {
+            var response = await HttpCommandClient.DeleteAsync($"{TemplateCommandEndpoint}/{id}");
+
+            if (response.IsSuccessStatusCode)
+                return true;
+
+            var errorContent = await response.Content.ReadAsStringAsync();
+            string? errorMessage = null;
+
+            try
+            {
+                using var doc = System.Text.Json.JsonDocument.Parse(errorContent);
+                if (doc.RootElement.TryGetProperty("detail", out var detail))
+                    errorMessage = detail.GetString();
+            }
+            catch (System.Text.Json.JsonException) { }
+
+            throw new Exception(errorMessage ?? $"Delete failed with status {(int)response.StatusCode}");
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error deleting template {id}", ex);
+            throw;
+        }
     }
 
     // Template filtering and queries
@@ -168,8 +192,8 @@ public class QuestionnaireTemplateService : BaseApiService, IQuestionnaireTempla
 
             if (response.IsSuccessStatusCode)
             {
-                var result = await response.Content.ReadFromJsonAsync<CloneTemplateResponseDto>();
-                return result?.NewTemplateId;
+                var result = await response.Content.ReadFromJsonAsync<Result<CloneTemplateResponseDto>>();
+                return result?.Payload?.NewTemplateId;
             }
 
             var errorContent = await response.Content.ReadAsStringAsync();

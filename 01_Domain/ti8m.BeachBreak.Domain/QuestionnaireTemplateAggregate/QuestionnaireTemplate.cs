@@ -235,21 +235,11 @@ public partial class QuestionnaireTemplate : AggregateRoot
 
     public async Task DeleteAsync(IQuestionnaireAssignmentService assignmentService, CancellationToken cancellationToken = default)
     {
-        if (await assignmentService.HasActiveAssignmentsAsync(Id, cancellationToken))
-        {
-            var assignmentCount = await assignmentService.GetActiveAssignmentCountAsync(Id, cancellationToken);
+        if (Status != TemplateStatus.Draft && await assignmentService.HasAnyAssignmentsAsync(Id, cancellationToken))
             throw new InvalidOperationException(
-                $"Cannot delete questionnaire template: {assignmentCount} active assignment(s) exist. " +
-                "Complete or cancel these assignments first, or archive the template instead.");
-        }
+                "Cannot delete template: templates with assignments must be in Draft status to be deleted.");
 
         RaiseEvent(new QuestionnaireTemplateDeleted());
-    }
-
-    public bool CanBeDeleted()
-    {
-        // Template can only be deleted if it's not archived (archived templates should stay for audit purposes)
-        return Status != TemplateStatus.Archived;
     }
 
     /// <summary>

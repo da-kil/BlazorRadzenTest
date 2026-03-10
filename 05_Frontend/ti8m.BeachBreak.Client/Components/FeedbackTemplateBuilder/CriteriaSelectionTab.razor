@@ -132,17 +132,14 @@
     [Parameter, EditorRequired] public FeedbackTemplate Template { get; set; } = null!;
     [Parameter, EditorRequired] public FeedbackTemplateBuilderState State { get; set; } = null!;
 
-    protected override string[] GetRequiredTranslationCategories()
-    {
-        return new[]
-        {
-            TranslationCategories.Sections,
-            TranslationCategories.Messages,
-            TranslationCategories.Labels,
-            TranslationCategories.Buttons,
-            TranslationCategories.Placeholders
-        };
-    }
+    protected override string[] GetRequiredTranslationCategories() =>
+    [
+        TranslationCategories.Sections,
+        TranslationCategories.Messages,
+        TranslationCategories.Labels,
+        TranslationCategories.Placeholders,
+        TranslationCategories.Buttons
+    ];
 
     private void AddCriterion()
     {

@@ -34,13 +34,7 @@
 	[Parameter] public int CurrentStep { get; set; } = 1;
 	[Parameter] public EventCallback<int> OnStepClick { get; set; }
 
-	protected override string[] GetRequiredTranslationCategories()
-	{
-		return new[]
-		{
-			TranslationCategories.Steps
-		};
-	}
+	protected override string[] GetRequiredTranslationCategories() => [TranslationCategories.Steps];
 
 	private async Task HandleStepClick(int step)
 	{

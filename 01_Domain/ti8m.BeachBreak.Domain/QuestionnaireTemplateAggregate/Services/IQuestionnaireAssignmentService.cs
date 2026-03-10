@@ -4,4 +4,5 @@ public interface IQuestionnaireAssignmentService
 {
     Task<bool> HasActiveAssignmentsAsync(Guid templateId, CancellationToken cancellationToken = default);
     Task<int> GetActiveAssignmentCountAsync(Guid templateId, CancellationToken cancellationToken = default);
+    Task<bool> HasAnyAssignmentsAsync(Guid templateId, CancellationToken cancellationToken = default);
 }

@@ -7264,5 +7264,54 @@
         "english": "Access Error",
         "category": "notifications",
         "createdDate": "2026-03-08T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "validation.category-required",
+        "german": "Kategorie ist erforderlich",
+        "english": "Category is required",
+        "category": "validation",
+        "createdDate": "2026-03-09T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.includes",
+        "german": "Enthält",
+        "english": "Includes",
+        "category": "labels",
+        "createdDate": "2026-03-09T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.restrictions",
+        "german": "Einschränkungen",
+        "english": "Restrictions",
+        "category": "labels",
+        "createdDate": "2026-03-09T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.process-type-description",
+        "german": "Wählen Sie den Prozesstyp, der den Workflow und die verfügbaren Fragetypen bestimmt",
+        "english": "Select the process type that determines the workflow and available question types",
+        "category": "messages",
+        "createdDate": "2026-03-09T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "process-types.allows-all-question-types",
+        "german": "Alle Fragetypen erlaubt (Text, Bewertung, Ziele)",
+        "english": "All question types allowed (text, assessment, goals)",
+        "category": "process-types",
+        "createdDate": "2026-03-09T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "process-types.employee-only-no-goals-feedback",
+        "german": "Nur Mitarbeiter, keine Ziele oder Manager-Feedback",
+        "english": "Employee only, no goals or manager feedback",
+        "category": "process-types",
+        "createdDate": "2026-03-09T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "dialogs.create-questionnaire-template",
+        "german": "Fragebogen-Vorlage erstellen",
+        "english": "Create Questionnaire Template",
+        "category": "dialogs",
+        "createdDate": "2026-03-09T12:00:00.0000000+01:00"
     }
 ]

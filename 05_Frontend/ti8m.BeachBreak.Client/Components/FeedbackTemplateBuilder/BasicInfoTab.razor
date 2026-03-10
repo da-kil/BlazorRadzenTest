@@ -121,6 +121,15 @@
 @code {
     [Parameter, EditorRequired] public FeedbackTemplate Template { get; set; } = null!;
 
+    protected override string[] GetRequiredTranslationCategories() =>
+    [
+        TranslationCategories.Labels,
+        TranslationCategories.Placeholders,
+        TranslationCategories.Sections,
+        TranslationCategories.Messages,
+        TranslationCategories.SourceTypes
+    ];
+
     // Checkbox binding properties
     private bool CustomerSelected { get; set; }
     private bool PeerSelected { get; set; }

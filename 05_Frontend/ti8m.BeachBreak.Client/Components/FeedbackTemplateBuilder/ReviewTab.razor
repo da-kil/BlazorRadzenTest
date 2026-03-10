@@ -185,16 +185,13 @@
 @code {
     [Parameter, EditorRequired] public FeedbackTemplate Template { get; set; } = null!;
 
-    protected override string[] GetRequiredTranslationCategories()
-    {
-        return new[]
-        {
-            TranslationCategories.Sections,
-            TranslationCategories.Labels,
-            TranslationCategories.Messages,
-            TranslationCategories.SourceTypes
-        };
-    }
+    protected override string[] GetRequiredTranslationCategories() =>
+    [
+        TranslationCategories.Sections,
+        TranslationCategories.Labels,
+        TranslationCategories.Messages,
+        TranslationCategories.SourceTypes
+    ];
 
     private string GetSourceTypeName(FeedbackSourceType sourceType)
     {

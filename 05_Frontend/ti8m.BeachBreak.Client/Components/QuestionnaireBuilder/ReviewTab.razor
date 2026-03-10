@@ -106,16 +106,13 @@
     [Parameter, EditorRequired] public Dictionary<QuestionType, string> QuestionTypeLabels { get; set; } = null!;
     [Parameter] public List<Category> Categories { get; set; } = new();
 
-    protected override string[] GetRequiredTranslationCategories()
-    {
-        return new[]
-        {
-            TranslationCategories.Labels,
-            TranslationCategories.Messages,
-            TranslationCategories.Sections,
-            TranslationCategories.Templates
-        };
-    }
+    protected override string[] GetRequiredTranslationCategories() =>
+    [
+        TranslationCategories.Labels,
+        TranslationCategories.Messages,
+        TranslationCategories.Sections,
+        TranslationCategories.Templates
+    ];
 
     private string GetCategoryName()
     {

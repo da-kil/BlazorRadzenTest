@@ -31,15 +31,12 @@
 @code {
     [Parameter, EditorRequired] public QuestionSection Section { get; set; } = default!;
 
-    protected override string[] GetRequiredTranslationCategories()
-    {
-        return new[]
-        {
-            TranslationCategories.QuestionTypes,
-            TranslationCategories.Messages,
-            TranslationCategories.Feedback
-        };
-    }
+    protected override string[] GetRequiredTranslationCategories() =>
+    [
+        TranslationCategories.QuestionTypes,
+        TranslationCategories.Messages,
+        TranslationCategories.Feedback
+    ];
 }
 
 <style>

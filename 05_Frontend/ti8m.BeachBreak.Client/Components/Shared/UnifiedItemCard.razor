@@ -108,6 +108,11 @@
     [Parameter] public EventCallback<string> OnTitleGermanChanged { get; set; }
     [Parameter] public EventCallback<string> OnDescriptionEnglishChanged { get; set; }
     [Parameter] public EventCallback<string> OnDescriptionGermanChanged { get; set; }
+
+    protected override string[] GetRequiredTranslationCategories() =>
+    [
+        TranslationCategories.Labels
+    ];
 }
 
 <style>

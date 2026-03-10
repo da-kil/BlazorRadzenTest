@@ -148,7 +148,12 @@ public class QuestionnaireTemplateCommandHandler :
                 return Result.Fail($"Questionnaire template with ID {command.Id} not found", StatusCodes.Status404NotFound);
             }
 
-            // Use the aggregate's business logic to determine if deletion is allowed
+            if (questionnaireTemplate.Status != TemplateStatus.Draft && await assignmentService.HasAnyAssignmentsAsync(command.Id, cancellationToken))
+            {
+                logger.LogDeleteQuestionnaireTemplateFailed(command.Id, "Template has assignments and is not in Draft status", new InvalidOperationException());
+                return Result.Fail("Cannot delete template: templates with assignments must be in Draft status to be deleted.", StatusCodes.Status400BadRequest);
+            }
+
             await questionnaireTemplate.DeleteAsync(assignmentService, cancellationToken);
             await repository.StoreAsync(questionnaireTemplate, cancellationToken);
 

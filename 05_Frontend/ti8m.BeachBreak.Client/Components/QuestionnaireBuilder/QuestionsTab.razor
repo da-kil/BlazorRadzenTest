@@ -16,42 +16,42 @@
                 @if (IsQuestionTypeAllowed(QuestionType.Assessment))
                 {
                     <AsyncButton Text="@T("buttons.assessment")"
-                                ButtonStyle="ButtonStyle.Primary"
-                                Icon="self_improvement"
-                                Size="ButtonSize.Small"
-                                Click="@(() => OnAddSectionWithTypeInternal(QuestionType.Assessment))"
-                                Title="@T("tooltips.add-assessment-section")"
-                                Disabled="@(!Template.IsAvailableForEditing)" />
+                                 ButtonStyle="ButtonStyle.Primary"
+                                 Icon="self_improvement"
+                                 Size="ButtonSize.Small"
+                                 Click="@(() => OnAddSectionWithTypeInternal(QuestionType.Assessment))"
+                                 Title="@T("tooltips.add-assessment-section")"
+                                 Disabled="@(!Template.IsAvailableForEditing)" />
                 }
                 @if (IsQuestionTypeAllowed(QuestionType.Goal))
                 {
                     <AsyncButton Text="@T("buttons.goal-achievement")"
-                                ButtonStyle="ButtonStyle.Success"
-                                Icon="track_changes"
-                                Size="ButtonSize.Small"
-                                Click="@(() => OnAddSectionWithTypeInternal(QuestionType.Goal))"
-                                Title="@T("tooltips.add-goal-section")"
-                                Disabled="@(!Template.IsAvailableForEditing)" />
+                                 ButtonStyle="ButtonStyle.Success"
+                                 Icon="track_changes"
+                                 Size="ButtonSize.Small"
+                                 Click="@(() => OnAddSectionWithTypeInternal(QuestionType.Goal))"
+                                 Title="@T("tooltips.add-goal-section")"
+                                 Disabled="@(!Template.IsAvailableForEditing)" />
                 }
                 @if (IsQuestionTypeAllowed(QuestionType.TextQuestion))
                 {
                     <AsyncButton Text="@T("buttons.text-question")"
-                                ButtonStyle="ButtonStyle.Secondary"
-                                Icon="psychology"
-                                Size="ButtonSize.Small"
-                                Click="@(() => OnAddSectionWithTypeInternal(QuestionType.TextQuestion))"
-                                Title="@T("tooltips.add-text-question-section")"
-                                Disabled="@(!Template.IsAvailableForEditing)" />
+                                 ButtonStyle="ButtonStyle.Secondary"
+                                 Icon="psychology"
+                                 Size="ButtonSize.Small"
+                                 Click="@(() => OnAddSectionWithTypeInternal(QuestionType.TextQuestion))"
+                                 Title="@T("tooltips.add-text-question-section")"
+                                 Disabled="@(!Template.IsAvailableForEditing)" />
                 }
                 @if (IsQuestionTypeAllowed(QuestionType.EmployeeFeedback))
                 {
                     <AsyncButton Text="@T("question-types.employee-feedback")"
-                                ButtonStyle="ButtonStyle.Info"
-                                Icon="feedback"
-                                Size="ButtonSize.Small"
-                                Click="@(() => OnAddSectionWithTypeInternal(QuestionType.EmployeeFeedback))"
-                                Title="@($"{T("buttons.add")} {T("question-types.employee-feedback")}")"
-                                Disabled="@(!Template.IsAvailableForEditing)" />
+                                 ButtonStyle="ButtonStyle.Info"
+                                 Icon="feedback"
+                                 Size="ButtonSize.Small"
+                                 Click="@(() => OnAddSectionWithTypeInternal(QuestionType.EmployeeFeedback))"
+                                 Title="@($"{T("buttons.add")} {T("question-types.employee-feedback")}")"
+                                 Disabled="@(!Template.IsAvailableForEditing)" />
                 }
             </div>
         </div>
@@ -91,20 +91,20 @@
                 var currentSectionIndex = sectionIndex;
 
                 <SectionCard Section="@templateSection"
-                           Template="@Template"
-                           CanMoveUp="@(currentSectionIndex > 0)"
-                           CanMoveDown="@(currentSectionIndex < Template.Sections.Count - 1)"
-                           OnMoveUp="@(() => OnMoveSectionUpInternal(currentSectionIndex))"
-                           OnMoveDown="@(() => OnMoveSectionDownInternal(currentSectionIndex))"
-                           OnDelete="@(() => OnRemoveSectionInternal(currentSectionIndex))"
-                           OnAddItemDirectly="@(() => OnAddItemDirectlyInternal(currentSectionIndex))"
-                           OnMoveQuestionUp="@((questionIndex) => OnMoveQuestionUpInternal(currentSectionIndex, questionIndex))"
-                           OnMoveQuestionDown="@((questionIndex) => OnMoveQuestionDownInternal(currentSectionIndex, questionIndex))"
-                           OnDeleteQuestion="@((questionIndex) => OnRemoveQuestionInternal(currentSectionIndex, questionIndex))"
-                           OnTitleEnglishChanged="@((value) => OnSectionTitleEnglishChanged(currentSectionIndex, value))"
-                           OnTitleGermanChanged="@((value) => OnSectionTitleGermanChanged(currentSectionIndex, value))"
-                           OnDescriptionEnglishChanged="@((value) => OnSectionDescriptionEnglishChanged(currentSectionIndex, value))"
-                           OnDescriptionGermanChanged="@((value) => OnSectionDescriptionGermanChanged(currentSectionIndex, value))" />
+                             Template="@Template"
+                             CanMoveUp="@(currentSectionIndex > 0)"
+                             CanMoveDown="@(currentSectionIndex < Template.Sections.Count - 1)"
+                             OnMoveUp="@(() => OnMoveSectionUpInternal(currentSectionIndex))"
+                             OnMoveDown="@(() => OnMoveSectionDownInternal(currentSectionIndex))"
+                             OnDelete="@(() => OnRemoveSectionInternal(currentSectionIndex))"
+                             OnAddItemDirectly="@(() => OnAddItemDirectlyInternal(currentSectionIndex))"
+                             OnMoveQuestionUp="@((questionIndex) => OnMoveQuestionUpInternal(currentSectionIndex, questionIndex))"
+                             OnMoveQuestionDown="@((questionIndex) => OnMoveQuestionDownInternal(currentSectionIndex, questionIndex))"
+                             OnDeleteQuestion="@((questionIndex) => OnRemoveQuestionInternal(currentSectionIndex, questionIndex))"
+                             OnTitleEnglishChanged="@((value) => OnSectionTitleEnglishChanged(currentSectionIndex, value))"
+                             OnTitleGermanChanged="@((value) => OnSectionTitleGermanChanged(currentSectionIndex, value))"
+                             OnDescriptionEnglishChanged="@((value) => OnSectionDescriptionEnglishChanged(currentSectionIndex, value))"
+                             OnDescriptionGermanChanged="@((value) => OnSectionDescriptionGermanChanged(currentSectionIndex, value))" />
             }
         </div>
     }
@@ -113,18 +113,6 @@
 @code {
     [Parameter, EditorRequired] public QuestionnaireTemplate Template { get; set; } = null!;
 
-    protected override string[] GetRequiredTranslationCategories()
-    {
-        return new[]
-        {
-            TranslationCategories.Buttons,
-            TranslationCategories.Labels,
-            TranslationCategories.Messages,
-            TranslationCategories.Tooltips,
-            TranslationCategories.QuestionTypes,
-            TranslationCategories.Sections
-        };
-    }
 
     [Parameter] public EventCallback<QuestionType> OnAddSectionWithType { get; set; }
     [Parameter] public EventCallback<int> OnMoveSectionUp { get; set; }
@@ -191,4 +179,13 @@
         return Template.ProcessType.IsQuestionTypeAllowed(questionType);
     }
 
+    protected override string[] GetRequiredTranslationCategories() =>
+    [
+        TranslationCategories.Messages,
+        TranslationCategories.Buttons,
+        TranslationCategories.Tooltips,
+        TranslationCategories.QuestionTypes,
+        TranslationCategories.Labels,
+        TranslationCategories.Sections
+    ];
 }

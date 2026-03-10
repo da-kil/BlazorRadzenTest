@@ -222,6 +222,21 @@
     private List<Category> categories = new();
     private Guid? lastLoadedTemplateId = null;
 
+    protected override string[] GetRequiredTranslationCategories() => new[]
+    {
+        TranslationCategories.Pages,
+        TranslationCategories.Labels,
+        TranslationCategories.Messages,
+        TranslationCategories.Buttons,
+        TranslationCategories.Steps,
+        TranslationCategories.Dialogs,
+        TranslationCategories.Notifications,
+        TranslationCategories.Questions,
+        TranslationCategories.QuestionTypes,
+        TranslationCategories.Tooltips,
+        TranslationCategories.Status,
+    };
+
     protected override Task OnInitializedAsync()
     {
         return base.OnInitializedAsync();

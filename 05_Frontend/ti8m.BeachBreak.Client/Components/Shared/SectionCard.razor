@@ -221,18 +221,16 @@
     [Parameter, EditorRequired] public bool CanMoveUp { get; set; }
     [Parameter, EditorRequired] public bool CanMoveDown { get; set; }
 
-    protected override string[] GetRequiredTranslationCategories()
-    {
-        return new[]
-        {
-            TranslationCategories.Labels,
-            TranslationCategories.Buttons,
-            TranslationCategories.Placeholders,
-            TranslationCategories.Sections,
-            TranslationCategories.QuestionTypes,
-            TranslationCategories.Roles
-        };
-    }
+    protected override string[] GetRequiredTranslationCategories() =>
+    [
+        TranslationCategories.Labels,
+        TranslationCategories.Buttons,
+        TranslationCategories.Placeholders,
+        TranslationCategories.Sections,
+        TranslationCategories.QuestionTypes,
+        TranslationCategories.Roles
+    ];
+
 
     [Parameter] public EventCallback OnMoveUp { get; set; }
     [Parameter] public EventCallback OnMoveDown { get; set; }
