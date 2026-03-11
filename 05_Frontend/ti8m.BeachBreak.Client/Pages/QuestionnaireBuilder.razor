@@ -49,25 +49,6 @@
                         @T("messages.saving")
                     </RadzenText>
                 }
-
-                @{
-                    var currentStatus = State.IsEditMode ? State.Template.Status : TemplateStatus.Draft;
-                }
-                @switch (currentStatus)
-                {
-                    case TemplateStatus.Draft:
-                        <RadzenButton Text="@(isSaving ? T("messages.saving") : T("buttons.save-draft"))" ButtonStyle="ButtonStyle.Light" Icon="save" Click="@SaveQuestionnaire" Disabled="@isSaving" Size="ButtonSize.Medium" />
-                        <RadzenButton Text="@T("buttons.publish")" ButtonStyle="ButtonStyle.Primary" Icon="publish" Click="@PublishQuestionnaire" Disabled="@isSaving" Size="ButtonSize.Medium" />
-                        break;
-                    case TemplateStatus.Published:
-                        <RadzenButton Text="@T("buttons.clone")" ButtonStyle="ButtonStyle.Light" Icon="content_copy" Click="@HandleClone" Size="ButtonSize.Medium" />
-                        <RadzenButton Text="@T("buttons.unpublish")" ButtonStyle="ButtonStyle.Light" Icon="unpublished" Click="@UnpublishQuestionnaire" Size="ButtonSize.Medium" />
-                        break;
-                    case TemplateStatus.Archived:
-                        <RadzenButton Text="@T("buttons.clone")" ButtonStyle="ButtonStyle.Light" Icon="content_copy" Click="@HandleClone" Size="ButtonSize.Medium" />
-                        <RadzenButton Text="@T("buttons.restore")" ButtonStyle="ButtonStyle.Primary" Icon="restore" Click="@RestoreQuestionnaire" Size="ButtonSize.Medium" />
-                        break;
-                }
             </HeaderActions>
             <ChildContent>
 
@@ -128,8 +109,8 @@
                                     @switch (stepNavStatus)
                                     {
                                         case TemplateStatus.Draft:
-                                            <RadzenButton Text="@(isSaving ? T("messages.saving") : T("buttons.save-draft"))" ButtonStyle="ButtonStyle.Secondary" Icon="save" Click="@SaveQuestionnaire" Disabled="@isSaving" />
-                                            <RadzenButton Text="@T("buttons.publish")" ButtonStyle="ButtonStyle.Success" Icon="publish" Click="@PublishQuestionnaire" Disabled="@isSaving" />
+                                            <RadzenButton Text="@(isSaving ? T("messages.saving") : T("buttons.save-draft"))" ButtonStyle="ButtonStyle.Light" Icon="save" Click="@SaveQuestionnaire" Disabled="@isSaving" />
+                                            <RadzenButton Text="@T("buttons.publish")" ButtonStyle="ButtonStyle.Primary" Icon="publish" Click="@PublishQuestionnaire" Disabled="@isSaving" />
                                             break;
                                         case TemplateStatus.Published:
                                             <RadzenButton Text="@T("buttons.unpublish")" ButtonStyle="ButtonStyle.Warning" Icon="unpublished" Click="@UnpublishQuestionnaire" />
