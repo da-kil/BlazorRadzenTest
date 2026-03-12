@@ -54,7 +54,7 @@ public static class QuestionnairePageConfigurationFactory
                     Id = "refresh",
                     Text = await translationService.GetTextAsync("buttons.refresh", currentLanguage),
                     Icon = "refresh",
-                    ButtonStyle = "ButtonStyle.Light"
+                    ButtonStyle = "Light"
                 }
             },
 
@@ -166,14 +166,14 @@ public static class QuestionnairePageConfigurationFactory
                     Id = "refresh",
                     Text = await translationService.GetTextAsync("buttons.refresh", currentLanguage),
                     Icon = "refresh",
-                    ButtonStyle = "ButtonStyle.Light"
+                    ButtonStyle = "Light"
                 },
                 new()
                 {
                     Id = "export",
                     Text = await translationService.GetTextAsync("buttons.export-report", currentLanguage),
                     Icon = "download",
-                    ButtonStyle = "ButtonStyle.Info"
+                    ButtonStyle = "Light"
                 }
             },
 
@@ -350,21 +350,21 @@ public static class QuestionnairePageConfigurationFactory
                     Id = "refresh",
                     Text = await translationService.GetTextAsync("buttons.refresh", currentLanguage),
                     Icon = "refresh",
-                    ButtonStyle = "ButtonStyle.Light"
+                    ButtonStyle = "Light"
                 },
                 new()
                 {
                     Id = "export",
                     Text = await translationService.GetTextAsync("buttons.export-report", currentLanguage),
                     Icon = "download",
-                    ButtonStyle = "ButtonStyle.Info"
+                    ButtonStyle = "Light"
                 },
                 new()
                 {
                     Id = "analytics",
                     Text = await translationService.GetTextAsync("buttons.analytics-dashboard", currentLanguage),
                     Icon = "analytics",
-                    ButtonStyle = "ButtonStyle.Primary"
+                    ButtonStyle = "Light"
                 }
             },
 
