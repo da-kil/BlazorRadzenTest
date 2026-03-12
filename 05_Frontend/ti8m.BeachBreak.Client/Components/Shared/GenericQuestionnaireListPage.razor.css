@@ -1,3 +1,10 @@
+/* Filter + Tabs grouped section - visually separates from stat cards above */
+.tab-section {
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--rz-border-color);
+}
+
 /* Employee Status Table Wrapper Styles */
 
 .employee-status-table-wrapper {

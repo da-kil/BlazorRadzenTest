@@ -44,27 +44,28 @@
                 <!-- Stats Cards -->
                 <StatsCardGrid Stats="@GetStatsCards()" Columns="@Configuration.StatsConfig.Columns" UseCards="false" />
 
-                <!-- Filter Bar Component -->
-                @if (!HideFilterBar)
-                {
-                    <QuestionnaireFilterBar Configuration="Configuration"
-                                           CurrentFilters="filterState"
-                                           OnFiltersChanged="ApplyFilters"
-                                           OnClearFilters="ClearAllFilters"
-                                           OnSearchChanged="OnSearchChanged" />
-                }
+                <!-- Filter + Tabs grouped section (filter scopes the data shown in tabs) -->
+                <div class="tab-section">
+                    @if (!HideFilterBar)
+                    {
+                        <QuestionnaireFilterBar Configuration="Configuration"
+                                               CurrentFilters="filterState"
+                                               OnFiltersChanged="ApplyFilters"
+                                               OnClearFilters="ClearAllFilters"
+                                               OnSearchChanged="OnSearchChanged" />
+                    }
 
-                <!-- Tab Content -->
-                <RadzenTabs @bind-SelectedIndex="SelectedTabIndex">
-                    <Tabs>
-                        @foreach (var tab in Configuration.Tabs.Where(t => t.IsVisible))
-                        {
-                            <RadzenTabsItem Text="@tab.Title">
-                                @RenderTabContent(tab)
-                            </RadzenTabsItem>
-                        }
-                    </Tabs>
-                </RadzenTabs>
+                    <RadzenTabs @bind-SelectedIndex="SelectedTabIndex">
+                        <Tabs>
+                            @foreach (var tab in Configuration.Tabs.Where(t => t.IsVisible))
+                            {
+                                <RadzenTabsItem Text="@tab.Title">
+                                    @RenderTabContent(tab)
+                                </RadzenTabsItem>
+                            }
+                        </Tabs>
+                    </RadzenTabs>
+                </div>
             </div>
 
 @implements IDisposable

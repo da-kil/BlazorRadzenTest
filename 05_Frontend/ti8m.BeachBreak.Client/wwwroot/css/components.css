@@ -990,26 +990,9 @@
    ============================================= */
 
 .advanced-filters-container {
-    background: var(--rz-panel-background-color);
-    border: 1px solid var(--rz-border-color);
-    border-radius: var(--rz-border-radius, 8px);
-    padding: 1.25rem;
-    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    margin-top: 0.25rem;
     transition: all 0.3s ease;
-    position: relative;
-}
-
-.advanced-filters-container::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg,
-        transparent 0%,
-        var(--rz-primary-lighter) 50%,
-        transparent 100%);
 }
 
 /* Responsive behavior for advanced filters */

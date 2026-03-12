@@ -6,7 +6,7 @@
 <!-- Main Filter Bar -->
 <div class="d-flex align-items-center gap-3 mb-3">
     <!-- Search Filter -->
-    <div class="flex-grow-1" style="max-width: 400px;">
+    <div class="flex-grow-1" style="min-width: 300px;">
         <RadzenTextBox @bind-Value="CurrentFilters.SearchFilter"
                       Placeholder="Search employees, emails, questionnaires..."
                       @oninput="OnSearchInputChanged"
@@ -21,7 +21,7 @@
     }
     @if (departmentFilterConfig != null && departmentFilterConfig.IsVisible)
     {
-        <div style="min-width: 200px;">
+        <div style="min-width: 260px;">
             <RadzenDropDown @bind-Value="CurrentFilters.DepartmentFilter"
                            Data="@GetDepartmentFilterOptions()"
                            Placeholder="Select Organization..."
@@ -38,7 +38,7 @@
     }
     @if (roleFilterConfig != null && roleFilterConfig.IsVisible)
     {
-        <div style="min-width: 200px;">
+        <div style="min-width: 260px;">
             <RadzenDropDown @bind-Value="CurrentFilters.RoleFilter"
                            Data="@GetRoleFilterOptions()"
                            Placeholder="Select Role..."
