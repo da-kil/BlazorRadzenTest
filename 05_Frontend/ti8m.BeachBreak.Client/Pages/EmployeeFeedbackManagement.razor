@@ -18,6 +18,12 @@
     <Authorized>
         <PageLayout Title="@T("pages.employee-feedback-management")"
                    Description="@T("pages.employee-feedback-description")">
+            <HeaderActions>
+                <RadzenButton Text="@T("buttons.record-feedback")"
+                            Icon="add"
+                            ButtonStyle="ButtonStyle.Primary"
+                            Click="@ShowRecordFeedbackDialog" />
+            </HeaderActions>
             <ChildContent>
                 <!-- Filters and Search -->
                 <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" Class="mb-4">
@@ -73,18 +79,11 @@
 
                         <!-- Actions -->
                         <RadzenColumn Size="12" SizeMD="3">
-                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
-                                <RadzenButton Text="@T("buttons.record-feedback")"
-                                            Icon="add"
-                                            ButtonStyle="ButtonStyle.Success"
-                                            Size="ButtonSize.Small"
-                                            Click="@ShowRecordFeedbackDialog" />
-                                <RadzenButton Text="@T("buttons.clear-filters")"
-                                            Icon="clear"
-                                            ButtonStyle="ButtonStyle.Light"
-                                            Size="ButtonSize.Small"
-                                            Click="@ClearFilters" />
-                            </RadzenStack>
+                            <RadzenButton Text="@T("buttons.clear-filters")"
+                                        Icon="clear"
+                                        ButtonStyle="ButtonStyle.Light"
+                                        Size="ButtonSize.Small"
+                                        Click="@ClearFilters" />
                         </RadzenColumn>
                     </RadzenRow>
                 </RadzenStack>
@@ -131,7 +130,7 @@
                 }
                 else if (feedbackList?.Any() != true)
                 {
-                    <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat">
+                    <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" AllowClose="false">
                         <RadzenText>@T("messages.no-feedback-found")</RadzenText>
                     </RadzenAlert>
                 }
