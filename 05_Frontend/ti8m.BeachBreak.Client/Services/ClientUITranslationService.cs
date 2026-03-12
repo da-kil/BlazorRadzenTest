@@ -299,23 +299,10 @@ public class ClientUITranslationService : IUITranslationService
                     await SaveCacheToLocalStorageAsync();
                 }
             }
-            else
-            {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                // If server fails and we have no cache, load basic fallbacks
-                if (!_cacheLoaded)
-                {
-                    LoadBasicFallbackTranslations();
-                }
-            }
         }
-        catch (Exception ex)
+        catch
         {
-            // If server fails and we have no cache, load basic fallbacks
-            if (!_cacheLoaded)
-            {
-                LoadBasicFallbackTranslations();
-            }
+            // Server unreachable and no cache - keys will be returned as-is
         }
     }
 
@@ -370,42 +357,6 @@ public class ClientUITranslationService : IUITranslationService
         }
     }
 
-    private void LoadBasicFallbackTranslations()
-    {
-        // Basic fallback translations for when both server and local storage fail
-        var fallbacks = new[]
-        {
-            // Navigation - CRITICAL for NavMenu to work
-            new UITranslation { Key = "nav.menu-toggle", German = "Navigationsmenü", English = "Navigation menu", Category = "navigation" },
-            new UITranslation { Key = "nav.dashboard", German = "Dashboard", English = "Dashboard", Category = "navigation" },
-            new UITranslation { Key = "nav.my-work", German = "Meine Arbeit", English = "My Work", Category = "navigation" },
-            new UITranslation { Key = "nav.my-questionnaires", German = "Meine Fragebogen", English = "My Questionnaires", Category = "navigation" },
-            new UITranslation { Key = "nav.team-overview", German = "Team Übersicht", English = "Team Overview", Category = "navigation" },
-            new UITranslation { Key = "nav.organization", German = "Organisation", English = "Organization", Category = "navigation" },
-            new UITranslation { Key = "nav.management", German = "Verwaltung", English = "Management", Category = "navigation" },
-            new UITranslation { Key = "nav.create-questionnaire", German = "Fragebogen erstellen", English = "Create Questionnaire", Category = "navigation" },
-            new UITranslation { Key = "nav.manage-questionnaires", German = "Fragebogen verwalten", English = "Manage Questionnaires", Category = "navigation" },
-            new UITranslation { Key = "nav.assignments", German = "Zuweisungen", English = "Assignments", Category = "navigation" },
-            new UITranslation { Key = "nav.administration", German = "Administration", English = "Administration", Category = "navigation" },
-            new UITranslation { Key = "nav.categories", German = "Kategorien", English = "Categories", Category = "navigation" },
-            new UITranslation { Key = "nav.role-management", German = "Rollenverwaltung", English = "Role Management", Category = "navigation" },
-            new UITranslation { Key = "nav.projection-replay", German = "Projektions-Wiederholung", English = "Projection Replay", Category = "navigation" },
-            // Common buttons
-            new UITranslation { Key = "buttons.save", German = "Speichern", English = "Save", Category = "buttons" },
-            new UITranslation { Key = "buttons.cancel", German = "Abbrechen", English = "Cancel", Category = "buttons" },
-            new UITranslation { Key = "buttons.delete", German = "Löschen", English = "Delete", Category = "buttons" },
-            new UITranslation { Key = "buttons.edit", German = "Bearbeiten", English = "Edit", Category = "buttons" },
-            new UITranslation { Key = "validation.required", German = "Erforderlich", English = "Required", Category = "validation" }
-        };
-
-        foreach (var fallback in fallbacks)
-        {
-            _cache[fallback.Key] = fallback;
-        }
-
-        _cacheLoaded = true;
-        _lastCacheUpdate = DateTime.UtcNow;
-    }
 }
 
 /// <summary>
