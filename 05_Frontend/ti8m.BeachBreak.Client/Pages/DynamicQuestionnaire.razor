@@ -62,7 +62,7 @@ else
                 @if (!IsQuestionnaireCompleted())
                 {
                     <RadzenButton Text="@(isSaving ? T("buttons.saving") : T("buttons.save-progress"))"
-                                 ButtonStyle="ButtonStyle.Info"
+                                 ButtonStyle="ButtonStyle.Light"
                                  Icon="@(isSaving ? "hourglass_empty" : "save")"
                                  Click="@SaveProgress"
                                  Disabled="@isSaving" />
@@ -70,7 +70,7 @@ else
                     @if (currentSectionIndex == visibleSections.Count - 1)
                     {
                         <RadzenButton Text="@(isSubmitting ? T("buttons.submitting") : T("buttons.submit"))"
-                                     ButtonStyle="ButtonStyle.Success"
+                                     ButtonStyle="ButtonStyle.Primary"
                                      Icon="send"
                                      Click="@ShowReview"
                                      Disabled="@(!CanSubmit() || isSubmitting)" />
