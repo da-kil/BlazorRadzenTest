@@ -116,23 +116,11 @@
                 <!-- Feedback List -->
                 @if (isLoading)
                 {
-                    <RadzenStack Orientation="Orientation.Vertical"
-                                AlignItems="AlignItems.Center"
-                                JustifyContent="JustifyContent.Center"
-                                Gap="1rem"
-                                Style="padding: 3rem">
-                        <RadzenProgressBarCircular Mode="ProgressBarMode.Indeterminate"
-                                                   Size="ProgressBarCircularSize.Large" />
-                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
-                            @T("messages.loading")
-                        </RadzenText>
-                    </RadzenStack>
+                    <LoadingIndicator Message="@T("messages.loading")" />
                 }
                 else if (feedbackList?.Any() != true)
                 {
-                    <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" AllowClose="false">
-                        <RadzenText>@T("messages.no-feedback-found")</RadzenText>
-                    </RadzenAlert>
+                    <EmptyState Icon="feedback" Title="@T("messages.no-feedback-found")" />
                 }
                 else
                 {

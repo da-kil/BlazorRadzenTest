@@ -15,8 +15,7 @@
 <div class="edit-feedback-dialog">
     @if (isLoading)
     {
-        <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
-        <RadzenText TextStyle="TextStyle.Body1">@T("messages.loading-feedback")</RadzenText>
+        <LoadingIndicator Message="@T("messages.loading-feedback")" />
     }
     else if (feedback != null)
     {

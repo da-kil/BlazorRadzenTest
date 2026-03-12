@@ -1,0 +1,30 @@
+@using Radzen
+@using Radzen.Blazor
+
+<div class="text-center @(Compact ? "p-3" : "p-5")">
+    <RadzenIcon Icon="@Icon" Class="@IconClass" />
+    <RadzenText TextStyle="@TitleStyle" Class="@TitleClass">@Title</RadzenText>
+    @if (!string.IsNullOrEmpty(Message))
+    {
+        <RadzenText TextStyle="TextStyle.Body1" Class="@MessageClass">@Message</RadzenText>
+    }
+    @if (ChildContent != null)
+    {
+        <div class="d-flex flex-wrap justify-content-center gap-2 mt-3">
+            @ChildContent
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string Icon { get; set; } = default!;
+    [Parameter, EditorRequired] public string Title { get; set; } = default!;
+    [Parameter] public string Message { get; set; } = "";
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public bool Compact { get; set; } = false;
+
+    private string IconClass => Compact ? "text-muted mb-2" : "text-muted mb-3";
+    private TextStyle TitleStyle => Compact ? TextStyle.Subtitle1 : TextStyle.H5;
+    private string TitleClass => Compact ? "text-muted mb-1" : "text-muted mb-2";
+    private string MessageClass => Compact ? "text-muted mb-2" : "text-muted mb-4";
+}

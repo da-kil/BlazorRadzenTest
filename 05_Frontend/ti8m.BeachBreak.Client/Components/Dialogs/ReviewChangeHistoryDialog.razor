@@ -8,23 +8,11 @@
 <RadzenStack Gap="1rem">
     @if (isLoading)
     {
-        <div class="text-center py-5">
-            <RadzenProgressBarCircular Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
-            <RadzenText TextStyle="TextStyle.Body2" Class="mt-3 text-muted">
-                @T("messages.loading-change-history")
-            </RadzenText>
-        </div>
+        <LoadingIndicator Message="@T("messages.loading-change-history")" Size="ProgressBarCircularSize.Medium" Padding="1.5rem" />
     }
     else if (changeLog == null || !changeLog.Any())
     {
-        <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter">
-            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                <RadzenIcon Icon="info" />
-                <RadzenText TextStyle="TextStyle.Body1">
-                    @T("messages.no-changes-during-review")
-                </RadzenText>
-            </RadzenStack>
-        </RadzenAlert>
+        <EmptyState Icon="history" Title="@T("messages.no-changes-during-review")" Compact="true" />
     }
     else
     {

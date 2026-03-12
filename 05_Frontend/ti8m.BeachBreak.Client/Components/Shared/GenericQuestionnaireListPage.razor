@@ -2050,14 +2050,6 @@
                 break;
         }
 
-        actions.Add(new EmptyStateAction
-        {
-            Text = "Refresh",
-            Icon = "refresh",
-            Style = ButtonStyle.Light,
-            OnClick = async () => await LoadData()
-        });
-
         return actions;
     }
 
@@ -2068,16 +2060,7 @@
 
     private List<EmptyStateAction> GetTeamMembersEmptyStateActions()
     {
-        return new List<EmptyStateAction>
-        {
-            new EmptyStateAction
-            {
-                Text = "Refresh Data",
-                Icon = "refresh",
-                Style = ButtonStyle.Light,
-                OnClick = async () => await LoadData()
-            }
-        };
+        return new List<EmptyStateAction>();
     }
 
     private string GetDepartmentsEmptyStateMessage()
@@ -2108,14 +2091,6 @@
                 OnClick = ClearAllFilters
             });
         }
-
-        actions.Add(new EmptyStateAction
-        {
-            Text = "Refresh Data",
-            Icon = "refresh",
-            Style = ButtonStyle.Light,
-            OnClick = async () => await LoadData()
-        });
 
         return actions;
     }
@@ -2148,14 +2123,6 @@
                 OnClick = ClearAllFilters
             });
         }
-
-        actions.Add(new EmptyStateAction
-        {
-            Text = "Refresh Data",
-            Icon = "refresh",
-            Style = ButtonStyle.Light,
-            OnClick = async () => await LoadData()
-        });
 
         return actions;
     }

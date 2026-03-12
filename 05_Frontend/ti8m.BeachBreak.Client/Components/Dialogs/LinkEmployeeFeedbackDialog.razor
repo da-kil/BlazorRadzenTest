@@ -12,18 +12,11 @@
     <RadzenStack Gap="1rem">
         @if (isLoading)
         {
-            <div class="text-center p-4">
-                <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Mode="ProgressBarMode.Indeterminate" />
-                <RadzenText TextStyle="TextStyle.Body2" Class="mt-2">@T("messages.loading-available-feedback")</RadzenText>
-            </div>
+            <LoadingIndicator Message="@T("messages.loading-available-feedback")" Size="ProgressBarCircularSize.Medium" Padding="1.5rem" />
         }
         else if (availableFeedback == null || availableFeedback.Count == 0)
         {
-            <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" ShowIcon="true">
-                <RadzenText TextStyle="TextStyle.Body2">
-                    @T("messages.no-feedback-available")
-                </RadzenText>
-            </RadzenAlert>
+            <EmptyState Icon="feedback" Title="@T("messages.no-feedback-available")" Compact="true" />
         }
         else
         {

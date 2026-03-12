@@ -19,7 +19,7 @@
 
                 @if (isLoading)
                 {
-                    <RadzenProgressBar Mode="ProgressBarMode.Indeterminate" />
+                    <LoadingIndicator Size="ProgressBarCircularSize.Medium" Padding="1rem" />
                 }
                 else if (feedbackBySource?.Any() == true)
                 {
@@ -79,9 +79,7 @@
                 }
                 else
                 {
-                    <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat">
-                        <RadzenText>@T("messages.no-feedback-current-year")</RadzenText>
-                    </RadzenAlert>
+                    <EmptyState Icon="feedback" Title="@T("messages.no-feedback-current-year")" Compact="true" />
                 }
             </RadzenCard>
         </div>

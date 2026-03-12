@@ -30,18 +30,11 @@
 
         @if (isLoadingPredecessors)
         {
-            <div class="text-center p-4">
-                <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Mode="ProgressBarMode.Indeterminate" />
-                <RadzenText TextStyle="TextStyle.Body2" Class="mt-2">@T("messages.loading-available-predecessors")</RadzenText>
-            </div>
+            <LoadingIndicator Message="@T("messages.loading-available-predecessors")" Size="ProgressBarCircularSize.Medium" Padding="1.5rem" />
         }
         else if (!availablePredecessors.Any())
         {
-            <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Class="mb-3" ShowIcon="true">
-                <RadzenText TextStyle="TextStyle.Body2">
-                    @T("messages.no-eligible-assignment-predecessors")
-                </RadzenText>
-            </RadzenAlert>
+            <EmptyState Icon="link_off" Title="@T("messages.no-eligible-assignment-predecessors")" Compact="true" />
         }
         else
         {

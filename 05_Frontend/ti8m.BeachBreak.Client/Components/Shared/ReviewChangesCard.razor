@@ -171,10 +171,7 @@
 
         @if (isLoading)
         {
-            <div class="loading-state">
-                <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Medium" />
-                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mt-2">Loading review changes...</RadzenText>
-            </div>
+            <LoadingIndicator Message="Loading review changes..." Size="ProgressBarCircularSize.Medium" Padding="1.5rem" />
         }
         else if (reviewChanges.Count == 0)
         {

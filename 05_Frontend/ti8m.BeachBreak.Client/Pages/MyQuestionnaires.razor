@@ -41,16 +41,11 @@
 		}
 		else if (isLoading)
 		{
-			<div class="text-center p-5">
-				<RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
-				<RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-3">@T("dashboard.loading-questionnaires")</RadzenText>
-			</div>
+			<LoadingIndicator Message="@T("dashboard.loading-questionnaires")" />
 		}
 		else
 		{
-			<div class="text-center p-5">
-				<RadzenText TextStyle="TextStyle.Body1" Class="text-muted">@T("dashboard.no-questionnaire-data")</RadzenText>
-			</div>
+			<EmptyState Icon="quiz" Title="@T("dashboard.no-questionnaire-data")" />
 		}
 	</ChildContent>
 </PageLayout>

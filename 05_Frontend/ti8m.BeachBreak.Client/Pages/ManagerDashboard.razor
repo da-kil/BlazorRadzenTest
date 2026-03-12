@@ -20,12 +20,7 @@
 
     @if (isLoading)
     {
-        <RadzenCard>
-            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
-                <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Small" />
-                <RadzenText>@T("messages.loading-dashboard")</RadzenText>
-            </RadzenStack>
-        </RadzenCard>
+        <LoadingIndicator Message="@T("messages.loading-dashboard")" Size="ProgressBarCircularSize.Small" Padding="1.5rem" />
     }
     else if (dashboard == null)
     {

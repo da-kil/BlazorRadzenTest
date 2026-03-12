@@ -20,18 +20,11 @@
 
     @if (isLoading)
     {
-        <RadzenCard>
-            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
-                <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Small" />
-                <RadzenText>@T("dashboard.loading")</RadzenText>
-            </RadzenStack>
-        </RadzenCard>
+        <LoadingIndicator Message="@T("dashboard.loading")" />
     }
     else if (dashboard == null)
     {
-        <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter">
-            @T("dashboard.no-data-available")
-        </RadzenAlert>
+        <EmptyState Icon="bar_chart" Title="@T("dashboard.no-data-available")" />
     }
     else
     {

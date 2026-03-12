@@ -6,10 +6,7 @@
 <div class="virtualized-list-optimized" style="height: @ContainerHeight; overflow-y: auto;" @onscroll="HandleScroll">
     @if (isLoading)
     {
-        <div class="d-flex justify-content-center align-items-center" style="height: 200px;">
-            <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
-            <span class="ms-2">Loading questionnaires...</span>
-        </div>
+        <LoadingIndicator Message="Loading questionnaires..." />
     }
     else
     {

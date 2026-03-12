@@ -34,7 +34,7 @@
                         <RadzenTabsItem Text="@T("tabs.active-replays")">
                             @if (isLoading)
                             {
-                                <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+                                <LoadingIndicator Size="ProgressBarCircularSize.Medium" Padding="1.5rem" />
                             }
                             else if (activeReplays.Any())
                             {
@@ -87,16 +87,14 @@
                             }
                             else
                             {
-                                <RadzenAlert AlertStyle="AlertStyle.Info" Class="mt-3">
-                                    @T("messages.no-active-replays")
-                                </RadzenAlert>
+                                <EmptyState Icon="replay" Title="@T("messages.no-active-replays")" />
                             }
                         </RadzenTabsItem>
 
                         <RadzenTabsItem Text="@T("tabs.history")">
                             @if (isLoading)
                             {
-                                <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+                                <LoadingIndicator Size="ProgressBarCircularSize.Medium" Padding="1.5rem" />
                             }
                             else
                             {

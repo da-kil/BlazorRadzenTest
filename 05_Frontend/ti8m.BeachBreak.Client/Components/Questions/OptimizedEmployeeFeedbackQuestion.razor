@@ -50,17 +50,11 @@ else
         <div class="feedback-question-content">
             @if (isLoading)
             {
-                <div class="text-center p-4">
-                    <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Small" />
-                </div>
+                <LoadingIndicator Size="ProgressBarCircularSize.Medium" Padding="1rem" />
             }
             else if (linkedFeedback == null || linkedFeedback.Count == 0)
             {
-                <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" ShowIcon="true">
-                    <RadzenText TextStyle="TextStyle.Body2">
-                        @T("messages.no-feedback-linked")
-                    </RadzenText>
-                </RadzenAlert>
+                <EmptyState Icon="link" Title="@T("messages.no-feedback-linked")" Compact="true" />
             }
             else
             {

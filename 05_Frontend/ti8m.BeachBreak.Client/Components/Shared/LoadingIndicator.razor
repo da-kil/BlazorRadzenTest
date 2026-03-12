@@ -1,0 +1,24 @@
+@using Radzen
+@using Radzen.Blazor
+
+<RadzenStack Orientation="Orientation.Vertical"
+             AlignItems="AlignItems.Center"
+             JustifyContent="JustifyContent.Center"
+             Gap="1rem"
+             Style="@PaddingStyle">
+    <RadzenProgressBarCircular ShowValue="false"
+                               Mode="ProgressBarMode.Indeterminate"
+                               Size="@Size" />
+    @if (!string.IsNullOrEmpty(Message))
+    {
+        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">@Message</RadzenText>
+    }
+</RadzenStack>
+
+@code {
+    [Parameter] public string Message { get; set; } = "";
+    [Parameter] public ProgressBarCircularSize Size { get; set; } = ProgressBarCircularSize.Large;
+    [Parameter] public string Padding { get; set; } = "3rem";
+
+    private string PaddingStyle => $"padding: {Padding}";
+}

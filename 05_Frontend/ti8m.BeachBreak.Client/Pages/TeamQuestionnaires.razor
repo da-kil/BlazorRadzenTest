@@ -46,10 +46,7 @@
 		}
 		else if (isLoading)
 		{
-			<div class="text-center p-5">
-				<RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
-				<RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-3">Loading team data...</RadzenText>
-			</div>
+			<LoadingIndicator Message="@T("messages.loading-team-data")" />
 		}
 	</ChildContent>
 </PageLayout>
