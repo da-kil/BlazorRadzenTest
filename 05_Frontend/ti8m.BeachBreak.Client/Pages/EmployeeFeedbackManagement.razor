@@ -117,7 +117,17 @@
                 <!-- Feedback List -->
                 @if (isLoading)
                 {
-                    <RadzenProgressBar Mode="ProgressBarMode.Indeterminate" />
+                    <RadzenStack Orientation="Orientation.Vertical"
+                                AlignItems="AlignItems.Center"
+                                JustifyContent="JustifyContent.Center"
+                                Gap="1rem"
+                                Style="padding: 3rem">
+                        <RadzenProgressBarCircular Mode="ProgressBarMode.Indeterminate"
+                                                   Size="ProgressBarCircularSize.Large" />
+                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+                            @T("messages.loading")
+                        </RadzenText>
+                    </RadzenStack>
                 }
                 else if (feedbackList?.Any() != true)
                 {
