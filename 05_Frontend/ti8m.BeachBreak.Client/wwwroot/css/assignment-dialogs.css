@@ -867,7 +867,7 @@ body[class="fluent"] .selection-status {
     display: flex;
     justify-content: flex-end;
     gap: 0.5rem;
-    padding-top: 0.25rem;
+    padding-top: 1rem;
     border-top: 1px solid var(--rz-border-color, #e9ecef);
 }
 

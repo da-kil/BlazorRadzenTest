@@ -1,0 +1,27 @@
+.process-type-options {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.process-type-option {
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.process-type-option:hover {
+    border-color: #2196F3;
+    background-color: rgba(33, 150, 243, 0.05);
+}
+
+.process-type-option.selected {
+    border-color: #2196F3;
+    background-color: rgba(33, 150, 243, 0.1);
+}
+
+.has-error {
+    border-color: #f44336 !important;
+}
