@@ -1995,6 +1995,20 @@
         "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
     },
     {
+        "key":  "labels.filter-by-organisation",
+        "german":  "Nach Organisation filtern",
+        "english":  "Filter by Organisation",
+        "category":  "labels",
+        "createdDate":  "2026-03-13T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "labels.filter-by-role",
+        "german":  "Nach Rolle filtern",
+        "english":  "Filter by Role",
+        "category":  "labels",
+        "createdDate":  "2026-03-13T12:00:00.0000000+00:00"
+    },
+    {
         "key":  "labels.from-date",
         "german":  "Von Datum",
         "english":  "From Date",
@@ -4361,6 +4375,20 @@
         "createdDate":  "2025-12-19T12:00:00.0000000+00:00"
     },
     {
+        "key":  "placeholders.all-organisations",
+        "german":  "Alle Organisationen",
+        "english":  "All Organisations",
+        "category":  "placeholders",
+        "createdDate":  "2026-03-13T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "placeholders.all-roles",
+        "german":  "Alle Rollen",
+        "english":  "All Roles",
+        "category":  "placeholders",
+        "createdDate":  "2026-03-13T12:00:00.0000000+00:00"
+    },
+    {
         "key":  "placeholders.all-sources",
         "german":  "Alle Quellen",
         "english":  "All Sources",
@@ -5992,6 +6020,20 @@
         "createdDate":  "2025-12-29T12:00:00.0000000+00:00"
     },
     {
+        "key":  "workflow-states.review-finished",
+        "german":  "Überprüfung abgeschlossen",
+        "english":  "Review Finished",
+        "category":  "workflow-states",
+        "createdDate":  "2026-03-13T12:00:00.0000000+01:00"
+    },
+    {
+        "key":  "workflow-states.initialized",
+        "german":  "Initialisiert",
+        "english":  "Initialized",
+        "category":  "workflow-states",
+        "createdDate":  "2026-03-13T12:00:00.0000000+01:00"
+    },
+    {
         "key":  "workflow-states.in-progress",
         "german":  "In Bearbeitung",
         "english":  "In Progress",
@@ -7320,5 +7362,40 @@
         "english": "Create Questionnaire Template",
         "category": "dialogs",
         "createdDate": "2026-03-09T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pages.create-assignment",
+        "german": "Zuweisung erstellen",
+        "english": "Create Assignment",
+        "category": "pages",
+        "createdDate": "2026-03-12T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pages.create-assignment-description",
+        "german": "W\u00e4hlen Sie einen Fragebogen und Mitarbeiter f\u00fcr die Zuweisung aus",
+        "english": "Select a questionnaire and employees to assign",
+        "category": "pages",
+        "createdDate": "2026-03-12T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "steps.select-questionnaire",
+        "german": "Fragebogen w\u00e4hlen",
+        "english": "Select Questionnaire",
+        "category": "steps",
+        "createdDate": "2026-03-12T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "steps.select-employees",
+        "german": "Mitarbeiter w\u00e4hlen",
+        "english": "Select Employees",
+        "category": "steps",
+        "createdDate": "2026-03-12T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "steps.summary",
+        "german": "\u00dcbersicht",
+        "english": "Summary",
+        "category": "steps",
+        "createdDate": "2026-03-12T12:00:00.0000000+01:00"
     }
 ]

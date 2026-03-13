@@ -165,8 +165,8 @@ public partial class QuestionnaireAssignment : AggregateRoot
         if (IsWithdrawn)
             throw new InvalidOperationException("Assignment is already withdrawn");
 
-        if (CompletedDate.HasValue)
-            throw new InvalidOperationException("Cannot withdraw a completed assignment");
+        if (WorkflowState != WorkflowState.Assigned)
+            throw new InvalidOperationException("Assignment can only be cancelled while in Assigned status. Once work has started, it cannot be cancelled.");
 
         RaiseEvent(new AssignmentWithdrawn(DateTime.UtcNow, withdrawnByEmployeeId, withdrawalReason));
     }

@@ -1,0 +1,585 @@
+@page "/questionnaire-assignments/create"
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Linq
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Services
+@using ti8m.BeachBreak.Client.Components
+@using ti8m.BeachBreak.Client.Components.Shared
+@using ti8m.BeachBreak.Client.Layout
+@inject IEmployeeApiService EmployeeApiService
+@inject ICategoryApiService CategoryApiService
+@inject IQuestionnaireAssignmentService AssignmentService
+@inject IQuestionnaireTemplateService TemplateService
+@inject IOrganizationApiService OrganizationService
+@inject NavigationManager NavigationManager
+@inherits CategoryOptimizedTranslatableComponent
+
+<PageTitle>@T("pages.create-assignment")</PageTitle>
+
+<link href="css/assignment-dialogs.css" rel="stylesheet" />
+
+<style>
+    .questionnaire-item {
+        border: 1px solid var(--rz-border-color, #e9ecef);
+        border-radius: var(--rz-border-radius, 6px);
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background: var(--rz-panel-background, var(--rz-base-background-color, white));
+        color: var(--rz-text-color, inherit);
+    }
+
+        .questionnaire-item:hover {
+            border-color: var(--rz-primary);
+            background: var(--rz-primary-lighter);
+        }
+
+        .questionnaire-item.selected {
+            border-color: var(--rz-primary);
+            background: var(--rz-primary-lighter);
+            color: var(--rz-text-color);
+        }
+
+    .summary-card {
+        background: var(--rz-panel-background, var(--rz-base-background-color, white));
+        border: 1px solid var(--rz-border-color, #e9ecef);
+        border-radius: var(--rz-border-radius, 8px);
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+    }
+
+    .summary-section-title {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--rz-text-secondary-color);
+        margin-bottom: 0.5rem;
+    }
+
+    .employee-chip {
+        display: inline-flex;
+        align-items: center;
+        background: var(--rz-primary-lighter);
+        border-radius: 1rem;
+        padding: 0.25rem 0.75rem;
+        margin: 0.25rem;
+        font-size: 0.85rem;
+        color: var(--rz-text-color);
+    }
+</style>
+
+<AuthorizeView Policy="HR">
+    <Authorized>
+        <PageLayout Type="LayoutType.Standard"
+                   Title="@T("pages.create-assignment")"
+                   Description="@T("pages.create-assignment-description")">
+            <HeaderActions>
+                <RadzenButton Text="@T("buttons.cancel")"
+                             ButtonStyle="ButtonStyle.Light"
+                             Icon="close"
+                             Size="ButtonSize.Medium"
+                             Click="@NavigateBack" />
+            </HeaderActions>
+            <ChildContent>
+                @if (isLoading)
+                {
+                    <LoadingIndicator Message="@T("labels.loading-data")" />
+                }
+                else
+                {
+                    <ProgressSteps CurrentStep="@currentStep"
+                                   OnStepClick="@HandleStepNavigation"
+                                   Steps="@GetProgressSteps()" />
+
+                    <!-- Step 1: Select Questionnaire -->
+                    @if (currentStep == 1)
+                    {
+                        <section class="step-section" data-step="1">
+                            <header class="qb-step-header">
+                                <h2 class="step-title">@T("sections.select-questionnaire")</h2>
+                            </header>
+
+                            <div class="mb-3">
+                                <RadzenDropDown @bind-Value="@selectedCategoryId"
+                                                Data="@availableCategories"
+                                                TextProperty="@GetCategoryNameProperty()"
+                                                ValueProperty="Id"
+                                                AllowClear="true"
+                                                Placeholder="@T("filters.filter-by-category")"
+                                                Change="@FilterQuestionnaires"
+                                                Style="width: 300px;" />
+                            </div>
+
+                            <div style="max-height: 450px; overflow-y: auto;">
+                                @if (filteredQuestionnaires.Any())
+                                {
+                                    @foreach (var questionnaire in filteredQuestionnaires)
+                                    {
+                                        <div class="questionnaire-item @(selectedQuestionnaireId == questionnaire.Id ? "selected" : "")"
+                                             @onclick="() => SelectQuestionnaire(questionnaire.Id)">
+                                            <div class="d-flex align-items-start">
+                                                <div class="flex-grow-1">
+                                                    <div class="d-flex justify-content-between align-items-start">
+                                                        <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold">@questionnaire.GetLocalizedNameWithFallback(CurrentLanguage)</RadzenText>
+                                                        <RadzenBadge Class="ml-3" Text="@GetCategoryName(questionnaire.CategoryId)" BadgeStyle="BadgeStyle.Info" />
+                                                    </div>
+                                                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mt-1">@questionnaire.GetLocalizedDescriptionWithFallback(CurrentLanguage)</RadzenText>
+                                                    <div class="d-flex gap-3 mt-2">
+                                                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                                                            <RadzenIcon Icon="layers" Style="font-size: 0.85rem; margin-right: 4px;" />
+                                                            @questionnaire.Sections.Count sections
+                                                        </RadzenText>
+                                                    </div>
+                                                </div>
+                                                @if (selectedQuestionnaireId == questionnaire.Id)
+                                                {
+                                                    <RadzenIcon Icon="check_circle" Style="color: var(--rz-success); font-size: 1.5rem;" />
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <EmptyState Icon="quiz" Title="@T("labels.no-questionnaires-available")" />
+                                }
+                            </div>
+
+                            <nav class="step-navigation">
+                                <RadzenButton Text="@T("buttons.next")"
+                                             ButtonStyle="ButtonStyle.Primary"
+                                             Icon="arrow_forward"
+                                             IconPosition="IconPosition.Right"
+                                             Disabled="@(!selectedQuestionnaireId.HasValue)"
+                                             Click="@(() => currentStep = 2)" />
+                            </nav>
+                        </section>
+                    }
+
+                    <!-- Step 2: Select Employees -->
+                    else if (currentStep == 2)
+                    {
+                        <section class="step-section" data-step="2">
+                            <header class="qb-step-header">
+                                <h2 class="step-title">@T("sections.select-employees")</h2>
+                            </header>
+
+                            <div class="mb-3">
+                                <QuestionnaireFilterBar Configuration="@employeeFilterConfiguration"
+                                                        CurrentFilters="@employeeFilters"
+                                                        OnFiltersChanged="@HandleEmployeeFiltersChanged" />
+                            </div>
+
+                            <div class="d-flex gap-2 mb-3">
+                                <AsyncButton Text="@($"{T("buttons.select-all-filtered")} ({filteredEmployees.Count})")"
+                                             ButtonStyle="ButtonStyle.Secondary"
+                                             Size="ButtonSize.Small"
+                                             Icon="select_all"
+                                             Click="@SelectAllFilteredEmployees" />
+                                <AsyncButton Text="@T("buttons.clear-selection")"
+                                             ButtonStyle="ButtonStyle.Light"
+                                             Size="ButtonSize.Small"
+                                             Icon="clear"
+                                             Click="@ClearEmployeeSelection" />
+                            </div>
+
+                            <EmployeeSelectionGrid Employees="@filteredEmployees"
+                                                   SelectedEmployeeIds="@selectedEmployeeIds.Select(id => id.ToString()).ToList()"
+                                                   OnEmployeeToggle="@ToggleEmployeeSelection" />
+
+                            <nav class="step-navigation-dual">
+                                <RadzenButton Text="@T("buttons.back")"
+                                             ButtonStyle="ButtonStyle.Light"
+                                             Icon="arrow_back"
+                                             Click="@(() => currentStep = 1)" />
+                                <RadzenButton Text="@T("buttons.next")"
+                                             ButtonStyle="ButtonStyle.Primary"
+                                             Icon="arrow_forward"
+                                             IconPosition="IconPosition.Right"
+                                             Disabled="@(!selectedEmployeeIds.Any())"
+                                             Click="@(() => currentStep = 3)" />
+                            </nav>
+                        </section>
+                    }
+
+                    <!-- Step 3: Summary -->
+                    else if (currentStep == 3)
+                    {
+                        <section class="step-section" data-step="3">
+                            <header class="qb-step-header">
+                                <h2 class="step-title">@T("sections.assignment-summary")</h2>
+                            </header>
+
+                            <RadzenRow Gap="2.5rem">
+                                <RadzenColumn Size="12" SizeMD="6">
+
+                                    <!-- Selected questionnaire -->
+                                    <div class="summary-card">
+                                        <div class="summary-section-title">@T("labels.selected-questionnaire")</div>
+                                        @{
+                                            var selectedQ = allQuestionnaires.FirstOrDefault(q => q.Id == selectedQuestionnaireId);
+                                        }
+                                        @if (selectedQ != null)
+                                        {
+                                            <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-1">@selectedQ.GetLocalizedNameWithFallback(CurrentLanguage)</RadzenText>
+                                            <RadzenBadge Text="@GetCategoryName(selectedQ.CategoryId)" BadgeStyle="BadgeStyle.Info" Class="mb-2" />
+                                            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+                                                <RadzenIcon Icon="layers" Style="font-size: 0.85rem; margin-right: 4px;" />
+                                                @selectedQ.Sections.Count sections
+                                            </RadzenText>
+                                        }
+                                    </div>
+
+                                    <!-- Selected employees -->
+                                    <div class="summary-card">
+                                        <div class="summary-section-title">
+                                            @T("labels.employees") (@selectedEmployeeIds.Count)
+                                        </div>
+                                        <div style="max-height: 200px; overflow-y: auto;">
+                                            @foreach (var emp in allEmployees.Where(e => selectedEmployeeIds.Contains(e.Id)))
+                                            {
+                                                <span class="employee-chip">@emp.FullName</span>
+                                            }
+                                        </div>
+                                    </div>
+
+                                </RadzenColumn>
+
+                                <!-- Right: bare form fields, no card -->
+                                <RadzenColumn Size="12" SizeMD="6">
+
+                                    <div class="summary-section-title" style="margin-bottom: 1.25rem;">@T("sections.assignment-settings")</div>
+
+                                    <div class="mb-4">
+                                        <RadzenLabel Text="@T("labels.due-date-optional")" />
+                                        <RadzenDatePicker @bind-Value="@assignmentDueDate"
+                                                          DateFormat="dd/MM/yyyy"
+                                                          Min="@DateTime.Today"
+                                                          Class="w-100" />
+                                    </div>
+
+                                    <div>
+                                        <RadzenLabel Text="@T("labels.notes-optional")" />
+                                        <RadzenTextArea @bind-Value="@assignmentNotes"
+                                                        Placeholder="@T("placeholders.assignment-instructions")"
+                                                        Rows="5"
+                                                        Class="w-100" />
+                                    </div>
+
+                                </RadzenColumn>
+                            </RadzenRow>
+
+                            <nav class="step-navigation-dual">
+                                <RadzenButton Text="@T("buttons.back")"
+                                             ButtonStyle="ButtonStyle.Light"
+                                             Icon="arrow_back"
+                                             Click="@(() => currentStep = 2)" />
+                                <AsyncButton Text="@T("buttons.create-assignment")"
+                                             ProcessingText="@T("buttons.creating-assignments")"
+                                             ButtonStyle="ButtonStyle.Primary"
+                                             Icon="assignment_turned_in"
+                                             ProcessingIcon="hourglass_empty"
+                                             Click="@SubmitAssignments" />
+                            </nav>
+                        </section>
+                    }
+                }
+            </ChildContent>
+        </PageLayout>
+    </Authorized>
+    <NotAuthorized>
+        <AccessDeniedComponent RequiredRole="HR" PageName="@T("pages.create-assignment")" />
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+
+    private List<EmployeeDto> allEmployees = new();
+    private List<EmployeeDto> filteredEmployees = new();
+    private List<QuestionnaireTemplate> allQuestionnaires = new();
+    private List<QuestionnaireTemplate> filteredQuestionnaires = new();
+    private List<Category> categories = new();
+    private List<Organization> organizations = new();
+    private List<Category> availableCategories = new();
+
+    private QuestionnairePageConfiguration employeeFilterConfiguration = new();
+    private QuestionnaireFilterBar.FilterState employeeFilters = new();
+
+    private bool isLoading = true;
+    private int currentStep = 1;
+
+    private Guid? selectedQuestionnaireId = null;
+    private List<Guid> selectedEmployeeIds = new();
+    private DateTime? assignmentDueDate;
+    private string assignmentNotes = "";
+
+    private Guid selectedCategoryId;
+
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Pages,
+            TranslationCategories.Buttons,
+            TranslationCategories.Sections,
+            TranslationCategories.Filters,
+            TranslationCategories.Labels,
+            TranslationCategories.Placeholders,
+            TranslationCategories.Notifications,
+            TranslationCategories.Steps
+        };
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        await LoadInitialData();
+    }
+
+    private async Task LoadInitialData()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            var employeesTask = EmployeeApiService.GetAllEmployeesAsync();
+            var questionnairesTask = TemplateService.GetAllTemplatesAsync();
+            var categoriesTask = CategoryApiService.GetAllCategoriesAsync();
+            var organizationsTask = OrganizationService.GetAllOrganizationsAsync(includeDeleted: false, includeIgnored: false);
+
+            await Task.WhenAll(employeesTask, questionnairesTask, categoriesTask, organizationsTask);
+
+            allEmployees = await employeesTask;
+            allQuestionnaires = await questionnairesTask;
+            categories = await categoriesTask;
+            organizations = await organizationsTask;
+
+            filteredEmployees = allEmployees.ToList();
+            filteredQuestionnaires = allQuestionnaires.Where(q => q.Status == TemplateStatus.Published).ToList();
+            availableCategories = categories.Where(c => allQuestionnaires.Select(q => q.CategoryId).Distinct().Contains(c.Id)).ToList();
+
+            InitializeEmployeeFilterConfiguration();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error,
+                T("notifications.loading-failed"),
+                T("notifications.failed-load-data"));
+            Console.WriteLine($"Error loading data: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void FilterQuestionnaires()
+    {
+        filteredQuestionnaires = selectedCategoryId == Guid.Empty
+            ? allQuestionnaires.Where(q => q.Status == TemplateStatus.Published).ToList()
+            : allQuestionnaires.Where(q => q.Status == TemplateStatus.Published && q.CategoryId == selectedCategoryId).ToList();
+
+        StateHasChanged();
+    }
+
+    private void FilterEmployees()
+    {
+        var employees = allEmployees.AsEnumerable();
+
+        if (!string.IsNullOrWhiteSpace(employeeFilters.SearchFilter))
+        {
+            var term = employeeFilters.SearchFilter.Trim();
+            employees = employees.Where(e =>
+                e.FullName.Contains(term, StringComparison.OrdinalIgnoreCase) ||
+                e.EMail.Contains(term, StringComparison.OrdinalIgnoreCase) ||
+                e.Department.Contains(term, StringComparison.OrdinalIgnoreCase) ||
+                e.Organization?.Contains(term, StringComparison.OrdinalIgnoreCase) == true ||
+                e.Role.Contains(term, StringComparison.OrdinalIgnoreCase)
+            );
+        }
+
+        if (employeeFilters.DepartmentFilter?.Any() == true)
+            employees = employees.Where(e => employeeFilters.DepartmentFilter.Contains(e.Organization ?? "Unknown"));
+
+        if (employeeFilters.RoleFilter?.Any() == true)
+            employees = employees.Where(e => employeeFilters.RoleFilter.Contains(e.Role ?? "Unknown"));
+
+        filteredEmployees = employees.ToList();
+        StateHasChanged();
+    }
+
+    private void SelectQuestionnaire(Guid questionnaireId)
+    {
+        selectedQuestionnaireId = questionnaireId;
+        StateHasChanged();
+    }
+
+    private void ToggleEmployeeSelection(EmployeeDto employee)
+    {
+        if (selectedEmployeeIds.Contains(employee.Id))
+            selectedEmployeeIds.Remove(employee.Id);
+        else
+            selectedEmployeeIds.Add(employee.Id);
+
+        StateHasChanged();
+    }
+
+    private void SelectAllFilteredEmployees()
+    {
+        foreach (var employee in filteredEmployees)
+        {
+            if (!selectedEmployeeIds.Contains(employee.Id))
+                selectedEmployeeIds.Add(employee.Id);
+        }
+        StateHasChanged();
+    }
+
+    private void ClearEmployeeSelection()
+    {
+        selectedEmployeeIds.Clear();
+        StateHasChanged();
+    }
+
+    private async Task SubmitAssignments()
+    {
+        if (!selectedQuestionnaireId.HasValue || !selectedEmployeeIds.Any()) return;
+
+        try
+        {
+            var selectedEmployees = allEmployees.Where(e => selectedEmployeeIds.Contains(e.Id)).ToList();
+            var selectedQuestionnaire = allQuestionnaires.FirstOrDefault(q => q.Id == selectedQuestionnaireId!.Value);
+
+            if (selectedQuestionnaire == null)
+            {
+                NotificationService.Notify(NotificationSeverity.Error,
+                    T("notifications.error"),
+                    T("notifications.questionnaire-not-found"));
+                return;
+            }
+
+            var newAssignments = await AssignmentService.CreateAssignmentsAsync(
+                selectedQuestionnaireId!.Value,
+                selectedQuestionnaire.ProcessType,
+                selectedEmployees,
+                assignmentDueDate,
+                assignmentNotes
+            );
+
+            if (newAssignments != null && newAssignments.Any())
+            {
+                NotificationService.Notify(NotificationSeverity.Success,
+                    T("notifications.assignments-created"),
+                    $"{T("notifications.assignments-created-success")} {newAssignments.Count}",
+                    duration: 6000);
+
+                NavigationManager.NavigateTo("/questionnaire-assignments");
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Warning,
+                    T("notifications.no-assignments-created"),
+                    T("notifications.no-assignments-message"));
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error,
+                T("notifications.assignment-creation-failed"),
+                $"{T("notifications.assignment-creation-error")}: {ex.Message}");
+        }
+    }
+
+    private IReadOnlyList<ProgressStepItem> GetProgressSteps() => new[]
+    {
+        new ProgressStepItem(T("steps.select-questionnaire"), "quiz"),
+        new ProgressStepItem(T("steps.select-employees"), "group"),
+        new ProgressStepItem(T("steps.summary"), "assignment_turned_in")
+    };
+
+    private void HandleStepNavigation(int step)
+    {
+        if (step == 1)
+            currentStep = 1;
+        else if (step == 2 && selectedQuestionnaireId.HasValue)
+            currentStep = 2;
+        else if (step == 3 && selectedQuestionnaireId.HasValue && selectedEmployeeIds.Any())
+            currentStep = 3;
+    }
+
+    private void NavigateBack()
+    {
+        NavigationManager.NavigateTo("/questionnaire-assignments");
+    }
+
+    private Task HandleEmployeeFiltersChanged()
+    {
+        FilterEmployees();
+        return Task.CompletedTask;
+    }
+
+    private string GetCategoryName(Guid categoryId)
+    {
+        var category = categories.FirstOrDefault(c => c.Id == categoryId);
+        return category?.NameEn ?? T("labels.uncategorized");
+    }
+
+    private string GetCategoryNameProperty()
+    {
+        return CurrentLanguage == Language.German ? "NameDe" : "NameEn";
+    }
+
+    private void InitializeEmployeeFilterConfiguration()
+    {
+        var organizationOptions = new List<string>();
+
+        if (organizations?.Any() == true)
+            organizationOptions.AddRange(organizations.Select(o => o.Name).Where(n => !string.IsNullOrWhiteSpace(n)));
+
+        if (allEmployees?.Any() == true)
+        {
+            var employeeOrgs = allEmployees
+                .Where(e => !string.IsNullOrWhiteSpace(e.Organization))
+                .Select(e => e.Organization!)
+                .Distinct()
+                .Where(org => !organizationOptions.Contains(org));
+            organizationOptions.AddRange(employeeOrgs);
+        }
+
+        organizationOptions = organizationOptions.Distinct().OrderBy(o => o).ToList();
+
+        var roleOptions = allEmployees?
+            .Where(e => !string.IsNullOrWhiteSpace(e.Role))
+            .Select(e => e.Role!)
+            .Distinct()
+            .OrderBy(r => r)
+            .ToList() ?? new List<string>();
+
+        employeeFilterConfiguration = new QuestionnairePageConfiguration
+        {
+            PageTitle = "Employee Selection",
+            Filters = new List<QuestionnairePageFilter>
+            {
+                new() { Id = "search", Label = "Search employees", Type = QuestionnaireFilterType.Search, IsVisible = true },
+                new() { Id = "department", Label = "Filter by Organization", Type = QuestionnaireFilterType.Department, IsVisible = organizationOptions.Any(), Options = organizationOptions },
+                new() { Id = "role", Label = "Filter by Role", Type = QuestionnaireFilterType.Role, IsVisible = roleOptions.Any(), Options = roleOptions }
+            }
+        };
+
+        employeeFilters = new QuestionnaireFilterBar.FilterState
+        {
+            SearchFilter = "",
+            DepartmentFilter = new List<string>(),
+            CategoryFilter = new List<string>(),
+            TemplateFilter = new List<Guid>(),
+            StatusFilters = new List<string>(),
+            DateRangeFrom = null,
+            DateRangeTo = null
+        };
+    }
+
+}

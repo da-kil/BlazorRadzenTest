@@ -11,6 +11,8 @@ public class QuestionnaireAssignment
     public Guid EmployeeId { get; set; }
     public string EmployeeName { get; set; } = string.Empty;
     public string EmployeeEmail { get; set; } = string.Empty;
+    public string EmployeeRole { get; set; } = string.Empty;
+    public string EmployeeOrganisationName { get; set; } = string.Empty;
     public DateTime AssignedDate { get; set; } = DateTime.Now;
     public DateTime? DueDate { get; set; }
     public DateTime? StartedDate { get; set; }

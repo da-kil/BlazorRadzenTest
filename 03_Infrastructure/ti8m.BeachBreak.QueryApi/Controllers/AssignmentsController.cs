@@ -135,6 +135,8 @@ public class AssignmentsController : BaseController
             EmployeeEmail = assignment.EmployeeEmail,
             EmployeeId = assignment.EmployeeId.ToString(),
             EmployeeName = assignment.EmployeeName,
+            EmployeeRole = assignment.EmployeeRole,
+            EmployeeOrganisationName = assignment.EmployeeOrganisationName,
             Id = assignment.Id,
             Notes = assignment.Notes,
             TemplateId = assignment.TemplateId,

@@ -15,6 +15,7 @@ public class QuestionnaireAssignmentQueryHandler :
     private readonly IQuestionnaireAssignmentRepository repository;
     private readonly IQuestionnaireTemplateRepository templateRepository;
     private readonly IEmployeeRepository employeeRepository;
+    private readonly IOrganizationRepository organizationRepository;
     private readonly ILanguageContext languageContext;
     private readonly IUITranslationService translationService;
     private readonly ILogger<QuestionnaireAssignmentQueryHandler> logger;
@@ -23,6 +24,7 @@ public class QuestionnaireAssignmentQueryHandler :
         IQuestionnaireAssignmentRepository repository,
         IQuestionnaireTemplateRepository templateRepository,
         IEmployeeRepository employeeRepository,
+        IOrganizationRepository organizationRepository,
         ILanguageContext languageContext,
         IUITranslationService translationService,
         ILogger<QuestionnaireAssignmentQueryHandler> logger)
@@ -30,6 +32,7 @@ public class QuestionnaireAssignmentQueryHandler :
         this.repository = repository;
         this.templateRepository = templateRepository;
         this.employeeRepository = employeeRepository;
+        this.organizationRepository = organizationRepository;
         this.languageContext = languageContext;
         this.translationService = translationService;
         this.logger = logger;
@@ -140,6 +143,8 @@ public class QuestionnaireAssignmentQueryHandler :
             })
             .Concat(readModelsList
                 .SelectMany(rm => rm.InReviewNotes.Select(note => (Guid?)note.AuthorEmployeeId)))
+            .Concat(readModelsList.Select(rm => (Guid?)rm.AssignedByUserId))
+            .Concat(readModelsList.Select(rm => (Guid?)rm.EmployeeId))
             .Where(id => id.HasValue)
             .Select(id => id!.Value)
             .Distinct()
@@ -147,13 +152,22 @@ public class QuestionnaireAssignmentQueryHandler :
 
         // Batch fetch employees if there are any to fetch
         var employeeLookup = new Dictionary<Guid, string>();
+        var employeeInfoLookup = new Dictionary<Guid, (string Role, int OrgNumber)>();
         if (employeeIds.Any())
         {
             var employees = await employeeRepository.GetEmployeesAsync(cancellationToken: cancellationToken);
-            employeeLookup = employees
-                .Where(e => employeeIds.Contains(e.Id))
+            var relevantEmployees = employees.Where(e => employeeIds.Contains(e.Id)).ToList();
+            employeeLookup = relevantEmployees
                 .ToDictionary(e => e.Id, e => $"{e.FirstName} {e.LastName}");
+            employeeInfoLookup = relevantEmployees
+                .ToDictionary(e => e.Id, e => (e.Role, e.OrganizationNumber));
         }
+
+        // Build org name lookup keyed by org number
+        var allOrganizations = await organizationRepository.GetAllOrganizationsAsync(cancellationToken: cancellationToken);
+        var orgNameLookup = allOrganizations
+            .Where(o => !string.IsNullOrEmpty(o.Number))
+            .ToDictionary(o => o.Number!, o => o.Name);
 
         // Map and enrich
         return readModelsList.Select(readModel =>
@@ -222,6 +236,18 @@ public class QuestionnaireAssignmentQueryHandler :
                 employeeLookup.TryGetValue(readModel.LastReopenedByEmployeeId.Value, out var lastReopenedByName))
             {
                 assignment.LastReopenedByEmployeeName = lastReopenedByName;
+            }
+
+            if (employeeLookup.TryGetValue(readModel.AssignedByUserId, out var assignedByName))
+            {
+                assignment.AssignedBy = assignedByName;
+            }
+
+            if (employeeInfoLookup.TryGetValue(readModel.EmployeeId, out var employeeInfo))
+            {
+                assignment.EmployeeRole = employeeInfo.Role;
+                orgNameLookup.TryGetValue(employeeInfo.OrgNumber.ToString(), out var orgName);
+                assignment.EmployeeOrganisationName = orgName ?? string.Empty;
             }
 
             // Enrich InReview notes with author names and section titles

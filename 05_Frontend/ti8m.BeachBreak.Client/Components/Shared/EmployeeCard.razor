@@ -9,10 +9,8 @@
      data-employee-id="@Employee.Id"
      title="@($"{Employee.FullName} - {Employee.EMail}")">
 
-    <span class="employee-avatar">@GetEmployeeInitials()</span>
     <div class="employee-info">
         <span class="employee-name">@Employee.FullName</span>
-        <span class="employee-email">@Employee.EMail</span>
         <span class="employee-dept">@Employee.Department • @Employee.Role</span>
         @if (IsCurrent)
         {

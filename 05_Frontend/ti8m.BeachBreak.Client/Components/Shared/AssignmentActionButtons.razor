@@ -3,16 +3,7 @@
 @using ti8m.BeachBreak.Client.Models
 @inherits CategoryOptimizedTranslatableComponent
 
-<div class="d-flex gap-1">
-    @if (ShowViewAction)
-    {
-        <RadzenButton ButtonStyle="ButtonStyle.Light"
-                     Icon="visibility"
-                     Size="ButtonSize.Small"
-                     Title="@T("tooltips.view-details")"
-                     Click="@(() => OnActionClick.InvokeAsync(new AssignmentActionEventArgs { Assignment = Assignment, Action = "view" }))" />
-    }
-
+<div class="template-actions">
     @if (ShowEditAction && CanEdit())
     {
         <RadzenButton ButtonStyle="ButtonStyle.Light"
@@ -33,7 +24,7 @@
 
     @if (ShowCancelAction && CanCancel())
     {
-        <RadzenButton ButtonStyle="ButtonStyle.Warning"
+        <RadzenButton ButtonStyle="ButtonStyle.Light"
                      Icon="cancel"
                      Size="ButtonSize.Small"
                      Title="@T("tooltips.cancel-assignment")"
@@ -44,7 +35,6 @@
 @code {
     [Parameter] public QuestionnaireAssignment Assignment { get; set; } = default!;
     [Parameter] public EventCallback<AssignmentActionEventArgs> OnActionClick { get; set; }
-    [Parameter] public bool ShowViewAction { get; set; } = true;
     [Parameter] public bool ShowEditAction { get; set; } = true;
     [Parameter] public bool ShowReminderAction { get; set; } = true;
     [Parameter] public bool ShowCancelAction { get; set; } = true;
@@ -72,7 +62,7 @@
 
     private bool CanCancel()
     {
-        return Assignment.WorkflowState != WorkflowState.Finalized;
+        return Assignment.WorkflowState == WorkflowState.Assigned;
     }
 
     public class AssignmentActionEventArgs
