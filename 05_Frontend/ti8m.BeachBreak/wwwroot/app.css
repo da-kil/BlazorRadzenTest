@@ -1,3 +1,26 @@
+/* Toast / Notification animations — driven by JS adding .toast-visible */
+.rz-notification-item-wrapper {
+    opacity: 0;
+    transform: translateX(2rem);
+    transition: opacity 300ms ease-out, transform 300ms ease-out;
+}
+
+.rz-notification-item-wrapper.toast-visible {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* Prevent long text (e.g. filenames) from pushing the close button outside the box */
+.rz-notification-message {
+    overflow-wrap: break-word;
+    word-break: break-word;
+    min-width: 0;
+}
+
+.rz-notification-close {
+    flex-shrink: 0;
+}
+
 /* Typography - inherits from shared-variables.css (loaded via App.razor) */
 html, body {
     font-family: var(--font-family-base);
