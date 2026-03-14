@@ -125,6 +125,10 @@
     {
         if (ItemTemplate != null)
         {
+            if (OnItemClick.HasDelegate)
+            {
+                return @<div style="cursor: pointer;" @onclick="@(() => OnItemClick.InvokeAsync(assignment))">@ItemTemplate(assignment)</div>;
+            }
             return ItemTemplate(assignment);
         }
 

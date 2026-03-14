@@ -328,114 +328,23 @@
     private RenderFragment<QuestionnaireAssignment> RenderQuestionnaireCard => assignment => __builder =>
     {
         var isOverdue = IsOverdue(assignment);
+        var stateColor = $"color: {WorkflowStateHelper.GetStateColor(assignment.WorkflowState)};";
 
-        <RadzenCard Class="questionnaire-card mb-3">
-            <div class="d-flex justify-content-between align-items-start">
-                <div class="flex-grow-1">
-                    <!-- Questionnaire Title -->
-                    <div class="d-flex align-items-center gap-2 mb-2">
-                        <RadzenText TextStyle="TextStyle.H6" Class="mb-0 questionnaire-card-title">
-                            @GetTemplateName(assignment)
-                        </RadzenText>
-                    </div>
-
-                    <!-- Workflow State Badge (if not default) -->
-                    @if (assignment.WorkflowState != WorkflowState.Assigned)
-                    {
-                        <div class="mt-2">
-                            <RadzenBadge Text="@T(WorkflowStateHelper.GetStateDisplayName(assignment.WorkflowState))"
-                                        BadgeStyle="BadgeStyle.Light"
-                                        Class="questionnaire-card-workflow-badge"
-                                        Style="@($"background-color: {WorkflowStateHelper.GetStateColor(assignment.WorkflowState)};")" />
-                        </div>
-                    }
-
-                    <!-- Assignment Details Grid -->
-                    <RadzenRow Gap="1rem" Class="mt-2">
-                        <RadzenColumn Size="12" SizeMD="4">
-                            <div class="d-flex align-items-center gap-2">
-                                <RadzenIcon Icon="person" Class="questionnaire-card-meta-icon" />
-                                <div class="questionnaire-card-meta-container">
-                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-0 questionnaire-card-meta-label">
-                                        @T("labels.assigned-by")
-                                    </RadzenText>
-                                    <RadzenText TextStyle="TextStyle.Body2" Class="mb-0 questionnaire-card-meta-value">
-                                        @assignment.AssignedBy
-                                    </RadzenText>
-                                </div>
-                            </div>
-                        </RadzenColumn>
-
-                        @if (assignment.DueDate.HasValue)
-                        {
-                            <RadzenColumn Size="12" SizeMD="4">
-                                <div class="d-flex align-items-center gap-2">
-                                    <RadzenIcon Icon="event" Class="@($"questionnaire-card-meta-icon{(isOverdue ? " questionnaire-card-meta-icon--danger" : "")}")" />
-                                    <div class="questionnaire-card-meta-container">
-                                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-0 questionnaire-card-meta-label">
-                                            @T("labels.due-date")
-                                        </RadzenText>
-                                        <RadzenText TextStyle="TextStyle.Body2" Class="@($"mb-0 questionnaire-card-meta-value{(isOverdue ? " questionnaire-card-meta-value--danger" : "")}")">
-                                            @assignment.DueDate.Value.ToString("MMM dd, yyyy")
-                                            @if (isOverdue)
-                                            {
-                                                <span class="questionnaire-card-overdue-indicator"> (@T("labels.overdue-indicator"))</span>
-                                            }
-                                        </RadzenText>
-                                    </div>
-                                </div>
-                            </RadzenColumn>
-                        }
-                    </RadzenRow>
-                </div>
-
-                <!-- Action Button -->
-                <div class="ms-3">
-                    @if (Configuration.PageType == QuestionnairePageType.Employee)
-                    {
-                        @if (IsQuestionnaireCompleted(assignment))
-                        {
-                            <RadzenButton Text="VIEW"
-                                         Icon="visibility"
-                                         ButtonStyle="ButtonStyle.Success"
-                                         Size="ButtonSize.Medium"
-                                         Class="questionnaire-card-action-button"
-                                         Click="@(() => NavigateToQuestionnaire(assignment))" />
-                        }
-                        else if (WorkflowStateHelper.CanEmployeeEdit(assignment))
-                        {
-                            // Can edit if: Assigned, EmployeeInProgress, BothInProgress, or InReview
-                            var hasProgress = assignment.WorkflowState != WorkflowState.Assigned;
-                            <RadzenButton Text="@(hasProgress ? "CONTINUE" : "START")"
-                                         Icon="@(hasProgress ? "play_circle" : "play_arrow")"
-                                         ButtonStyle="ButtonStyle.Primary"
-                                         Size="ButtonSize.Medium"
-                                         Class="questionnaire-card-action-button"
-                                         Click="@(() => NavigateToQuestionnaire(assignment))" />
-                        }
-                        else
-                        {
-                            // Employee has submitted, waiting for manager or in review confirmation states
-                            <RadzenButton Text="VIEW"
-                                         Icon="visibility"
-                                         ButtonStyle="ButtonStyle.Info"
-                                         Size="ButtonSize.Medium"
-                                         Class="questionnaire-card-action-button"
-                                         Disabled="@(!WorkflowStateHelper.CanEmployeeEdit(assignment))"
-                                         Click="@(() => NavigateToQuestionnaire(assignment))" />
-                        }
-                    }
-                    else
-                    {
-                        <RadzenButton Text="DETAILS"
-                                     Icon="info"
-                                     ButtonStyle="ButtonStyle.Light"
-                                     Size="ButtonSize.Medium"
-                                     Class="questionnaire-card-action-button"
-                                     Click="@(() => ViewAssignmentDetails(assignment))" />
-                    }
-                </div>
-            </div>
+        <RadzenCard Class="questionnaire-card mb-2" Style="padding: 12px 16px;">
+            <span class="fw-medium d-block text-truncate questionnaire-card-title">@GetTemplateName(assignment)</span>
+            <small style="font-size: 0.72rem;">
+                <span style="@stateColor">
+                    @T(WorkflowStateHelper.GetStateDisplayName(assignment.WorkflowState))
+                </span>
+                @if (assignment.DueDate.HasValue)
+                {
+                    <span class="@(isOverdue ? "text-danger fw-bold" : "text-muted")">
+                        @(" · ")
+                        @if (isOverdue) { <text>⚠ </text> }
+                        @assignment.DueDate.Value.ToString("dd MMM yyyy")
+                    </span>
+                }
+            </small>
         </RadzenCard>
     };
 
@@ -1405,7 +1314,7 @@
         NavigationManager.NavigateTo($"/questionnaire/{assignmentId}");
     }
 
-    private void ShowInfo(string message)
+    protected override void ShowInfo(string message)
     {
         // Info notification would be implemented here
         Console.WriteLine($"Info: {message}");

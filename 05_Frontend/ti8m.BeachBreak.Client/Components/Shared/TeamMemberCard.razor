@@ -1,6 +1,8 @@
 @using Radzen
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Services
+@inherits CategoryOptimizedTranslatableComponent
 
 <div class="team-member-item team-member-card-adaptive p-4 mb-3 rounded"
      @onmouseover="@(() => isHovered = true)"
@@ -47,16 +49,21 @@
                 <div class="d-flex align-items-center justify-content-between py-2 px-3 rounded assignment-row assignment-row-adaptive"
                      style="cursor: pointer; margin-bottom: 6px;"
                      @onclick="@(() => OnAssignmentClick.InvokeAsync(assignment.Id))">
-                    <div class="d-flex align-items-center flex-grow-1">
-                        <div class="assignment-status-dot me-2"
-                             style="width: 8px; height: 8px; border-radius: 50%; background-color: @WorkflowStateHelper.GetStateColor(assignment.WorkflowState);"></div>
+                    <div class="d-flex flex-column flex-grow-1 min-width-0">
                         <span class="assignment-name text-truncate">@assignment.TemplateName</span>
-                        @if (assignment.DueDate.HasValue && assignment.DueDate.Value < DateTime.Now && assignment.WorkflowState != WorkflowState.Finalized)
-                        {
-                            <RadzenIcon Icon="warning" Class="text-danger ms-1" Style="font-size: 0.75rem;" title="Overdue" />
-                        }
+                        <small style="font-size: 0.72rem;">
+                            <span style="@GetStateStyle(assignment.WorkflowState)">@T(WorkflowStateHelper.GetStateDisplayName(assignment.WorkflowState))</span>
+                            @if (assignment.DueDate.HasValue)
+                            {
+                                <span class="@GetDueDateClass(assignment)">
+                                    @(" · ")
+                                    @if (assignment.DueDate.Value < DateTime.Now && assignment.WorkflowState != WorkflowState.Finalized) { <text>⚠ </text> }
+                                    @assignment.DueDate.Value.ToString("dd MMM yyyy")
+                                </span>
+                            }
+                        </small>
                     </div>
-                    <div class="d-flex align-items-center gap-1">
+                    <div class="d-flex align-items-center gap-1 flex-shrink-0 ms-2">
                         @if (OnSendReminder.HasDelegate && assignment.WorkflowState != WorkflowState.Finalized)
                         {
                             <RadzenButton Icon="notifications"
@@ -148,6 +155,13 @@
         if (ProgressPercentage >= 50) return BadgeStyle.Info;
         return BadgeStyle.Warning;
     }
+
+    private string GetStateStyle(WorkflowState state) => $"color: {WorkflowStateHelper.GetStateColor(state)}";
+
+    protected override string[] GetRequiredTranslationCategories() => new[]
+    {
+        TranslationCategories.WorkflowStates
+    };
 
     private BadgeStyle GetStatusBadgeStyle(WorkflowState state)
     {
