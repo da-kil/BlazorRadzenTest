@@ -10,4 +10,5 @@ public record InReviewNoteAdded(
     string Content,
     DateTime Timestamp,
     Guid? SectionId,
-    Guid AuthorEmployeeId) : IDomainEvent;
+    Guid AuthorEmployeeId,
+    string? ItemKey = null) : IDomainEvent;

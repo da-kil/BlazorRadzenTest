@@ -206,7 +206,7 @@
     transition: all 0.2s ease;
     position: relative;
     background-color: var(--question-text-alpha-subtle) !important;
-    padding: 1.5rem;
+    padding: 1.5rem 0;
 }
 
 /* Generic question section styles - used by both evaluation and text sections */
@@ -1027,7 +1027,7 @@
     color: white;
     padding: 0.5rem 0.75rem;
     margin: -0.5rem -1rem 1rem -1rem;
-    border-radius: 6px 6px 0 0;
+    border-radius: 0;
     font-size: 0.875rem;
     font-weight: 500;
     display: flex;
@@ -1048,16 +1048,7 @@
 }
 
 .answer-column.has-difference::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -0.25rem;
-    right: -0.25rem;
-    bottom: 0;
-    border: 2px solid var(--rz-warning);
-    border-radius: 8px;
-    opacity: 0.3;
-    pointer-events: none;
+    content: none;
 }
 
 .rating-badge {

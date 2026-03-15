@@ -197,6 +197,7 @@ public class AssignmentsController : BaseController
                 Content = note.Content,
                 Timestamp = note.Timestamp,
                 SectionId = note.SectionId,
+                ItemKey = note.ItemKey,
                 SectionTitle = note.SectionTitle,
                 AuthorEmployeeId = note.AuthorEmployeeId,
                 AuthorName = note.AuthorName

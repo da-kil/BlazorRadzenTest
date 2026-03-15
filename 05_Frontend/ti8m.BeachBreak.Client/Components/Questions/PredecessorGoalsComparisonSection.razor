@@ -26,7 +26,7 @@
         {
             @foreach (var group in predecessorGoalGroups)
             {
-                <div class="predecessor-goal-group mb-4 p-3 border rounded" @key="@group.Key">
+                <div class="predecessor-goal-group mb-4" @key="@group.Key">
                     @RenderPredecessorGoalComparison(group.Key, group.Value)
                 </div>
             }
@@ -125,25 +125,23 @@
         var showBothColumns = IsReviewOrPostReviewState();
         var isManagerUser = IsManagerRole(CurrentUserRole);
 
-        <RadzenRow>
-            <RadzenColumn Size="12" Class="mb-3">
-                <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold">
-                    @originalObjective
-                </RadzenText>
-            </RadzenColumn>
-        </RadzenRow>
+        <div class="mb-3">
+            <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold">
+                @originalObjective
+            </RadzenText>
+        </div>
 
-        <RadzenRow>
-            @* Employee Assessment — shown when in review+ OR current user is an employee *@
-            @if (showBothColumns || !isManagerUser)
-            {
-                <RadzenColumn Size="12" SizeMD="@(showBothColumns ? 6 : 12)">
-                    <RadzenCard Class="h-100 employee-assessment">
-                        <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2 text-primary">
-                            <RadzenIcon Icon="person" Class="me-1" />
-                            Employee Assessment
-                        </RadzenText>
-
+        @if (showBothColumns)
+        {
+            <div class="side-by-side-view">
+                <div class="answer-column employee">
+                    <div class="answer-header">
+                        <span class="answer-label">
+                            <RadzenIcon Icon="person" Style="font-size: 1rem;" />
+                            Employee's Answer
+                        </span>
+                    </div>
+                    <div class="answer-content">
                         @if (employeeRating != null)
                         {
                             @RenderRatingContent(employeeRating, sourceGoalId, "Employee")
@@ -153,29 +151,18 @@
                             <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Size="AlertSize.Small">
                                 <RadzenText TextStyle="TextStyle.Caption">No employee assessment yet</RadzenText>
                             </RadzenAlert>
-                            @if (!IsReadOnly && !isManagerUser)
-                            {
-                                <RadzenButton Text="Provide Assessment"
-                                            Icon="add"
-                                            ButtonStyle="ButtonStyle.Primary"
-                                            Size="ButtonSize.Small"
-                                            Click="@(() => AddNewRating(sourceGoalId, originalObjective, "Employee"))" />
-                            }
                         }
-                    </RadzenCard>
-                </RadzenColumn>
-            }
+                    </div>
+                </div>
 
-            @* Manager Assessment — shown when in review+ OR current user is a manager *@
-            @if (showBothColumns || isManagerUser)
-            {
-                <RadzenColumn Size="12" SizeMD="@(showBothColumns ? 6 : 12)">
-                    <RadzenCard Class="h-100 manager-assessment">
-                        <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2 text-success">
-                            <RadzenIcon Icon="business_center" Class="me-1" />
-                            Manager Assessment
-                        </RadzenText>
-
+                <div class="answer-column manager">
+                    <div class="answer-header">
+                        <span class="answer-label">
+                            <RadzenIcon Icon="supervisor_account" Style="font-size: 1rem;" />
+                            Manager's Answer
+                        </span>
+                    </div>
+                    <div class="answer-content">
                         @if (managerRating != null)
                         {
                             @RenderRatingContent(managerRating, sourceGoalId, "Manager")
@@ -185,19 +172,53 @@
                             <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Size="AlertSize.Small">
                                 <RadzenText TextStyle="TextStyle.Caption">No manager assessment yet</RadzenText>
                             </RadzenAlert>
-                            @if (!IsReadOnly && isManagerUser)
-                            {
-                                <RadzenButton Text="Provide Assessment"
-                                            Icon="add"
-                                            ButtonStyle="ButtonStyle.Secondary"
-                                            Size="ButtonSize.Small"
-                                            Click="@(() => AddNewRating(sourceGoalId, originalObjective, "Manager"))" />
-                            }
                         }
-                    </RadzenCard>
-                </RadzenColumn>
+                    </div>
+                </div>
+            </div>
+        }
+        else if (!isManagerUser)
+        {
+            @if (employeeRating != null)
+            {
+                @RenderRatingContent(employeeRating, sourceGoalId, "Employee")
             }
-        </RadzenRow>
+            else
+            {
+                <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Size="AlertSize.Small">
+                    <RadzenText TextStyle="TextStyle.Caption">No employee assessment yet</RadzenText>
+                </RadzenAlert>
+                @if (!IsReadOnly)
+                {
+                    <RadzenButton Text="Provide Assessment"
+                                Icon="add"
+                                ButtonStyle="ButtonStyle.Primary"
+                                Size="ButtonSize.Small"
+                                Click="@(() => AddNewRating(sourceGoalId, originalObjective, "Employee"))" />
+                }
+            }
+        }
+        else
+        {
+            @if (managerRating != null)
+            {
+                @RenderRatingContent(managerRating, sourceGoalId, "Manager")
+            }
+            else
+            {
+                <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Size="AlertSize.Small">
+                    <RadzenText TextStyle="TextStyle.Caption">No manager assessment yet</RadzenText>
+                </RadzenAlert>
+                @if (!IsReadOnly)
+                {
+                    <RadzenButton Text="Provide Assessment"
+                                Icon="add"
+                                ButtonStyle="ButtonStyle.Secondary"
+                                Size="ButtonSize.Small"
+                                Click="@(() => AddNewRating(sourceGoalId, originalObjective, "Manager"))" />
+                }
+            }
+        }
     };
 
     private RenderFragment RenderRatingContent(PredecessorRatingDto rating, Guid sourceGoalId, string perspective) => __builder =>
@@ -397,17 +418,13 @@
 
 <style>
 
-.predecessor-goals-section .manager-assessment {
-}
-
 .predecessor-goal-group {
-    transition: all 0.2s ease;
-    border-color: var(--border-light, #e2e8f0) !important;
+    border-bottom: 2px solid var(--border-light, #e2e8f0);
+    padding-bottom: 1.5rem;
 }
 
-.predecessor-goal-group:hover {
-    border-color: var(--primary-color, #2563eb) !important;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+.predecessor-goal-group:last-child {
+    border-bottom: none;
 }
 
 .achievement-display, .justification-display {

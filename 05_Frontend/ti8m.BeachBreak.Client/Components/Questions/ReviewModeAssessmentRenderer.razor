@@ -4,6 +4,7 @@
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Components.Questions
 @using ti8m.BeachBreak.Client.Helpers
+@using ti8m.BeachBreak.Client.Components
 
 <div class="rating-scale-info mb-3">
     <RadzenIcon Icon="info" Class="me-2" />
@@ -60,19 +61,6 @@ else
                             ScaleLowLabel="@scaleLowLabel"
                             ScaleHighLabel="@scaleHighLabel" />
                     </div>
-                    <div class="answer-actions">
-                        <RadzenButton Text="Copy to Manager →"
-                                     ButtonStyle="ButtonStyle.Light"
-                                     Icon="content_copy"
-                                     Size="ButtonSize.Small"
-                                     Click="@(() => OnCopyAnswer.InvokeAsync((Question, CompletionRole.Employee, CompletionRole.Manager)))"
-                                     Class="copy-button" />
-                        <RadzenButton Text="Edit"
-                                     ButtonStyle="ButtonStyle.Primary"
-                                     Icon="edit"
-                                     Size="ButtonSize.Small"
-                                     Click="@(() => OnEditAnswer.InvokeAsync((Question, CompletionRole.Employee, evaluation.Key)))" />
-                    </div>
                 </div>
 
                 <!-- Manager Rating -->
@@ -99,31 +87,26 @@ else
                             ScaleLowLabel="@scaleLowLabel"
                             ScaleHighLabel="@scaleHighLabel" />
                     </div>
-                    <div class="answer-actions">
-                        <RadzenButton Text="← Copy to Employee"
-                                     ButtonStyle="ButtonStyle.Light"
-                                     Icon="content_copy"
-                                     Size="ButtonSize.Small"
-                                     Click="@(() => OnCopyAnswer.InvokeAsync((Question, CompletionRole.Manager, CompletionRole.Employee)))"
-                                     Class="copy-button" />
-                        <RadzenButton Text="Edit"
-                                     ButtonStyle="ButtonStyle.Primary"
-                                     Icon="edit"
-                                     Size="ButtonSize.Small"
-                                     Click="@(() => OnEditAnswer.InvokeAsync((Question, CompletionRole.Manager, evaluation.Key)))" />
-                    </div>
                 </div>
             </div>
+            <InReviewNotesPanel Assignment="@Assignment"
+                               CurrentSection="@Question"
+                               ItemKey="@evaluation.Key"
+                               Label="@evaluation.GetLocalizedTitleWithFallback(CurrentLanguage)"
+                               IsInlineMode="true" />
         </div>
     }
+    <InReviewNotesPanel Assignment="@Assignment"
+                       CurrentSection="@Question"
+                       IsInlineMode="true" />
 }
 
 @code {
     [Parameter, EditorRequired] public QuestionSection Question { get; set; } = default!;
     [Parameter, EditorRequired] public QuestionResponse EmployeeResponse { get; set; } = default!;
     [Parameter, EditorRequired] public QuestionResponse ManagerResponse { get; set; } = default!;
-    [Parameter] public EventCallback<(QuestionSection, CompletionRole, string?)> OnEditAnswer { get; set; } // Added evaluation key
-    [Parameter] public EventCallback<(QuestionSection, CompletionRole, CompletionRole)> OnCopyAnswer { get; set; }
+    [Parameter, EditorRequired] public QuestionnaireAssignment Assignment { get; set; } = default!;
+    [Parameter] public Language CurrentLanguage { get; set; } = Language.English;
 
     private List<EvaluationItem> evaluations = new();
     private int ratingScale = 4;

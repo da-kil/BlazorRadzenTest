@@ -28,6 +28,11 @@ public class InReviewNote
     public Guid? SectionId { get; set; }
 
     /// <summary>
+    /// Optional item key to identify a specific evaluation item within a section (e.g. assessment competency key)
+    /// </summary>
+    public string? ItemKey { get; set; }
+
+    /// <summary>
     /// ID of the employee who authored the note
     /// </summary>
     public Guid AuthorEmployeeId { get; set; }

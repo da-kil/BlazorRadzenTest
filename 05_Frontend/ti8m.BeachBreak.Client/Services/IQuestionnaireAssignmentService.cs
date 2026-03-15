@@ -50,7 +50,7 @@ public interface IQuestionnaireAssignmentService
     Task<bool> FinalizeQuestionnaireAsync(Guid assignmentId, string finalizedBy, string? finalNotes);
 
     // InReview note management
-    Task<Result<Guid>> AddInReviewNoteAsync(Guid assignmentId, string content, Guid? sectionId);
+    Task<Result<Guid>> AddInReviewNoteAsync(Guid assignmentId, string content, Guid? sectionId, string? itemKey = null);
     Task<bool> UpdateInReviewNoteAsync(Guid assignmentId, Guid noteId, string content);
     Task<bool> DeleteInReviewNoteAsync(Guid assignmentId, Guid noteId);
 

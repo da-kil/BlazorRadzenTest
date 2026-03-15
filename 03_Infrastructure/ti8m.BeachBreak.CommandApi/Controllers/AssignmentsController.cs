@@ -593,7 +593,8 @@ public class AssignmentsController : BaseController
         var command = new AddInReviewNoteCommand(
             assignmentId,
             noteDto.Content,
-            noteDto.SectionId);
+            noteDto.SectionId,
+            noteDto.ItemKey);
 
         var result = await commandDispatcher.SendAsync(command);
         return CreateResponse(result);

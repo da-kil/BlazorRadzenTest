@@ -492,7 +492,7 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
     }
 
     // InReview note management
-    public async Task<Result<Guid>> AddInReviewNoteAsync(Guid assignmentId, string content, Guid? sectionId)
+    public async Task<Result<Guid>> AddInReviewNoteAsync(Guid assignmentId, string content, Guid? sectionId, string? itemKey = null)
     {
         try
         {
@@ -500,6 +500,7 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
             {
                 Content = content,
                 SectionId = sectionId,
+                ItemKey = itemKey,
             };
 
             var response = await HttpCommandClient.PostAsJsonAsync(

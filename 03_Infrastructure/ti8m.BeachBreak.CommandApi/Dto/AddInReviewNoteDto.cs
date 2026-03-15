@@ -14,4 +14,9 @@ public class AddInReviewNoteDto
     /// Optional section ID for context (null = general note)
     /// </summary>
     public Guid? SectionId { get; set; }
+
+    /// <summary>
+    /// Optional item key to identify a specific evaluation item within a section (e.g. assessment competency key)
+    /// </summary>
+    public string? ItemKey { get; set; }
 }

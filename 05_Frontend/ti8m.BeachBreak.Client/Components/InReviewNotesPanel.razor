@@ -6,37 +6,59 @@
 @inherits CategoryOptimizedTranslatableComponent
 @inject IQuestionnaireAssignmentService AssignmentService
 
-<div class="inreview-notes-panel">
+<div class="inreview-notes-panel @(IsInlineMode ? "inreview-notes-panel--inline" : "")">
     <RadzenStack Gap="1rem">
-        <!-- Header with collapse toggle -->
-        <div class="notes-header notes-header-clickable" @onclick="ToggleCollapsed">
-            <RadzenStack Orientation="Orientation.Horizontal"
-                       AlignItems="AlignItems.Center"
-                       JustifyContent="JustifyContent.SpaceBetween">
+        @if (!IsInlineMode)
+        {
+            <!-- Header with collapse toggle -->
+            <div class="notes-header notes-header-clickable" @onclick="ToggleCollapsed">
+                <RadzenStack Orientation="Orientation.Horizontal"
+                           AlignItems="AlignItems.Center"
+                           JustifyContent="JustifyContent.SpaceBetween">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <RadzenIcon Icon="comment" />
+                        <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold">
+                            @T("sections.discussion-notes")
+                        </RadzenText>
+                        @if (!IsCollapsed && Assignment.InReviewNotes.Any())
+                        {
+                            <RadzenBadge BadgeStyle="BadgeStyle.Info"
+                                       Text="@Assignment.InReviewNotes.Count.ToString()" />
+                        }
+                    </RadzenStack>
+                    <RadzenIcon Icon="@(IsCollapsed ? "expand_more" : "expand_less")" />
+                </RadzenStack>
+            </div>
+        }
+        else
+        {
+            <!-- Inline mode: always-visible label with note count badge -->
+            <div class="inline-notes-header">
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                    <RadzenIcon Icon="comment" />
-                    <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold">
-                        @T("sections.discussion-notes")
-                    </RadzenText>
-                    @if (!IsCollapsed && Assignment.InReviewNotes.Any())
+                    <RadzenIcon Icon="comment" Style="font-size: 0.9rem;" />
+                    <span class="inline-notes-label">@(Label ?? T("sections.discussion-notes"))</span>
+                    @if (DisplayedNotes.Any())
                     {
                         <RadzenBadge BadgeStyle="BadgeStyle.Info"
-                                   Text="@Assignment.InReviewNotes.Count.ToString()" />
+                                   Text="@DisplayedNotes.Count.ToString()"
+                                   Style="font-size: 0.75rem;" />
                     }
                 </RadzenStack>
-                <RadzenIcon Icon="@(IsCollapsed ? "expand_more" : "expand_less")" />
-            </RadzenStack>
-        </div>
+            </div>
+        }
 
-        <!-- Content (collapsible) -->
+        <!-- Content (collapsible in normal mode, always visible in inline mode) -->
         @if (!IsCollapsed)
         {
-            <!-- Current section context -->
-            <div class="section-context">
-                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
-                    @T("labels.current-section"): <strong>@CurrentSectionTitle</strong>
-                </RadzenText>
-            </div>
+            @if (!IsInlineMode)
+            {
+                <!-- Current section context (non-inline only) -->
+                <div class="section-context">
+                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                        @T("labels.current-section"): <strong>@CurrentSectionTitle</strong>
+                    </RadzenText>
+                </div>
+            }
 
             <!-- Note input -->
             <RadzenStack Gap="0.5rem" Class="note-input-container">
@@ -55,9 +77,12 @@
                         </RadzenText>
 
                         <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
-                            <RadzenCheckBox @bind-Value="@isGeneralNote"
-                                          Name="generalNote" />
-                            <RadzenLabel Text="@T("sections.general-notes")" Component="generalNote" />
+                            @if (!IsInlineMode)
+                            {
+                                <RadzenCheckBox @bind-Value="@isGeneralNote"
+                                              Name="generalNote" />
+                                <RadzenLabel Text="@T("sections.general-notes")" Component="generalNote" />
+                            }
 
                             <RadzenButton Text="@T("buttons.add-note")"
                                         ButtonStyle="ButtonStyle.Primary"
@@ -70,9 +95,10 @@
             </RadzenStack>
 
             <!-- Existing notes list -->
-            <InReviewNotesList Notes="@Assignment.InReviewNotes"
+            <InReviewNotesList Notes="@DisplayedNotes"
                              AssignmentId="@Assignment.Id"
                              CurrentSection="@CurrentSection"
+                             IsInlineMode="@IsInlineMode"
                              OnNoteUpdated="@OnNoteUpdated"
                              OnNoteDeleted="@OnNoteDeleted" />
         }
@@ -96,8 +122,11 @@
     [Parameter, EditorRequired] public QuestionnaireAssignment Assignment { get; set; } = null!;
     [Parameter] public QuestionSection? CurrentSection { get; set; }
     [Parameter] public EventCallback OnNotesChanged { get; set; }
+    [Parameter] public bool IsInlineMode { get; set; } = false;
+    [Parameter] public string? ItemKey { get; set; }
+    [Parameter] public string? Label { get; set; }
 
-    private bool IsCollapsed { get; set; } = true; // Start collapsed
+    private bool IsCollapsed { get; set; } = true;
     private string newNoteContent = string.Empty;
     private bool isGeneralNote = false;
     private bool isSaving = false;
@@ -105,14 +134,18 @@
     private string CurrentSectionTitle => isGeneralNote ? T("sections.general-notes") :
         (CurrentSection?.GetLocalizedTitleWithFallback(CurrentLanguage) ?? T("sections.general-notes"));
 
+    private List<InReviewNote> DisplayedNotes => IsInlineMode
+        ? Assignment.InReviewNotes.Where(n => n.SectionId == CurrentSection?.Id && n.ItemKey == ItemKey).ToList()
+        : Assignment.InReviewNotes;
+
+    protected override void OnInitialized()
+    {
+        IsCollapsed = !IsInlineMode;
+        base.OnInitialized();
+    }
+
     protected override async Task OnParametersSetAsync()
     {
-        // Auto-expand if this is the first note and panel is collapsed
-        if (IsCollapsed && !Assignment.InReviewNotes.Any() && CurrentSection != null)
-        {
-            // Don't auto-expand - let user choose when to open
-        }
-
         await base.OnParametersSetAsync();
     }
 
@@ -140,11 +173,13 @@
             StateHasChanged();
 
             var sectionId = isGeneralNote ? null : CurrentSection?.Id;
+            var itemKey = IsInlineMode ? ItemKey : null;
 
             var result = await AssignmentService.AddInReviewNoteAsync(
                 Assignment.Id,
                 newNoteContent.Trim(),
-                sectionId);
+                sectionId,
+                itemKey);
 
             if (result.Succeeded)
             {
@@ -155,6 +190,7 @@
                     Content = newNoteContent.Trim(),
                     Timestamp = DateTime.Now,
                     SectionId = sectionId,
+                    ItemKey = itemKey,
                     SectionTitle = isGeneralNote ? T("sections.general-notes") :
                         (CurrentSection?.GetLocalizedTitleWithFallback(CurrentLanguage) ?? T("sections.general-notes"))
                 });

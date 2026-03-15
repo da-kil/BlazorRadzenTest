@@ -43,7 +43,8 @@ public class AddInReviewNoteCommandHandler
             var noteId = assignment.AddInReviewNote(
                 command.Content,
                 command.SectionId,
-                authorEmployeeId);
+                authorEmployeeId,
+                command.ItemKey);
 
             await repository.StoreAsync(assignment, cancellationToken);
 

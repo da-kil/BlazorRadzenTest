@@ -356,6 +356,7 @@ public class QuestionnaireAssignmentQueryHandler :
                 Content = note.Content,
                 Timestamp = note.Timestamp,
                 SectionId = note.SectionId,
+                ItemKey = note.ItemKey,
                 SectionTitle = string.Empty, // Will be enriched later
                 AuthorEmployeeId = note.AuthorEmployeeId,
                 AuthorName = string.Empty // Will be enriched later

@@ -7,15 +7,12 @@
 @using ti8m.BeachBreak.Client.Components.Questions
 @using ti8m.BeachBreak.Client.Components.Dialogs
 @using ti8m.BeachBreak.Client.Layout
-@using Microsoft.AspNetCore.Components.Authorization
 @using ti8m.BeachBreak.Client.Extensions
 @using ti8m.BeachBreak.Client.Components.Shared
 @inherits CategoryOptimizedTranslatableComponent
 @inject IQuestionnaireTemplateService TemplateService
 @inject IQuestionnaireResponseService ResponseService
 @inject IQuestionnaireAssignmentService AssignmentService
-@inject DialogService DialogService
-@inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IAuthService AuthService
 @inject NavigationManager NavigationManager
 
@@ -129,8 +126,8 @@ else
                                     <ReviewModeAssessmentRenderer Question="@currentSection"
                                                                   EmployeeResponse="@employeeResponse"
                                                                   ManagerResponse="@managerResponse"
-                                                                  OnEditAnswer="@((args) => EditAnswer(args.Item1, args.Item2, args.Item3))"
-                                                                  OnCopyAnswer="@((args) => CopyAnswer(args.Item1, args.Item2, args.Item3))" />
+                                                                  Assignment="@Assignment"
+                                                                  CurrentLanguage="@CurrentLanguage" />
                                 }
                                 else if (currentSection.CompletionRole == CompletionRole.Both && currentSection.Type != QuestionType.Goal)
                                 {
@@ -161,19 +158,6 @@ else
                                                                                    GoalRefreshToken="@goalRefreshToken" />
                                                     </div>
                                                 </div>
-                                                <div class="answer-actions">
-                                                    <RadzenButton Text="@T("buttons.copy-to-manager")"
-                                                                  ButtonStyle="ButtonStyle.Light"
-                                                                  Icon="content_copy"
-                                                                  Size="ButtonSize.Small"
-                                                                  Click="@(() => CopyAnswer(currentSection, CompletionRole.Employee, CompletionRole.Manager))"
-                                                                  Class="copy-button" />
-                                                    <RadzenButton Text="@T("buttons.edit")"
-                                                                  ButtonStyle="ButtonStyle.Primary"
-                                                                  Icon="edit"
-                                                                  Size="ButtonSize.Small"
-                                                                  Click="@(() => EditAnswer(currentSection, CompletionRole.Employee))" />
-                                                </div>
                                             </div>
 
                                             <!-- Manager Answer -->
@@ -199,21 +183,15 @@ else
                                                                                    GoalRefreshToken="@goalRefreshToken" />
                                                     </div>
                                                 </div>
-                                                <div class="answer-actions">
-                                                    <RadzenButton Text="@T("buttons.copy-to-employee")"
-                                                                  ButtonStyle="ButtonStyle.Light"
-                                                                  Icon="content_copy"
-                                                                  Size="ButtonSize.Small"
-                                                                  Click="@(() => CopyAnswer(currentSection, CompletionRole.Manager, CompletionRole.Employee))"
-                                                                  Class="copy-button" />
-                                                    <RadzenButton Text="@T("buttons.edit")"
-                                                                  ButtonStyle="ButtonStyle.Primary"
-                                                                  Icon="edit"
-                                                                  Size="ButtonSize.Small"
-                                                                  Click="@(() => EditAnswer(currentSection, CompletionRole.Manager))" />
-                                                </div>
                                             </div>
                                         </div>
+                                        @if (Assignment.WorkflowState == WorkflowState.InReview)
+                                        {
+                                            <InReviewNotesPanel Assignment="@Assignment"
+                                                               CurrentSection="@currentSection"
+                                                               IsInlineMode="true"
+                                                               OnNotesChanged="@OnNotesUpdated" />
+                                        }
                                     </div>
                                 }
                                 else if (currentSection.CompletionRole == CompletionRole.Both && currentSection.Type == QuestionType.Goal)
@@ -275,13 +253,13 @@ else
                                                                            GoalRefreshToken="@goalRefreshToken" />
                                             </div>
                                         </div>
-                                        <div class="answer-actions">
-                                            <RadzenButton Text="@T("buttons.edit-answer")"
-                                                          ButtonStyle="ButtonStyle.Primary"
-                                                          Icon="edit"
-                                                          Size="ButtonSize.Medium"
-                                                          Click="@(() => EditAnswer(currentSection, currentSection.CompletionRole))" />
-                                        </div>
+                                        @if (Assignment.WorkflowState == WorkflowState.InReview)
+                                        {
+                                            <InReviewNotesPanel Assignment="@Assignment"
+                                                               CurrentSection="@currentSection"
+                                                               IsInlineMode="true"
+                                                               OnNotesChanged="@OnNotesUpdated" />
+                                        }
                                     </div>
                                 }
                             </div>
@@ -290,13 +268,6 @@ else
                 }
             </div>
 
-            <!-- InReview Notes Panel -->
-            @if (Assignment.WorkflowState == WorkflowState.InReview && HasManagerPrivileges)
-            {
-                <InReviewNotesPanel Assignment="@Assignment"
-                                   CurrentSection="@currentSection"
-                                   OnNotesChanged="@OnNotesUpdated" />
-            }
         </ChildContent>
     </PageLayout>
 }
@@ -330,8 +301,6 @@ else
     private QuestionnaireResponse? response;
     private int currentSectionIndex = 0;
     private bool isLoading = true;
-    private string currentManagerName = string.Empty;
-
     // Token to trigger goal component refresh after assignment response reload
     private int goalRefreshToken = 0;
 
@@ -349,10 +318,6 @@ else
         try
         {
             isLoading = true;
-
-            // Get current manager name
-            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-            currentManagerName = authState.User.Identity?.Name ?? "Unknown Manager";
 
             // Load template
             template = await TemplateService.GetTemplateByIdAsync(Assignment.TemplateId);
@@ -449,123 +414,6 @@ else
     {
         var sectionResponse = GetSectionResponse(sectionId, role);
         return sectionResponse.ResponseData;
-    }
-
-    private async Task EditAnswer(QuestionSection section, CompletionRole originalRole, string? evaluationKey = null)
-    {
-        var currentAnswer = GetAnswer(section.Id, originalRole);
-
-        var parameters = new Dictionary<string, object>
-        {
-            { "Question", section },
-            { "CurrentAnswer", currentAnswer },
-            { "CompletionRole", originalRole },
-            { "SectionTitle", section.GetLocalizedTitleWithFallback(CurrentLanguage) },
-            { "AssignmentId", Assignment.Id },
-            { "CurrentUserRole", GetRoleForDialog(originalRole) },
-            { "AssignmentWorkflowState", Assignment.WorkflowState }
-        };
-
-        // Add EvaluationKey if editing a specific evaluation
-        if (!string.IsNullOrEmpty(evaluationKey))
-        {
-            parameters.Add("EvaluationKey", evaluationKey);
-        }
-
-        var result = await DialogService.OpenAsync<EditAnswerDialog>(
-            $"{T("buttons.edit-answer")}: {section.GetLocalizedTitleWithFallback(CurrentLanguage)}",
-            parameters,
-            new DialogOptions { Width = "900px", Height = "600px", Resizable = true, Draggable = true }
-        );
-
-        if (result is QuestionResponse questionResponse)
-        {
-            await SaveEditedAnswer(section.Id, originalRole, questionResponse);
-        }
-    }
-
-    private async Task SaveEditedAnswer(Guid sectionId, CompletionRole originalRole, QuestionResponse questionResponse)
-    {
-        try
-        {
-            // NOTE: questionResponse.QuestionId IS the sectionId (Section IS the question)
-            // Validate ResponseData before serialization
-            if (questionResponse.ResponseData == null)
-            {
-                NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), T("messages.failed-to-save-answer"));
-                return;
-            }
-
-            // Serialize only the ResponseData (QuestionResponseDataDto) to JSON
-            var jsonOptions = new System.Text.Json.JsonSerializerOptions
-            {
-                PropertyNamingPolicy = null, // PascalCase
-                PropertyNameCaseInsensitive = false,
-                Converters = { new ti8m.BeachBreak.Client.Converters.QuestionResponseDataDtoJsonConverter() }
-            };
-
-            string answerJson = System.Text.Json.JsonSerializer.Serialize(questionResponse.ResponseData, jsonOptions);
-
-            var success = await AssignmentService.EditAnswerDuringReviewAsync(
-                Assignment.Id,
-                sectionId,
-                questionResponse.QuestionId,  // This is the section ID
-                originalRole,
-                answerJson,
-                currentManagerName
-            );
-
-            if (success)
-            {
-                NotificationService.Notify(NotificationSeverity.Success, T("notifications.saved"), T("messages.answer-updated-successfully"));
-
-                // Reload response to show updated answer
-                await LoadReviewData();
-
-                // After assignment response reload, refresh any goal components to prevent stale data
-                await RefreshGoalComponents();
-
-                StateHasChanged();
-            }
-            else
-            {
-                NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), T("messages.failed-to-save-answer"));
-            }
-        }
-        catch (Exception ex)
-        {
-            NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), string.Format(T("messages.failed-to-save-answer-details"), ex.Message));
-        }
-    }
-
-    private async Task CopyAnswer(QuestionSection section, CompletionRole fromRole, CompletionRole toRole)
-    {
-        var sourceAnswer = GetAnswer(section.Id, fromRole);
-        if (sourceAnswer == null)
-        {
-            NotificationService.Notify(NotificationSeverity.Warning, T("notifications.nothing-to-copy"), T("messages.source-answer-is-empty"));
-            return;
-        }
-
-        var confirmed = await DialogService.Confirm(
-            string.Format(T("messages.confirm-copy-answer"), fromRole, toRole),
-            T("dialogs.confirm-copy"),
-            new ConfirmOptions { OkButtonText = T("buttons.yes-copy"), CancelButtonText = T("buttons.cancel") }
-        );
-
-        if (confirmed == true)
-        {
-            // Build QuestionResponse from source answer
-            var questionResponse = new QuestionResponse
-            {
-                QuestionId = section.Id,  // Section ID is the question ID
-                QuestionType = section.Type,
-                LastModified = DateTime.Now,
-                ResponseData = sourceAnswer as QuestionResponseDataDto
-            };
-
-            await SaveEditedAnswer(section.Id, fromRole, questionResponse);
-        }
     }
 
     private void PreviousSection()
@@ -670,13 +518,6 @@ else
         }
     }
 
-
-    private ApplicationRole GetRoleForDialog(CompletionRole originalRole)
-    {
-        // When editing Employee's Answer, always pass ApplicationRole.Employee
-        // When editing Manager's Answer, pass the current user's actual role
-        return originalRole == CompletionRole.Employee ? ApplicationRole.Employee : currentUserRole;
-    }
 
     private bool IsManagerRole(ApplicationRole role)
     {

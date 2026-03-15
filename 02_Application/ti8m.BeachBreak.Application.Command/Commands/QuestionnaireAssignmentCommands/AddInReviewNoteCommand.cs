@@ -6,5 +6,6 @@ namespace ti8m.BeachBreak.Application.Command.Commands.QuestionnaireAssignmentCo
 public record AddInReviewNoteCommand(
     Guid AssignmentId,
     string Content,
-    Guid? SectionId
+    Guid? SectionId,
+    string? ItemKey = null
 ) : ICommand<Result<Guid>>;

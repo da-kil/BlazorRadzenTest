@@ -26,6 +26,11 @@ public class InReviewNote
     public Guid? SectionId { get; set; }
 
     /// <summary>
+    /// Optional item key to identify a specific evaluation item within a section (e.g. assessment competency key)
+    /// </summary>
+    public string? ItemKey { get; set; }
+
+    /// <summary>
     /// Section title for display purposes
     /// </summary>
     public string SectionTitle { get; set; } = "General";

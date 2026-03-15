@@ -370,6 +370,7 @@ public class QuestionnaireAssignmentReadModel
             Content = @event.Content,
             Timestamp = @event.Timestamp,
             SectionId = @event.SectionId,
+            ItemKey = @event.ItemKey,
             AuthorEmployeeId = @event.AuthorEmployeeId
         });
     }

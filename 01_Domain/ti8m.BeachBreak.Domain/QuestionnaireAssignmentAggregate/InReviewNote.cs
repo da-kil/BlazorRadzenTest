@@ -28,6 +28,11 @@ public class InReviewNote : ValueObject
     public Guid? SectionId { get; }
 
     /// <summary>
+    /// Optional item key to identify a specific evaluation item within a section (e.g. assessment competency key)
+    /// </summary>
+    public string? ItemKey { get; }
+
+    /// <summary>
     /// ID of the employee who authored the note
     /// </summary>
     public Guid AuthorEmployeeId { get; }
@@ -40,7 +45,8 @@ public class InReviewNote : ValueObject
         string content,
         DateTime timestamp,
         Guid? sectionId,
-        Guid authorEmployeeId)
+        Guid authorEmployeeId,
+        string? itemKey = null)
     {
         if (string.IsNullOrWhiteSpace(content))
             throw new ArgumentException("Note content cannot be empty", nameof(content));
@@ -53,6 +59,7 @@ public class InReviewNote : ValueObject
         Timestamp = timestamp;
         SectionId = sectionId;
         AuthorEmployeeId = authorEmployeeId;
+        ItemKey = itemKey;
     }
 
 
@@ -65,6 +72,7 @@ public class InReviewNote : ValueObject
         yield return Content;
         yield return Timestamp;
         yield return SectionId;
+        yield return ItemKey;
         yield return AuthorEmployeeId;
     }
 }

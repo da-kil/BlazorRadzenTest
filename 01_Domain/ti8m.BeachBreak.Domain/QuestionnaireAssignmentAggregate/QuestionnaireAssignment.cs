@@ -622,7 +622,8 @@ public partial class QuestionnaireAssignment : AggregateRoot
     public Guid AddInReviewNote(
         string content,
         Guid? sectionId,
-        Guid authorEmployeeId)
+        Guid authorEmployeeId,
+        string? itemKey = null)
     {
         if (WorkflowState != WorkflowState.InReview)
             throw new InvalidOperationException("Notes can only be added during InReview state");
@@ -639,7 +640,8 @@ public partial class QuestionnaireAssignment : AggregateRoot
             content.Trim(),
             DateTime.UtcNow,
             sectionId,
-            authorEmployeeId
+            authorEmployeeId,
+            itemKey
         ));
 
         return noteId;
@@ -1009,7 +1011,8 @@ public partial class QuestionnaireAssignment : AggregateRoot
             @event.Content,
             @event.Timestamp,
             @event.SectionId,
-            @event.AuthorEmployeeId
+            @event.AuthorEmployeeId,
+            @event.ItemKey
         ));
     }
 
@@ -1025,7 +1028,8 @@ public partial class QuestionnaireAssignment : AggregateRoot
                 @event.Content,
                 @event.UpdatedAt,
                 note.SectionId,
-                note.AuthorEmployeeId
+                note.AuthorEmployeeId,
+                note.ItemKey
             ));
         }
     }
