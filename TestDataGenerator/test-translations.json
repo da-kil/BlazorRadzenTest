@@ -231,6 +231,34 @@
         "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
     },
     {
+        "key":  "buttons.view",
+        "german":  "Ansehen",
+        "english":  "View",
+        "category":  "buttons",
+        "createdDate":  "2026-03-13T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "buttons.start",
+        "german":  "Starten",
+        "english":  "Start",
+        "category":  "buttons",
+        "createdDate":  "2026-03-13T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "buttons.continue",
+        "german":  "Fortfahren",
+        "english":  "Continue",
+        "category":  "buttons",
+        "createdDate":  "2026-03-13T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "buttons.details",
+        "german":  "Details",
+        "english":  "Details",
+        "category":  "buttons",
+        "createdDate":  "2026-03-13T00:00:00.0000000+00:00"
+    },
+    {
         "key":  "buttons.cancel-assignment",
         "german":  "Zuweisung stornieren",
         "english":  "Cancel Assignment",
@@ -7418,5 +7446,348 @@
         "english": "Summary",
         "category": "steps",
         "createdDate": "2026-03-12T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "buttons.export-pdf",
+        "german": "PDF exportieren",
+        "english": "Export PDF",
+        "category": "buttons",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "buttons.exporting-pdf",
+        "german": "Wird exportiert...",
+        "english": "Exporting...",
+        "category": "buttons",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "buttons.export-finalized-pdfs",
+        "german": "Abgeschlossene als PDF exportieren",
+        "english": "Export Finalized as PDF",
+        "category": "buttons",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "notifications.pdf-export-success",
+        "german": "PDF erfolgreich exportiert",
+        "english": "PDF exported successfully",
+        "category": "notifications",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "notifications.pdf-export-failed",
+        "german": "PDF-Export fehlgeschlagen",
+        "english": "PDF export failed",
+        "category": "notifications",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "notifications.bulk-pdf-export-success",
+        "german": "PDFs als ZIP exportiert",
+        "english": "PDFs exported as ZIP",
+        "category": "notifications",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "notifications.bulk-pdf-export-failed",
+        "german": "Massen-PDF-Export fehlgeschlagen",
+        "english": "Bulk PDF export failed",
+        "category": "notifications",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.no-finalized-assignments",
+        "german": "Keine abgeschlossenen Aufgaben zum Exportieren",
+        "english": "No finalized assignments to export",
+        "category": "messages",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "dialogs.export-pdf-language",
+        "german": "PDF-Sprache w\u00e4hlen",
+        "english": "Select PDF Language",
+        "category": "dialogs",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pdf.assignment-details",
+        "german": "Aufgabendetails",
+        "english": "Assignment Details",
+        "category": "pdf",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pdf.manager",
+        "german": "Vorgesetzte/r",
+        "english": "Manager",
+        "category": "pdf",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pdf.email",
+        "german": "E-Mail",
+        "english": "Email",
+        "category": "pdf",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pdf.role",
+        "german": "Rolle",
+        "english": "Role",
+        "category": "pdf",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pdf.organisation",
+        "german": "Organisation",
+        "english": "Organisation",
+        "category": "pdf",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pdf.assigned",
+        "german": "Zugewiesen",
+        "english": "Assigned",
+        "category": "pdf",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pdf.due",
+        "german": "Fällig",
+        "english": "Due",
+        "category": "pdf",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pdf.finalized",
+        "german": "Abgeschlossen",
+        "english": "Finalized",
+        "category": "pdf",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pdf.finalized-by",
+        "german": "Abgeschlossen von",
+        "english": "Finalized By",
+        "category": "pdf",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pdf.generated-prefix",
+        "german": "Erstellt: ",
+        "english": "Generated: ",
+        "category": "pdf",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pdf.scale-prefix",
+        "german": "Skala: ",
+        "english": "Scale: ",
+        "category": "pdf",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pdf.competency",
+        "german": "Kompetenz",
+        "english": "Competency",
+        "category": "pdf",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pdf.employee-abbr",
+        "german": "MA",
+        "english": "Emp.",
+        "category": "pdf",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pdf.manager-abbr",
+        "german": "VM",
+        "english": "Mgr.",
+        "category": "pdf",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pdf.employee-comment",
+        "german": "MA-Kommentar",
+        "english": "Emp. Comment",
+        "category": "pdf",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pdf.manager-comment",
+        "german": "VM-Kommentar",
+        "english": "Mgr. Comment",
+        "category": "pdf",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pdf.no-assessment-items",
+        "german": "Keine Bewertungskriterien definiert.",
+        "english": "No assessment items defined.",
+        "category": "pdf",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pdf.no-responses",
+        "german": "Keine Antworten erfasst.",
+        "english": "No responses recorded.",
+        "category": "pdf",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pdf.employee-label",
+        "german": "Mitarbeiter/in:",
+        "english": "Employee:",
+        "category": "pdf",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pdf.manager-label",
+        "german": "Vorgesetzte/r:",
+        "english": "Manager:",
+        "category": "pdf",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pdf.current-goals",
+        "german": "Aktuelle Ziele",
+        "english": "Current Goals",
+        "category": "pdf",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pdf.no-goals",
+        "german": "Keine Ziele definiert.",
+        "english": "No goals defined.",
+        "category": "pdf",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pdf.objective",
+        "german": "Ziel",
+        "english": "Objective",
+        "category": "pdf",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pdf.from",
+        "german": "Von",
+        "english": "From",
+        "category": "pdf",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pdf.to",
+        "german": "Bis",
+        "english": "To",
+        "category": "pdf",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pdf.weight",
+        "german": "Gewichtung",
+        "english": "Weight",
+        "category": "pdf",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pdf.added-by",
+        "german": "Hinzugefügt von",
+        "english": "Added By",
+        "category": "pdf",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pdf.predecessor-ratings",
+        "german": "Vorgänger-Bewertungen",
+        "english": "Predecessor Ratings",
+        "category": "pdf",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pdf.degree-of-achievement",
+        "german": "ZE",
+        "english": "DoA",
+        "category": "pdf",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pdf.justification",
+        "german": "Begründung",
+        "english": "Justification",
+        "category": "pdf",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pdf.rated-by",
+        "german": "Bewertet von",
+        "english": "Rated By",
+        "category": "pdf",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pdf.in-review-notes",
+        "german": "Überprüfungsnotizen",
+        "english": "In-Review Notes",
+        "category": "pdf",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pdf.section-prefix",
+        "german": "Abschnitt: ",
+        "english": "Section: ",
+        "category": "pdf",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pdf.review-summary",
+        "german": "Überprüfungszusammenfassung",
+        "english": "Review Summary",
+        "category": "pdf",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pdf.manager-final-notes",
+        "german": "Endnotizen des Vorgesetzten",
+        "english": "Manager Final Notes",
+        "category": "pdf",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pdf.sign-off",
+        "german": "Abschlussbestätigung",
+        "english": "Sign-Off",
+        "category": "pdf",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pdf.employee",
+        "german": "Mitarbeiter/in",
+        "english": "Employee",
+        "category": "pdf",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pdf.name",
+        "german": "Name:",
+        "english": "Name:",
+        "category": "pdf",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pdf.date",
+        "german": "Datum:",
+        "english": "Date:",
+        "category": "pdf",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pdf.signature",
+        "german": "Unterschrift:",
+        "english": "Signature:",
+        "category": "pdf",
+        "createdDate": "2026-03-14T12:00:00.0000000+01:00"
     }
 ]

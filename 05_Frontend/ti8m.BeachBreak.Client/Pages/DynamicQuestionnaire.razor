@@ -25,6 +25,7 @@
 @inject GoalService GoalService
 @inject IJSRuntime JSRuntime
 @inject IAuthService AuthService
+@inject ti8m.BeachBreak.Client.Services.Exports.IPdfExportApiService PdfExportService
 @inherits CategoryOptimizedTranslatableComponent
 
 
@@ -132,6 +133,16 @@ else
                                 <span> @T("messages.no-further-changes-allowed")</span>
                             </RadzenText>
                         </RadzenAlert>
+                        <div class="d-flex justify-content-end mt-2 mb-3">
+                            <RadzenSplitButton Text="@(isExportingPdf ? T("buttons.exporting-pdf") : T("buttons.export-pdf"))"
+                                          Icon="@(isExportingPdf ? "hourglass_empty" : "picture_as_pdf")"
+                                          ButtonStyle="ButtonStyle.Primary"
+                                          Disabled="@isExportingPdf"
+                                          Click="@OnExportPdf">
+                                <RadzenSplitButtonItem Text="@T("language.english")" Value="en" Icon="language" />
+                                <RadzenSplitButtonItem Text="@T("language.german")" Value="de" Icon="language" />
+                            </RadzenSplitButton>
+                        </div>
                     }
                     else if (assignment?.WorkflowState == WorkflowState.ReviewFinished)
                     {
@@ -268,7 +279,8 @@ else
             TranslationCategories.Status,
             TranslationCategories.WorkflowStates,
             TranslationCategories.Roles,
-            TranslationCategories.Warnings
+            TranslationCategories.Warnings,
+            TranslationCategories.Language
         };
     }
 
@@ -277,6 +289,27 @@ else
 
     private Guid? assignmentId;
     private QuestionnaireAssignment? assignment;
+    private bool isExportingPdf;
+
+    private async Task OnExportPdf(RadzenSplitButtonItem item)
+    {
+        var language = item?.Value == "de" ? PdfLanguage.German
+            : item?.Value == "en" ? PdfLanguage.English
+            : (PdfLanguage)CurrentLanguage;
+        await ExportPdfWithLanguage(language);
+    }
+
+    private async Task ExportPdfWithLanguage(PdfLanguage language)
+    {
+        isExportingPdf = true;
+        var employeeName = !string.IsNullOrEmpty(assignment!.EmployeeName) ? assignment.EmployeeName : currentUserName;
+        var fileName = $"{employeeName}_{assignment.TemplateName}_{DateTime.Now:yyyy-MM-dd}.pdf".Replace(" ", "_");
+        var success = await PdfExportService.ExportSinglePdfAsync(assignment!.Id, fileName, language);
+        isExportingPdf = false;
+        if (success) ShowSuccess(T("notifications.pdf-export-success"));
+        else ShowWarning(T("notifications.pdf-export-failed"));
+    }
+
     private QuestionnaireTemplate? template;
     private QuestionnaireResponse response = new();
     private int currentSectionIndex = 0;

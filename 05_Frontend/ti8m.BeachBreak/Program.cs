@@ -435,6 +435,7 @@ public class Program
 
         // Register export services
         builder.Services.AddScoped<IQuestionnaireReportExporter, QuestionnaireReportExporter>();
+        builder.Services.AddScoped<IPdfExportApiService, PdfExportApiService>();
 
         // Register question type handlers (Strategy Pattern)
         builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.QuestionHandlers.AssessmentQuestionHandler>();

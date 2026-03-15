@@ -5,7 +5,6 @@
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components.Shared
-@using ti8m.BeachBreak.Client.Components.Dialogs
 @using ti8m.BeachBreak.Client.Layout
 @using ti8m.BeachBreak.Client.Models.Reports
 @using ti8m.BeachBreak.Client.Services.Exports
@@ -16,6 +15,7 @@
 @inject IQuestionnaireTemplateService TemplateService
 @inject IQuestionnaireReportExporter ReportExporter
 @inject IUITranslationService TranslationService
+@inject ti8m.BeachBreak.Client.Services.Exports.IPdfExportApiService PdfExportService
 
 <PageTitle>@T("pages.organization-questionnaires")</PageTitle>
 
@@ -36,6 +36,15 @@
 							 Size="ButtonSize.Medium" />
 			}
 		}
+		<RadzenSplitButton Text="@(isExportingBulkPdf ? T("buttons.exporting-pdf") : T("buttons.export-finalized-pdfs"))"
+					 Icon="@(isExportingBulkPdf ? "hourglass_empty" : "picture_as_pdf")"
+					 ButtonStyle="ButtonStyle.Secondary"
+					 Disabled="@isExportingBulkPdf"
+					 Size="ButtonSize.Medium"
+					 Click="@OnExportBulkPdf">
+			<RadzenSplitButtonItem Text="@T("language.english")" Value="en" Icon="language" />
+			<RadzenSplitButtonItem Text="@T("language.german")" Value="de" Icon="language" />
+		</RadzenSplitButton>
 	</HeaderActions>
 	<ChildContent>
 		@if (configuration != null && dataService != null)
@@ -63,11 +72,15 @@
 		{
 			TranslationCategories.Pages,
 			TranslationCategories.Messages,
-			TranslationCategories.Labels
+			TranslationCategories.Labels,
+			TranslationCategories.Buttons,
+			TranslationCategories.Notifications,
+			TranslationCategories.Language
 		};
 	}
 
 	// HR-specific state
+	private bool isExportingBulkPdf;
 	private List<QuestionnaireAssignment> allAssignments = new();
 	private List<EmployeeDto> allEmployees = new();
 	private List<Organization> allOrganizations = new();
@@ -104,6 +117,35 @@
 			categories,
 			TranslationService,
 			CurrentLanguage);
+	}
+
+	private async Task OnExportBulkPdf(RadzenSplitButtonItem item)
+	{
+		var language = item?.Value == "de" ? PdfLanguage.German
+			: item?.Value == "en" ? PdfLanguage.English
+			: (PdfLanguage)CurrentLanguage;
+		await ExportFinalizedPdfsWithLanguage(language);
+	}
+
+	private async Task ExportFinalizedPdfsWithLanguage(PdfLanguage language)
+	{
+		var finalizedIds = allAssignments
+			.Where(a => a.WorkflowState == WorkflowState.Finalized)
+			.Select(a => a.Id)
+			.ToList();
+
+		if (finalizedIds.Count == 0)
+		{
+			ShowInfo(T("messages.no-finalized-assignments"));
+			return;
+		}
+
+		isExportingBulkPdf = true;
+		var success = await PdfExportService.ExportBulkPdfAsync(finalizedIds, language);
+		isExportingBulkPdf = false;
+
+		if (success) ShowSuccess(T("notifications.bulk-pdf-export-success"));
+		else ShowWarning(T("notifications.bulk-pdf-export-failed"));
 	}
 
 	protected override void ConfigureActions()

@@ -340,4 +340,41 @@ public static partial class LoggerMessageDefinitions
         Level = LogLevel.Error,
         Message = "Failed to retrieve HR dashboard")]
     public static partial void LogHRDashboardQueryFailed(this ILogger logger, Exception exception);
+
+    // PDF Export Operations
+    [LoggerMessage(
+        EventId = 7001,
+        Level = LogLevel.Information,
+        Message = "Starting PDF export for AssignmentId: {AssignmentId}, UserId: {UserId}")]
+    public static partial void LogPdfExportStarting(this ILogger logger, Guid assignmentId, Guid userId);
+
+    [LoggerMessage(
+        EventId = 7002,
+        Level = LogLevel.Information,
+        Message = "PDF export completed for AssignmentId: {AssignmentId}, Size: {SizeBytes} bytes")]
+    public static partial void LogPdfExportCompleted(this ILogger logger, Guid assignmentId, int sizeBytes);
+
+    [LoggerMessage(
+        EventId = 7003,
+        Level = LogLevel.Warning,
+        Message = "PDF export blocked — assignment {AssignmentId} is not finalized (WorkflowState: {WorkflowState})")]
+    public static partial void LogPdfExportNotFinalized(this ILogger logger, Guid assignmentId, int workflowState);
+
+    [LoggerMessage(
+        EventId = 7004,
+        Level = LogLevel.Warning,
+        Message = "PDF export unauthorized — UserId: {UserId} attempted to access AssignmentId: {AssignmentId}")]
+    public static partial void LogPdfExportUnauthorized(this ILogger logger, Guid assignmentId, Guid userId);
+
+    [LoggerMessage(
+        EventId = 7005,
+        Level = LogLevel.Information,
+        Message = "Starting bulk PDF export for {Count} assignments, UserId: {UserId}")]
+    public static partial void LogBulkPdfExportStarting(this ILogger logger, int count, Guid userId);
+
+    [LoggerMessage(
+        EventId = 7006,
+        Level = LogLevel.Information,
+        Message = "Bulk PDF export completed — {SuccessCount} PDFs, Size: {SizeBytes} bytes")]
+    public static partial void LogBulkPdfExportCompleted(this ILogger logger, int successCount, int sizeBytes);
 }

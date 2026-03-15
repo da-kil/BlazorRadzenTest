@@ -1,4 +1,6 @@
 using Asp.Versioning;
+using PdfSharp.Fonts;
+using ti8m.BeachBreak.QueryApi.Services.Pdf;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Identity.Web;
@@ -17,6 +19,9 @@ public class Program
     public static async Task Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
+        // Register embedded font resolver for PDFsharp (must be set before any PDF generation)
+        GlobalFontSettings.FontResolver = new EmbeddedFontResolver();
+
         builder.AddServiceDefaults();
         builder.AddDefaultContexts();
 
@@ -102,6 +107,11 @@ public class Program
 
         // Register manager authorization service
         builder.Services.AddScoped<IManagerAuthorizationService, ManagerAuthorizationService>();
+
+        // Register PDF export services
+        builder.Services.AddScoped<IQuestionnairePdfService, QuestionnairePdfService>();
+        builder.Services.AddScoped<IBulkPdfExportService, BulkPdfExportService>();
+        builder.Services.AddScoped<IPdfExportApplicationService, PdfExportApplicationService>();
 
         // Configure JSON serialization to explicitly use PascalCase (C# naming conventions)
         builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>

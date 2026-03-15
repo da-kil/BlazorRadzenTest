@@ -25,3 +25,31 @@
 
     observer.observe(document.body, { childList: true, subtree: true });
 })();
+
+// Downloads a file from a base64-encoded byte array (PDF, ZIP, etc.)
+function downloadBase64File(base64Data, fileName, mimeType) {
+    const byteCharacters = atob(base64Data);
+    const byteNumbers = new Uint8Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const blob = new Blob([byteNumbers], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+
+// Legacy data-URI download for CSV exports
+function downloadFile(dataUri, fileName) {
+    const link = document.createElement('a');
+    link.href = dataUri;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}

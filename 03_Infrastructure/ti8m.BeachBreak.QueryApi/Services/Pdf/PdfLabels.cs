@@ -1,0 +1,47 @@
+namespace ti8m.BeachBreak.QueryApi.Services.Pdf;
+
+/// <summary>
+/// Holds all localized static labels used when rendering a PDF document.
+/// Populated at runtime from the translation store via IUITranslationService.
+/// </summary>
+public record PdfLabels(
+    string AssignmentDetails,
+    string Manager,
+    string Email,
+    string Role,
+    string Organisation,
+    string Assigned,
+    string Due,
+    string Finalized,
+    string FinalizedBy,
+    string GeneratedPrefix,
+    string ScalePrefix,
+    string Competency,
+    string EmployeeAbbr,
+    string ManagerAbbr,
+    string EmployeeComment,
+    string ManagerComment,
+    string NoAssessmentItems,
+    string NoResponses,
+    string EmployeeLabel,
+    string ManagerLabel,
+    string CurrentGoals,
+    string NoGoals,
+    string Objective,
+    string From,
+    string To,
+    string Weight,
+    string AddedBy,
+    string PredecessorRatings,
+    string DegreeOfAchievement,
+    string Justification,
+    string RatedBy,
+    string InReviewNotes,
+    string SectionPrefix,
+    string ReviewSummary,
+    string ManagerFinalNotes,
+    string SignOff,
+    string Employee,
+    string Name,
+    string Date,
+    string Signature);

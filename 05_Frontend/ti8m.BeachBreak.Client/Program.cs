@@ -78,6 +78,7 @@ internal class Program
 
         // Register export services
         builder.Services.AddScoped<IQuestionnaireReportExporter, QuestionnaireReportExporter>();
+        builder.Services.AddScoped<IPdfExportApiService, PdfExportApiService>();
 
         // Register translation services
         builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.ILanguageContext, ti8m.BeachBreak.Client.Services.ClientLanguageContext>();
