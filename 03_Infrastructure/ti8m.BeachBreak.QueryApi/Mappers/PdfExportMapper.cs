@@ -44,6 +44,7 @@ public static class PdfExportMapper
                 Timestamp = n.Timestamp,
                 SectionId = n.SectionId,
                 SectionTitle = n.SectionTitle,
+                ItemKey = n.ItemKey,
                 AuthorEmployeeId = n.AuthorEmployeeId,
                 AuthorName = n.AuthorName
             }).ToList()

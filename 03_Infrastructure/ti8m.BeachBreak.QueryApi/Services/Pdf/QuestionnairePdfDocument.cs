@@ -160,11 +160,15 @@ public class QuestionnairePdfDocument
         foreach (var sectionDto in data.Template.Sections.OrderBy(s => s.Order))
         {
             data.Response.SectionResponses.TryGetValue(sectionDto.Id, out var sectionResponse);
-            BuildSectionBlock(section, sectionDto, sectionResponse);
+            var sectionNotes = data.Assignment.InReviewNotes
+                .Where(n => n.SectionId == sectionDto.Id)
+                .ToList();
+            BuildSectionBlock(section, sectionDto, sectionResponse, sectionNotes);
         }
 
-        if (data.Assignment.InReviewNotes.Count > 0)
-            BuildInReviewNotes(section);
+        var globalNotes = data.Assignment.InReviewNotes.Where(n => n.SectionId == null).ToList();
+        if (globalNotes.Count > 0)
+            BuildInReviewNotes(section, globalNotes);
 
         if (!string.IsNullOrWhiteSpace(data.Assignment.ManagerReviewSummary))
             BuildSummarySection(section, labels.ReviewSummary, data.Assignment.ManagerReviewSummary!);
@@ -225,7 +229,7 @@ public class QuestionnairePdfDocument
 
     // ─── Section block ─────────────────────────────────────────────────────
 
-    private void BuildSectionBlock(Section section, QuestionSectionDto sectionDto, SectionResponseDto? sectionResponse)
+    private void BuildSectionBlock(Section section, QuestionSectionDto sectionDto, SectionResponseDto? sectionResponse, IReadOnlyList<InReviewNoteDto> sectionNotes)
     {
         var sectionTitle = data.Language == Core.Domain.QuestionConfiguration.Language.German
             ? sectionDto.TitleGerman
@@ -243,18 +247,22 @@ public class QuestionnairePdfDocument
         switch (sectionDto.Type)
         {
             case DtoQuestionType.Assessment:
-                BuildAssessmentSection(section, sectionDto, sectionResponse, labels, data.Language);
+                BuildAssessmentSection(section, sectionDto, sectionResponse, labels, data.Language, sectionNotes);
                 break;
             case DtoQuestionType.Goal:
                 BuildGoalSection(section, sectionResponse);
+                if (sectionNotes.Count > 0)
+                    BuildSectionNoteCards(section, sectionNotes, null);
                 break;
             default:
                 BuildTextSection(section, sectionResponse, labels);
+                if (sectionNotes.Count > 0)
+                    BuildSectionNoteCards(section, sectionNotes, null);
                 break;
         }
     }
 
-    private static void BuildAssessmentSection(Section section, QuestionSectionDto sectionDto, SectionResponseDto? sectionResponse, PdfLabels labels, Core.Domain.QuestionConfiguration.Language language)
+    private static void BuildAssessmentSection(Section section, QuestionSectionDto sectionDto, SectionResponseDto? sectionResponse, PdfLabels labels, Core.Domain.QuestionConfiguration.Language language, IReadOnlyList<InReviewNoteDto> sectionNotes)
     {
         if (sectionDto.Configuration is not AssessmentConfig config || config.Evaluations.Count == 0)
         {
@@ -278,16 +286,19 @@ public class QuestionnairePdfDocument
         var empData = empResponses?.Values.FirstOrDefault()?.ResponseData as AssessmentResponseDataDto;
         var mgrData = mgrResponses?.Values.FirstOrDefault()?.ResponseData as AssessmentResponseDataDto;
 
-        // Columns: Competency(7) | Emp(2) | Mgr(2) | EmpComment(3.5) | MgrComment(3.5) = 18cm
+        var notesByItemKey = sectionNotes
+            .Where(n => !string.IsNullOrWhiteSpace(n.ItemKey))
+            .GroupBy(n => n.ItemKey!)
+            .ToDictionary(g => g.Key, g => g.OrderBy(n => n.Timestamp).ToList());
+
+        // Columns: Competency(11) | Emp(3.5) | Mgr(3.5) = 18cm
         var table = section.AddTable();
         table.Borders.Visible = false;
-        table.AddColumn(Unit.FromCentimeter(7.0));
-        table.AddColumn(Unit.FromCentimeter(2.0));
-        table.AddColumn(Unit.FromCentimeter(2.0));
+        table.AddColumn(Unit.FromCentimeter(11.0));
         table.AddColumn(Unit.FromCentimeter(3.5));
         table.AddColumn(Unit.FromCentimeter(3.5));
 
-        TableHeader(table, labels.Competency, labels.EmployeeAbbr, labels.ManagerAbbr, labels.EmployeeComment, labels.ManagerComment);
+        TableHeader(table, labels.Competency, labels.EmployeeAbbr, labels.ManagerAbbr);
 
         var idx = 0;
         foreach (var item in config.Evaluations.OrderBy(e => e.Order))
@@ -303,9 +314,49 @@ public class QuestionnairePdfDocument
             CompetencyCell(row.Cells[0], itemTitle, itemDesc);
             CenteredSmallCell(row.Cells[1], empRating?.Rating > 0 ? empRating.Rating.ToString() : "—");
             CenteredSmallCell(row.Cells[2], mgrRating?.Rating > 0 ? mgrRating.Rating.ToString() : "—");
-            SmallCell(row.Cells[3], empRating?.Comment ?? "");
-            SmallCell(row.Cells[4], mgrRating?.Comment ?? "");
+
+            if (!notesByItemKey.TryGetValue(item.Key, out var itemNotes)) continue;
+            foreach (var note in itemNotes)
+                AddNoteSubRow(table, note);
         }
+
+        foreach (var note in sectionNotes.Where(n => string.IsNullOrWhiteSpace(n.ItemKey)).OrderBy(n => n.Timestamp))
+            AddNoteSubRow(table, note);
+    }
+
+    private static void AddNoteSubRow(Table table, InReviewNoteDto note)
+    {
+        var noteRow = table.AddRow();
+        noteRow.Shading.Color = NoteCardBgColor;
+        noteRow.TopPadding = Unit.FromPoint(4);
+        noteRow.BottomPadding = Unit.FromPoint(4);
+        noteRow.Cells[0].MergeRight = 2;
+
+        // Accent left border — the classic "comment" indicator
+        noteRow.Cells[0].Borders.Left.Color = NoteCardBorderColor;
+        noteRow.Cells[0].Borders.Left.Width = Unit.FromPoint(3);
+        noteRow.Cells[0].Borders.Top.Color = NoteCardBorderColor;
+        noteRow.Cells[0].Borders.Top.Width = Unit.FromPoint(0.5);
+        noteRow.Cells[0].Borders.Bottom.Color = NoteCardBorderColor;
+        noteRow.Cells[0].Borders.Bottom.Width = Unit.FromPoint(0.5);
+
+        // Author + timestamp header line
+        var headerPara = noteRow.Cells[0].AddParagraph();
+        headerPara.Format.LeftIndent = Unit.FromPoint(8);
+        var authorText = headerPara.AddFormattedText(note.AuthorName, TextFormat.Bold);
+        authorText.Font.Size = 7;
+        authorText.Font.Name = FontName;
+        authorText.Font.Color = SectionHeadingColor;
+        var timeText = headerPara.AddFormattedText($"  {note.Timestamp:yyyy-MM-dd HH:mm}");
+        timeText.Font.Size = 7;
+        timeText.Font.Color = FooterColor;
+
+        // Content on a separate line
+        var contentPara = noteRow.Cells[0].AddParagraph(note.Content);
+        contentPara.Format.LeftIndent = Unit.FromPoint(8);
+        contentPara.Format.Font.Size = 7;
+        contentPara.Format.Font.Name = FontName;
+        contentPara.Format.SpaceBefore = Unit.FromPoint(1);
     }
 
     private static void BuildTextSection(Section section, SectionResponseDto? sectionResponse, PdfLabels labels)
@@ -399,11 +450,63 @@ public class QuestionnairePdfDocument
         }
     }
 
-    private void BuildInReviewNotes(Section section)
+    private void BuildSectionNoteCards(Section section, IReadOnlyList<InReviewNoteDto> notes, AssessmentConfig? config)
+    {
+        SubHeading(section, labels.InReviewNotes, topSpace: 8);
+
+        foreach (var note in notes.OrderBy(n => n.Timestamp))
+        {
+            var noteTable = section.AddTable();
+            noteTable.Borders.Width = Unit.FromPoint(1);
+            noteTable.Borders.Color = NoteCardBorderColor;
+            noteTable.TopPadding = Unit.FromPoint(6);
+            noteTable.BottomPadding = Unit.FromPoint(6);
+            noteTable.LeftPadding = Unit.FromPoint(8);
+            noteTable.RightPadding = Unit.FromPoint(8);
+            noteTable.AddColumn(Unit.FromCentimeter(ContentWidth));
+
+            var noteRow = noteTable.AddRow();
+            noteRow.Shading.Color = NoteCardBgColor;
+
+            var headerPara = noteRow.Cells[0].AddParagraph();
+            headerPara.Format.TabStops.ClearAll();
+            headerPara.Format.TabStops.AddTabStop(Unit.FromCentimeter(ContentWidth - 0.3), TabAlignment.Right);
+            var authorText = headerPara.AddFormattedText(note.AuthorName, TextFormat.Bold);
+            authorText.Font.Size = FontSizeSmall;
+            authorText.Font.Name = FontName;
+            headerPara.AddTab();
+            var timeText = headerPara.AddFormattedText(note.Timestamp.ToString("yyyy-MM-dd HH:mm"));
+            timeText.Font.Size = FontSizeSmall;
+            timeText.Font.Color = FooterColor;
+
+            if (!string.IsNullOrWhiteSpace(note.ItemKey) && config != null)
+            {
+                var item = config.Evaluations.FirstOrDefault(e => e.Key == note.ItemKey);
+                if (item != null)
+                {
+                    var itemTitle = data.Language == Core.Domain.QuestionConfiguration.Language.German
+                        ? item.TitleGerman
+                        : item.TitleEnglish;
+                    var itemPara = noteRow.Cells[0].AddParagraph($"{labels.SectionPrefix}{itemTitle}");
+                    itemPara.Format.Font.Italic = true;
+                    itemPara.Format.Font.Size = FontSizeSmall;
+                    itemPara.Format.Font.Color = NoteMetaColor;
+                }
+            }
+
+            var contentPara = noteRow.Cells[0].AddParagraph(note.Content);
+            contentPara.Format.Font.Size = FontSizeSmall;
+            contentPara.Format.SpaceBefore = Unit.FromPoint(3);
+
+            Spacer(section, 4);
+        }
+    }
+
+    private void BuildInReviewNotes(Section section, IReadOnlyList<InReviewNoteDto> notes)
     {
         SectionHeading(section, labels.InReviewNotes);
 
-        foreach (var note in data.Assignment.InReviewNotes.OrderBy(n => n.Timestamp))
+        foreach (var note in notes.OrderBy(n => n.Timestamp))
         {
             var noteTable = section.AddTable();
             noteTable.Borders.Width = Unit.FromPoint(1);
