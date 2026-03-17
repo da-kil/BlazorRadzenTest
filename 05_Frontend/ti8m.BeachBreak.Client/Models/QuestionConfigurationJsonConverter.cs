@@ -77,6 +77,7 @@ public class QuestionConfigurationJsonConverter : JsonConverter<IQuestionConfigu
             QuestionType.Assessment => JsonSerializer.Deserialize<AssessmentConfiguration>(rawJson, options),
             QuestionType.TextQuestion => JsonSerializer.Deserialize<TextQuestionConfiguration>(rawJson, options),
             QuestionType.Goal => JsonSerializer.Deserialize<GoalConfiguration>(rawJson, options),
+            QuestionType.EmployeeFeedback => JsonSerializer.Deserialize<EmployeeFeedbackConfiguration>(rawJson, options),
             _ => throw new JsonException($"Unknown question type: {questionType}")
         };
     }
@@ -122,6 +123,12 @@ public class QuestionConfigurationJsonConverter : JsonConverter<IQuestionConfigu
             return QuestionType.Goal;
         }
 
+        // EmployeeFeedbackConfiguration has "ShowFeedbackSection"
+        if (root.TryGetProperty("ShowFeedbackSection", out _))
+        {
+            return QuestionType.EmployeeFeedback;
+        }
+
         // Last resort: Try to use the QuestionType property if it exists
         if (root.TryGetProperty("QuestionType", out var questionTypeElement) &&
             questionTypeElement.TryGetInt32(out var questionTypeValue))
@@ -151,6 +158,9 @@ public class QuestionConfigurationJsonConverter : JsonConverter<IQuestionConfigu
             case GoalConfiguration goal:
                 WriteGoalConfiguration(writer, goal, options);
                 break;
+            case EmployeeFeedbackConfiguration feedback:
+                WriteEmployeeFeedbackConfiguration(writer, feedback);
+                break;
             default:
                 throw new JsonException($"Unknown configuration type: {value.GetType()}");
         }
@@ -177,5 +187,10 @@ public class QuestionConfigurationJsonConverter : JsonConverter<IQuestionConfigu
     private void WriteGoalConfiguration(Utf8JsonWriter writer, GoalConfiguration goal, JsonSerializerOptions options)
     {
         writer.WriteBoolean("ShowGoalSection", goal.ShowGoalSection);
+    }
+
+    private void WriteEmployeeFeedbackConfiguration(Utf8JsonWriter writer, EmployeeFeedbackConfiguration feedback)
+    {
+        writer.WriteBoolean("ShowFeedbackSection", feedback.ShowFeedbackSection);
     }
 }

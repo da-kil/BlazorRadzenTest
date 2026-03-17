@@ -32,38 +32,23 @@
                         </RadzenText>
 
                         <!-- Rating Stars -->
-                        <div class="rating-section mb-2">
-                            <div class="star-rating-container">
-                                <RadzenButton Text="@T("buttons.not-rated")"
-                                            Size="ButtonSize.ExtraSmall"
-                                            ButtonStyle="@(GetCurrentRating(criterion) == 0 ? ButtonStyle.Primary : ButtonStyle.Light)"
-                                            Click="@(() => SetRating(criterion, 0))"
-                                            Class="not-rated-btn" />
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Wrap="FlexWrap.Wrap" Class="mb-2">
+                            <RadzenButton Text="@T("buttons.not-rated")"
+                                        Size="ButtonSize.ExtraSmall"
+                                        ButtonStyle="@(GetCurrentRating(criterion) == 0 ? ButtonStyle.Primary : ButtonStyle.Light)"
+                                        Click="@(() => SetRating(criterion, 0))" />
 
-                                <div class="star-rating">
-                                    @for (int i = 1; i <= RatingScale; i++)
-                                    {
-                                        var starIndex = i;
-                                        var isSelected = GetCurrentRating(criterion) >= starIndex;
+                            <RadzenRating Value="@GetCurrentRating(criterion)"
+                                         ValueChanged="@(async (int v) => await SetRating(criterion, v))"
+                                         Stars="@RatingScale" />
 
-                                        <RadzenButton Icon="@(isSelected ? "star" : "star_border")"
-                                                    Size="ButtonSize.Small"
-                                                    ButtonStyle="ButtonStyle.Base"
-                                                    Variant="Variant.Text"
-                                                    Click="@(() => SetRating(criterion, starIndex))"
-                                                    Class="@($"star-btn {(isSelected ? "selected" : "")}")"
-                                                    title="@($"{starIndex}/{RatingScale}")" />
-                                    }
-                                </div>
-
-                                @if (GetCurrentRating(criterion) > 0)
-                                {
-                                    <RadzenText TextStyle="TextStyle.Body2" Class="rating-display">
-                                        @GetCurrentRating(criterion)/@RatingScale (@GetRatingLabel(GetCurrentRating(criterion)))
-                                    </RadzenText>
-                                }
-                            </div>
-                        </div>
+                            @if (GetCurrentRating(criterion) > 0)
+                            {
+                                <RadzenText TextStyle="TextStyle.Body2">
+                                    @GetCurrentRating(criterion)/@RatingScale (@GetRatingLabel(GetCurrentRating(criterion)))
+                                </RadzenText>
+                            }
+                        </RadzenStack>
 
                         <!-- Optional Comment -->
                         <div class="comment-section">

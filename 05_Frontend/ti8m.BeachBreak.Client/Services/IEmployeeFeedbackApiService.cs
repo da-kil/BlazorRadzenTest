@@ -68,6 +68,14 @@ public interface IEmployeeFeedbackApiService
     /// </summary>
     /// <returns>Source type options with validation requirements</returns>
     Task<Result<FeedbackTemplatesResponse>> GetSourceTypeOptionsAsync();
+
+    /// <summary>
+    /// Gets all linked feedback data for a specific question within an assignment.
+    /// </summary>
+    /// <param name="assignmentId">Assignment ID</param>
+    /// <param name="questionId">Question ID</param>
+    /// <returns>Feedback question data including linked feedback records</returns>
+    Task<FeedbackQuestionDataDto?> GetFeedbackQuestionDataAsync(Guid assignmentId, Guid questionId);
 }
 
 /// <summary>

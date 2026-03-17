@@ -38,6 +38,10 @@ public static class QuestionnaireResponseConverter
                 // Detect actual question type based on response data (more reliable than QuestionType field)
                 var actualQuestionType = DetectQuestionType(response);
 
+                // EmployeeFeedback sections are display-only and have no response data to save
+                if (actualQuestionType == QuestionType.EmployeeFeedback)
+                    continue;
+
                 // Convert QuestionResponse to QuestionResponseCommandDto based on actual question type
                 var commandDto = new QuestionResponseCommandDto
                 {
