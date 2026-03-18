@@ -38,6 +38,7 @@
     [Parameter] public WorkflowState AssignmentWorkflowState { get; set; } = WorkflowState.EmployeeInProgress;
     [Parameter] public int GoalRefreshToken { get; set; } = 0;
     [Parameter] public SectionResponse? SectionData { get; set; } // Access to all role responses for review mode
+    [Parameter] public bool AllowLinking { get; set; } = false;
 
     private bool shouldRender = true;
     private string? lastQuestionHash;
@@ -157,7 +158,8 @@
     {
         <OptimizedEmployeeFeedbackQuestion Section="@Section"
                                           HideHeader="@HideHeader"
-                                          AssignmentId="@AssignmentId" />
+                                          AssignmentId="@AssignmentId"
+                                          AllowLinking="@AllowLinking" />
     };
 
     private RenderFragment RenderUnsupportedQuestion() => __builder =>

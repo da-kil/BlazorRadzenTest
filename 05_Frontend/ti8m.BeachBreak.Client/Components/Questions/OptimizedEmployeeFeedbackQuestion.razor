@@ -2,9 +2,11 @@
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Models.Dto
 @using ti8m.BeachBreak.Client.Components.Shared
+@using ti8m.BeachBreak.Client.Components.Dialogs
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Extensions
 @inject IEmployeeFeedbackApiService FeedbackApiService
+@inject DialogService DialogService
 @inherits CategoryOptimizedTranslatableComponent
 
 @if (!HideHeader)
@@ -55,9 +57,21 @@ else
             else if (linkedFeedback == null || linkedFeedback.Count == 0)
             {
                 <EmptyState Icon="link" Title="@T("messages.no-feedback-linked")" Compact="true" />
+                @if (AllowLinking)
+                {
+                    <div class="d-flex justify-content-center mt-2">
+                        <RadzenButton Text="@T("buttons.link-feedback")" Icon="link" ButtonStyle="ButtonStyle.Primary" Click="@OpenLinkDialog" />
+                    </div>
+                }
             }
             else
             {
+                @if (AllowLinking)
+                {
+                    <div class="d-flex justify-content-end mb-2">
+                        <RadzenButton Text="@T("buttons.link-feedback")" Icon="link" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Click="@OpenLinkDialog" />
+                    </div>
+                }
                 <RadzenStack Gap="1.5rem">
                     @foreach (var feedback in linkedFeedback)
                     {
@@ -169,6 +183,7 @@ else
     [Parameter, EditorRequired] public QuestionSection Section { get; set; } = default!;
     [Parameter] public bool HideHeader { get; set; } = false;
     [Parameter] public Guid AssignmentId { get; set; }
+    [Parameter] public bool AllowLinking { get; set; } = false;
 
     private bool isLoading = true;
     private List<LinkedEmployeeFeedbackDto> linkedFeedback = new();
@@ -182,6 +197,23 @@ else
     {
         // Reload if Section or AssignmentId changes
         await LoadLinkedFeedback();
+    }
+
+    private async Task OpenLinkDialog()
+    {
+        var result = await DialogService.OpenAsync<LinkEmployeeFeedbackDialog>(
+            T("dialogs.link-employee-feedback-title"),
+            new Dictionary<string, object>
+            {
+                { "AssignmentId", AssignmentId },
+                { "QuestionId", Section.Id }
+            },
+            new DialogOptions { Width = "640px", CloseDialogOnOverlayClick = false });
+
+        if (result is true)
+        {
+            await LoadLinkedFeedback();
+        }
     }
 
     private async Task LoadLinkedFeedback()

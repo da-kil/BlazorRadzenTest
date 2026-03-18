@@ -55,123 +55,124 @@
                         <RadzenLink Path="/team/questionnaires" Text="@T("navigation.back-to-dashboard")" Icon="arrow_back" />
                     </div>
 
-                    <!-- Assignment Details Card -->
-                    <RadzenCard Class="mb-4">
-                        <RadzenText TextStyle="TextStyle.H6" Class="mb-3">@T("sections.assignment-details")</RadzenText>
+                    <!-- Assignment Details -->
+                    <section style="padding: 1.5rem 0;">
+                        <RadzenText TextStyle="TextStyle.H6" Class="section-heading">@T("sections.assignment-details")</RadzenText>
                         <RadzenRow>
                             <RadzenColumn Size="12" SizeMD="6">
-                                <div class="mb-3">
+                                <div class="detail-field">
                                     <RadzenText TextStyle="TextStyle.Overline" Class="text-muted">@T("labels.employee")</RadzenText>
                                     <RadzenText TextStyle="TextStyle.Body1"><strong>@assignment.EmployeeName</strong></RadzenText>
                                 </div>
-                                <div class="mb-3">
+                                <div class="detail-field">
                                     <RadzenText TextStyle="TextStyle.Overline" Class="text-muted">@T("labels.template")</RadzenText>
                                     <RadzenText TextStyle="TextStyle.Body1">@template.GetLocalizedNameWithFallback(CurrentLanguage)</RadzenText>
                                 </div>
                             </RadzenColumn>
                             <RadzenColumn Size="12" SizeMD="6">
-                                <div class="mb-3">
+                                <div class="detail-field">
                                     <RadzenText TextStyle="TextStyle.Overline" Class="text-muted">@T("labels.due-date")</RadzenText>
                                     <RadzenText TextStyle="TextStyle.Body1">@(assignment.DueDate?.ToString("d") ?? T("labels.no-due-date"))</RadzenText>
                                 </div>
-                                <div class="mb-3">
+                                <div class="detail-field">
                                     <RadzenText TextStyle="TextStyle.Overline" Class="text-muted">@T("labels.status")</RadzenText>
                                     <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text="@T(WorkflowStateHelper.GetStateDisplayName(assignment.WorkflowState))" />
                                 </div>
                             </RadzenColumn>
                         </RadzenRow>
-                    </RadzenCard>
+                    </section>
+                    <div style="height: 1px; background: var(--border-light); margin: 0;"></div>
 
-                    <!-- Initialization Tasks Card -->
-                    <RadzenCard Class="mb-4">
-                        <RadzenText TextStyle="TextStyle.H6" Class="mb-3">@T("sections.initialization-tasks")</RadzenText>
-                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-4">@T("messages.initialization-tasks-description")</RadzenText>
+                    <!-- Initialization Tasks -->
+                    <section style="padding: 1.5rem 0;">
+                        <div style="display: flex; align-items: baseline; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.5rem;">
+                            <RadzenText TextStyle="TextStyle.H6">@T("sections.initialization-tasks")</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@T("messages.initialization-tasks-description")</RadzenText>
+                        </div>
 
                         <!-- Link Predecessor Questionnaire (only shown if template has Goal sections) -->
                         @if (template?.Sections.Any(s => s.Type == QuestionType.Goal) == true)
                         {
-                            <div class="mb-4">
-                                <RadzenText TextStyle="TextStyle.Subtitle1" Class="mb-2">
-                                    @T("labels.link-predecessor-questionnaire")
-                                    <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="@T("labels.optional")" Class="ms-2" />
-                                </RadzenText>
-                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">@T("messages.link-predecessor-description")</RadzenText>
-
-                                @if (predecessorLinked)
-                                {
-                                    <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Class="d-inline-flex align-items-center">
-                                        <RadzenIcon Icon="check_circle" Class="me-2" />
-                                        @T("messages.predecessor-linked")
-                                    </RadzenAlert>
-                                }
-                                else
-                                {
-                                    <RadzenButton Text="@T("buttons.link-predecessor")"
-                                                Icon="link"
-                                                ButtonStyle="ButtonStyle.Light"
-                                                Click="@OpenLinkAssignmentPredecessorDialog" />
-                                }
+                            <div class="init-task-row" style="padding: 0.625rem 0;">
+                                <div class="init-task-header" style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.125rem;">
+                                    <RadzenText TextStyle="TextStyle.Subtitle2">@T("labels.link-predecessor-questionnaire")</RadzenText>
+                                    @if (predecessorLinked)
+                                    {
+                                        <span class="init-task-done">
+                                            <RadzenIcon Icon="check_circle" />
+                                            @T("messages.predecessor-linked")
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <RadzenButton Text="@T("buttons.link-predecessor")"
+                                                    Icon="link"
+                                                    ButtonStyle="ButtonStyle.Light"
+                                                    Size="ButtonSize.Small"
+                                                    Click="@OpenLinkAssignmentPredecessorDialog" />
+                                    }
+                                </div>
+                                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@T("messages.link-predecessor-description")</RadzenText>
                             </div>
+                        }
+
+                        <!-- Link Employee Feedback (only shown if template has EmployeeFeedback sections) -->
+                        @if (template?.Sections.Any(s => s.Type == QuestionType.EmployeeFeedback) == true)
+                        {
+                            @foreach (var feedbackSection in template.Sections.Where(s => s.Type == QuestionType.EmployeeFeedback))
+                            {
+                                var sectionTitle = feedbackSection.GetLocalizedTitle(CurrentLanguage);
+                                var sectionId = feedbackSection.Id;
+                                <div class="init-task-row" style="padding: 0.625rem 0;">
+                                    <div class="init-task-header" style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.125rem;">
+                                        <RadzenText TextStyle="TextStyle.Subtitle2">@T("labels.link-employee-feedback"): @sectionTitle</RadzenText>
+                                        @if (linkedFeedbackSectionIds.Contains(sectionId))
+                                        {
+                                            <span class="init-task-done">
+                                                <RadzenIcon Icon="check_circle" />
+                                                @T("messages.feedback-linked-during-initialization")
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <RadzenButton Text="@T("buttons.link-feedback")"
+                                                        Icon="link"
+                                                        ButtonStyle="ButtonStyle.Light"
+                                                        Size="ButtonSize.Small"
+                                                        Click="@(() => OpenLinkFeedbackDialog(sectionId))" />
+                                        }
+                                    </div>
+                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@T("messages.feedback-linking-explanation")</RadzenText>
+                                </div>
+                            }
                         }
 
                         <!-- Add Custom Questions -->
                         @if (template.IsCustomizable)
                         {
-                            <div class="mb-3">
-                                <RadzenText TextStyle="TextStyle.Subtitle1" Class="mb-2">
-                                    @T("labels.add-custom-questions")
-                                    <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="@T("labels.optional")" Class="ms-2" />
-                                </RadzenText>
-                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">@T("messages.add-custom-questions-description")</RadzenText>
+                            <div class="init-task-row" style="padding: 0.625rem 0;">
+                                <div class="init-task-header" style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.125rem;">
+                                    <RadzenText TextStyle="TextStyle.Subtitle2">@T("labels.add-custom-questions")</RadzenText>
+                                    @if (!isAddingAssessment && !isAddingTextQuestion && editingIndex < 0)
+                                    {
+                                        <div class="d-flex gap-2">
+                                            <RadzenButton Text="@T("labels.add-assessment-question")"
+                                                        Icon="assessment"
+                                                        ButtonStyle="ButtonStyle.Light"
+                                                        Size="ButtonSize.Small"
+                                                        Click="@StartAddingAssessment" />
+                                            <RadzenButton Text="@T("labels.add-text-question")"
+                                                        Icon="text_fields"
+                                                        ButtonStyle="ButtonStyle.Light"
+                                                        Size="ButtonSize.Small"
+                                                        Click="@StartAddingTextQuestion" />
+                                        </div>
+                                    }
+                                </div>
+                                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@T("messages.add-custom-questions-description")</RadzenText>
+                            </div>
 
-                                <!-- Custom Questions Container -->
                             <div class="custom-questions-container">
-                                <!-- Add Question Type Cards -->
-                                @if (!isAddingAssessment && !isAddingTextQuestion)
-                                {
-                                    <div class="add-question-cards mb-4">
-                                        <!-- Add Assessment Question Card -->
-                                        <div class="modern-section-card add-question-card" @onclick="@StartAddingAssessment" style="cursor: pointer; border: 2px dashed var(--primary-color-alpha); background: var(--primary-color-alpha-subtle); transition: all 0.2s ease;">
-                                            <div class="section-header-modern">
-                                                <div class="header-top-row">
-                                                    <div class="section-badges">
-                                                        <div class="section-type-badge">
-                                                            <RadzenIcon Icon="assessment" Class="badge-icon" />
-                                                            <span class="badge-text">@T("labels.add-assessment-question")</span>
-                                                        </div>
-                                                    </div>
-                                                    <RadzenIcon Icon="add_circle_outline" Style="color: var(--primary-color); font-size: 1.5rem;" />
-                                                </div>
-                                            </div>
-                                            <div class="section-content-modern">
-                                                <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--text-muted);">
-                                                    @T("messages.click-to-add-assessment")
-                                                </RadzenText>
-                                            </div>
-                                        </div>
-
-                                        <!-- Add Text Question Card -->
-                                        <div class="modern-section-card add-question-card mt-3" @onclick="@StartAddingTextQuestion" style="cursor: pointer; border: 2px dashed var(--question-text-response); background: var(--question-text-alpha-subtle); transition: all 0.2s ease;">
-                                            <div class="section-header-modern">
-                                                <div class="header-top-row">
-                                                    <div class="section-badges">
-                                                        <div class="section-type-badge" style="background: var(--question-text-alpha-subtle); border-color: var(--question-text-response);">
-                                                            <RadzenIcon Icon="text_fields" Class="badge-icon" style="color: var(--question-text-response);" />
-                                                            <span class="badge-text" style="color: var(--question-text-response);">@T("labels.add-text-question")</span>
-                                                        </div>
-                                                    </div>
-                                                    <RadzenIcon Icon="add_circle_outline" Style="color: var(--question-text-response); font-size: 1.5rem;" />
-                                                </div>
-                                            </div>
-                                            <div class="section-content-modern">
-                                                <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--text-muted);">
-                                                    @T("messages.click-to-add-text-question")
-                                                </RadzenText>
-                                            </div>
-                                        </div>
-                                    </div>
-                                }
-
                                 <!-- Inline Section Editor for Assessment -->
                                 @if (isAddingAssessment)
                                 {
@@ -297,28 +298,14 @@
                                         </div>
                                     </div>
                                 }
-                                </div>
                             </div>
                         }
-                        else
-                        {
-                            <div class="mb-3">
-                                <RadzenText TextStyle="TextStyle.Subtitle1" Class="mb-2">
-                                    @T("labels.add-custom-questions")
-                                    <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="@T("labels.not-available")" Class="ms-2" />
-                                </RadzenText>
-                                <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Class="mb-3">
-                                    <RadzenText TextStyle="TextStyle.Body2">
-                                        @T("assignments.no-customization-support")
-                                    </RadzenText>
-                                </RadzenAlert>
-                            </div>
-                        }
-                    </RadzenCard>
+                    </section>
+                    <div style="height: 1px; background: var(--border-light); margin: 0;"></div>
 
                     <!-- Initialization Notes -->
-                    <RadzenCard Class="mb-4">
-                        <RadzenText TextStyle="TextStyle.H6" Class="mb-3">@T("labels.initialization-notes")</RadzenText>
+                    <section style="padding: 1.5rem 0;">
+                        <RadzenText TextStyle="TextStyle.H6" Class="section-heading">@T("labels.initialization-notes")</RadzenText>
                         <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">@T("messages.initialization-notes-description")</RadzenText>
                         <RadzenTextArea @bind-Value="@initializationNotes"
                                       Rows="5"
@@ -328,7 +315,7 @@
                         <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mt-1">
                             @initializationNotes?.Length.ToString() / 5000 @T("labels.characters")
                         </RadzenText>
-                    </RadzenCard>
+                    </section>
 
                     <!-- Action Buttons -->
                     <div class="d-flex justify-content-end gap-2">
@@ -387,6 +374,7 @@
     }
     private bool isSubmitting = false;
     private bool predecessorLinked = false;
+    private HashSet<Guid> linkedFeedbackSectionIds = new();
     private string? initializationNotes;
     private List<QuestionSection> customSections = new();
     private ApplicationRole currentUserRole = ApplicationRole.Employee;
@@ -488,6 +476,26 @@
         }
     }
 
+
+    private async Task OpenLinkFeedbackDialog(Guid questionId)
+    {
+        if (assignment == null) return;
+
+        var result = await DialogService.OpenAsync<LinkEmployeeFeedbackDialog>(
+            T("dialogs.link-employee-feedback-title"),
+            new Dictionary<string, object>
+            {
+                { "AssignmentId", assignment.Id },
+                { "QuestionId", questionId }
+            },
+            new DialogOptions { Width = "640px", CloseDialogOnOverlayClick = false });
+
+        if (result is true)
+        {
+            linkedFeedbackSectionIds.Add(questionId);
+            NotificationService.Notify(NotificationSeverity.Success, T("notifications.success"), T("notifications.feedback-linked-title"));
+        }
+    }
 
     private void RemoveCustomSection(QuestionSection section)
     {

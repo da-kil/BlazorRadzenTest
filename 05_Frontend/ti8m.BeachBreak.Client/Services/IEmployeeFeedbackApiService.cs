@@ -76,6 +76,10 @@ public interface IEmployeeFeedbackApiService
     /// <param name="questionId">Question ID</param>
     /// <returns>Feedback question data including linked feedback records</returns>
     Task<FeedbackQuestionDataDto?> GetFeedbackQuestionDataAsync(Guid assignmentId, Guid questionId);
+
+    Task<List<LinkedEmployeeFeedbackDto>> GetAvailableFeedbackForAssignmentAsync(Guid assignmentId);
+
+    Task<bool> LinkFeedbackToAssignmentAsync(Guid assignmentId, LinkEmployeeFeedbackDto dto);
 }
 
 /// <summary>

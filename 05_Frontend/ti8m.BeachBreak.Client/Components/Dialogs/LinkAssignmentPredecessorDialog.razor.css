@@ -10,26 +10,29 @@
     cursor: pointer;
     transition: all 0.2s ease-in-out;
     background-color: var(--rz-base-50);
-    border: 1px solid var(--rz-base-200) !important;
+    border: 1px solid var(--rz-base-200);
+    border-radius: var(--rz-border-radius);
+}
+
+.predecessor-card-inner {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
 }
 
 .predecessor-card:hover {
     background-color: var(--rz-base-100);
-    border-color: var(--rz-primary-light) !important;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-color: var(--rz-primary-light);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
 .predecessor-card.selected {
-    background-color: var(--rz-primary-lighter) !important;
-    border-color: var(--rz-primary) !important;
-    box-shadow: 0 0 0 2px var(--rz-primary-lighter);
+    background-color: var(--rz-primary-lighter);
+    border-color: var(--rz-primary);
 }
 
 .predecessor-card.selected:hover {
-    background-color: var(--rz-primary-lighter) !important;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15), 0 0 0 2px var(--rz-primary-lighter);
+    background-color: var(--rz-primary-lighter);
 }
 
 .dialog-actions-inline {

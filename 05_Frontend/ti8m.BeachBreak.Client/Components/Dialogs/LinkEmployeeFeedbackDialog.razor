@@ -5,100 +5,102 @@
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components.Shared
 @inject DialogService DialogService
-@inject EmployeeFeedbackApiService FeedbackApiService
+@inject IEmployeeFeedbackApiService FeedbackApiService
 @inherits CategoryOptimizedTranslatableComponent
 
 <div class="link-feedback-dialog">
-    <RadzenStack Gap="1rem">
-        @if (isLoading)
-        {
-            <LoadingIndicator Message="@T("messages.loading-available-feedback")" Size="ProgressBarCircularSize.Medium" Padding="1.5rem" />
-        }
-        else if (availableFeedback == null || availableFeedback.Count == 0)
-        {
-            <EmptyState Icon="feedback" Title="@T("messages.no-feedback-available")" Compact="true" />
-        }
-        else
-        {
-            <RadzenText TextStyle="TextStyle.Body1" Class="mb-2">
-                @T("sections.select-feedback-to-link")
-            </RadzenText>
-
-            <RadzenDataGrid @ref="feedbackGrid"
-                           Data="@availableFeedback"
-                           TItem="LinkedEmployeeFeedbackDto"
-                           AllowFiltering="true"
-                           FilterMode="FilterMode.Simple"
-                           SelectionMode="DataGridSelectionMode.Multiple"
-                           @bind-Value="@selectedFeedback"
-                           AllowSorting="true"
-                           PageSize="10"
-                           AllowPaging="true"
-                           PagerHorizontalAlign="HorizontalAlign.Center">
-                <Columns>
-                    <RadzenDataGridColumn TItem="LinkedEmployeeFeedbackDto" Width="60px" Sortable="false" Filterable="false" TextAlign="TextAlign.Center">
-                        <HeaderTemplate>
-                            <RadzenCheckBox TriState="false"
-                                          TValue="bool"
-                                          Value="@(selectedFeedback?.Count == availableFeedback?.Count)"
-                                          Change="@((args) => ToggleSelectAll(args))" />
-                        </HeaderTemplate>
-                        <Template Context="feedback">
-                            <RadzenCheckBox TriState="false"
-                                          Value="@(selectedFeedback?.Contains(feedback) == true)"
-                                          TValue="bool" />
-                        </Template>
-                    </RadzenDataGridColumn>
-
-                    <RadzenDataGridColumn TItem="LinkedEmployeeFeedbackDto" Property="FeedbackDate" Title="@T("columns.feedback-date")" Width="140px" Sortable="true">
-                        <Template Context="feedback">
-                            @feedback.FeedbackDate.ToShortDateString()
-                        </Template>
-                    </RadzenDataGridColumn>
-
-                    <RadzenDataGridColumn TItem="LinkedEmployeeFeedbackDto" Property="SourceType" Title="@T("columns.source-type")" Width="140px" Sortable="true">
-                        <Template Context="feedback">
-                            <RadzenBadge BadgeStyle="@GetSourceTypeBadgeStyle(feedback.SourceType)"
-                                       Text="@GetSourceTypeDisplayName(feedback.SourceType)" />
-                        </Template>
-                    </RadzenDataGridColumn>
-
-                    <RadzenDataGridColumn TItem="LinkedEmployeeFeedbackDto" Property="ProviderName" Title="@T("columns.provider")" Sortable="true" />
-
-                    <RadzenDataGridColumn TItem="LinkedEmployeeFeedbackDto" Property="ProjectName" Title="@T("columns.project")" Sortable="true">
-                        <Template Context="feedback">
-                            @(feedback.ProjectName ?? "-")
-                        </Template>
-                    </RadzenDataGridColumn>
-
-                    <RadzenDataGridColumn TItem="LinkedEmployeeFeedbackDto" Property="AverageRating" Title="@T("columns.avg-rating")" Width="140px" Sortable="true">
-                        <Template Context="feedback">
-                            @if (feedback.AverageRating.HasValue)
-                            {
-                                <RadzenRating ReadOnly="true" Value="@((int)Math.Round(feedback.AverageRating.Value))" Stars="5" />
-                            }
-                            else
-                            {
-                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">@T("labels.no-ratings")</RadzenText>
-                            }
-                        </Template>
-                    </RadzenDataGridColumn>
-                </Columns>
-            </RadzenDataGrid>
-        }
-
-        <div class="dialog-actions-inline">
-            <RadzenButton Text="@T("buttons.cancel")"
-                        ButtonStyle="ButtonStyle.Light"
-                        Click="@Cancel"
-                        Disabled="@isSubmitting" />
-            <RadzenButton Text="@(isSubmitting ? T("buttons.linking") : T("buttons.link-selected"))"
-                        Icon="@(isSubmitting ? "" : "link")"
-                        ButtonStyle="ButtonStyle.Primary"
-                        Click="@LinkSelected"
-                        Disabled="@(isSubmitting || selectedFeedback == null || selectedFeedback.Count == 0)" />
+    @if (isLoading)
+    {
+        <LoadingIndicator Message="@T("messages.loading-available-feedback")" Size="ProgressBarCircularSize.Medium" Padding="2rem" />
+    }
+    else if (availableFeedback == null || availableFeedback.Count == 0)
+    {
+        <EmptyState Icon="feedback" Title="@T("messages.no-feedback-available")" Compact="true" />
+    }
+    else
+    {
+        <div class="feedback-list-header">
+            <div class="feedback-select-all">
+                <RadzenCheckBox TriState="false"
+                               TValue="bool"
+                               Value="@(selectedFeedback.Count > 0 && selectedFeedback.Count == filteredFeedback.Count)"
+                               Change="@((args) => ToggleSelectAll(args))" />
+                <span class="select-all-label">@T("labels.select-all")</span>
+            </div>
+            <div class="feedback-header-right">
+                <RadzenDropDown TValue="int?"
+                               Data="@availableYears"
+                               Value="@selectedYear"
+                               ValueChanged="@((int? y) => OnYearChanged(y))"
+                               Placeholder="@T("labels.all-years")"
+                               AllowClear="true"
+                               Style="width: 110px" />
+                <span class="feedback-count">
+                    @if (selectedFeedback.Count > 0)
+                    {
+                        @string.Format(T("labels.n-selected"), selectedFeedback.Count)
+                    }
+                    else
+                    {
+                        @string.Format(T("labels.n-available"), filteredFeedback.Count)
+                    }
+                </span>
+            </div>
         </div>
-    </RadzenStack>
+
+        <div class="feedback-card-list">
+            @foreach (var feedback in filteredFeedback)
+            {
+                var isSelected = selectedFeedback?.Contains(feedback) == true;
+                <div class="feedback-card @(isSelected ? "selected" : "")" @onclick="() => ToggleFeedbackSelection(feedback)">
+                    <div class="feedback-card-check">
+                        <RadzenCheckBox TriState="false"
+                                       TValue="bool"
+                                       Value="@isSelected"
+                                       Change="@((v) => ToggleFeedbackSelection(feedback))"
+                                       @onclick:stopPropagation="true" />
+                    </div>
+                    <div class="feedback-card-body">
+                        <div class="feedback-card-top">
+                            <RadzenBadge BadgeStyle="@GetSourceTypeBadgeStyle(feedback.SourceType)"
+                                        Text="@GetSourceTypeDisplayName(feedback.SourceType)"
+                                        Class="source-badge" />
+                            <span class="feedback-date">@feedback.FeedbackDate.ToShortDateString()</span>
+                        </div>
+                        <div class="feedback-card-main">
+                            <span class="feedback-provider">@feedback.ProviderName</span>
+                            @if (!string.IsNullOrEmpty(feedback.ProjectName))
+                            {
+                                <span class="feedback-project">@feedback.ProjectName</span>
+                            }
+                        </div>
+                    </div>
+                    <div class="feedback-card-rating">
+                        @if (feedback.AverageRating.HasValue)
+                        {
+                            <RadzenRating ReadOnly="true" Value="@((int)Math.Round(feedback.AverageRating.Value))" Stars="5" />
+                        }
+                        else
+                        {
+                            <span class="no-rating">@T("labels.no-ratings")</span>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    <div class="dialog-actions-inline">
+        <RadzenButton Text="@T("buttons.cancel")"
+                    ButtonStyle="ButtonStyle.Light"
+                    Click="@Cancel"
+                    Disabled="@isSubmitting" />
+        <RadzenButton Text="@(isSubmitting ? T("buttons.linking") : T("buttons.link-selected"))"
+                    Icon="@(isSubmitting ? "" : "link")"
+                    ButtonStyle="ButtonStyle.Primary"
+                    Click="@LinkSelected"
+                    Disabled="@(isSubmitting || selectedFeedback == null || selectedFeedback.Count == 0)" />
+    </div>
 </div>
 
 @code {
@@ -119,11 +121,23 @@
         };
     }
 
-    private RadzenDataGrid<LinkedEmployeeFeedbackDto>? feedbackGrid;
     private bool isLoading = true;
     private bool isSubmitting = false;
     private List<LinkedEmployeeFeedbackDto>? availableFeedback;
-    private IList<LinkedEmployeeFeedbackDto>? selectedFeedback;
+    private List<LinkedEmployeeFeedbackDto> selectedFeedback = new();
+    private int? selectedYear;
+
+    private List<int> availableYears =>
+        availableFeedback?
+            .Select(f => f.FeedbackDate.Year)
+            .Distinct()
+            .OrderByDescending(y => y)
+            .ToList() ?? new();
+
+    private List<LinkedEmployeeFeedbackDto> filteredFeedback =>
+        availableFeedback?
+            .Where(f => selectedYear == null || f.FeedbackDate.Year == selectedYear)
+            .ToList() ?? new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -153,9 +167,24 @@
         }
     }
 
+    private void OnYearChanged(int? year)
+    {
+        selectedYear = year;
+        // Drop selections that are no longer visible
+        selectedFeedback = selectedFeedback.Intersect(filteredFeedback).ToList();
+    }
+
     private void ToggleSelectAll(bool? selectAll)
     {
-        selectedFeedback = selectAll == true ? availableFeedback?.ToList() : new List<LinkedEmployeeFeedbackDto>();
+        selectedFeedback = selectAll == true ? filteredFeedback.ToList() : new();
+    }
+
+    private void ToggleFeedbackSelection(LinkedEmployeeFeedbackDto feedback)
+    {
+        if (selectedFeedback.Contains(feedback))
+            selectedFeedback.Remove(feedback);
+        else
+            selectedFeedback.Add(feedback);
     }
 
     private async Task LinkSelected()
