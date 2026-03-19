@@ -331,7 +331,7 @@
         var stateColor = $"color: {WorkflowStateHelper.GetStateColor(assignment.WorkflowState)};";
 
         <RadzenCard Class="questionnaire-card mb-2" Style="padding: 12px 16px;">
-            <span class="fw-medium d-block text-truncate questionnaire-card-title">@GetTemplateName(assignment)</span>
+            <span class="d-block text-truncate questionnaire-card-title">@GetTemplateName(assignment)</span>
             <small style="font-size: 0.72rem;">
                 <span style="@stateColor">
                     @T(WorkflowStateHelper.GetStateDisplayName(assignment.WorkflowState))

@@ -3,7 +3,7 @@
 @using ti8m.BeachBreak.Client.Services.Enhanced
 @inherits CompositionComponentBase
 
-<div class="virtualized-list-optimized" style="height: @ContainerHeight; overflow-y: auto;" @onscroll="HandleScroll">
+<div class="virtualized-list-optimized" style="height: @ContainerHeight; overflow-y: auto; overflow-x: hidden;" @onscroll="HandleScroll">
     @if (isLoading)
     {
         <LoadingIndicator Message="Loading questionnaires..." />
@@ -13,7 +13,7 @@
         <div>
             @foreach (var assignment in AllAssignments)
             {
-                <div class="mb-3">
+                <div class="mb-2">
                     @RenderQuestionnaireCard(assignment)
                 </div>
             }

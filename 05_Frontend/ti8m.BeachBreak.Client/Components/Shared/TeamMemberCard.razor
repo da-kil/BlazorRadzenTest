@@ -91,17 +91,17 @@
             }
             @if (Assignments.Count > 3)
             {
-                <div class="text-muted text-center mt-1" style="cursor: pointer;" @onclick="ToggleShowAllAssignments">
-                    <small>
-                        @if (showAllAssignments)
-                        {
-                            <span><RadzenIcon Icon="expand_less" Style="font-size: 0.8rem;" /> Show less</span>
-                        }
-                        else
-                        {
-                            <span>+@(Assignments.Count - 3) more assignments - click to view all <RadzenIcon Icon="expand_more" Style="font-size: 0.8rem;" /></span>
-                        }
-                    </small>
+                <div class="show-more-assignments" @onclick="ToggleShowAllAssignments">
+                    @if (showAllAssignments)
+                    {
+                        <RadzenIcon Icon="expand_less" />
+                        <span>Show less</span>
+                    }
+                    else
+                    {
+                        <RadzenIcon Icon="expand_more" />
+                        <span>+@(Assignments.Count - 3) more assignments</span>
+                    }
                 </div>
             }
         </div>

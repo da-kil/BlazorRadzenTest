@@ -3,6 +3,7 @@
     margin-top: 1.5rem;
     padding-top: 1.25rem;
     border-top: 1px solid var(--rz-border-color);
+    overflow-x: hidden;
 }
 
 /* Employee Status Table Wrapper Styles */
