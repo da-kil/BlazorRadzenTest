@@ -418,7 +418,7 @@
             <div class="questionnaire-view-container">
                 <div class="mb-3 d-flex justify-content-between align-items-center">
                     <RadzenText TextStyle="TextStyle.Subtitle1">
-                        Showing @GetGroupedQuestionnaires().Count questionnaire @(GetGroupedQuestionnaires().Count == 1 ? "template" : "templates")
+                        @string.Format(T("labels.showing-questionnaire-templates"), GetGroupedQuestionnaires().Count)
                     </RadzenText>
                     <div class="d-flex align-items-center gap-2">
                         <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-0">@T("labels.sort-by")</RadzenText>
@@ -451,7 +451,7 @@
         {
             <div class="text-center p-5">
                 <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
-                <RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-3">Loading analytics data...</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-3">@T("messages.loading-analytics-data")</RadzenText>
             </div>
         }
         else
@@ -462,11 +462,11 @@
                     <RadzenColumn Size="12">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <RadzenText TextStyle="TextStyle.H5" Class="mb-1">Analytics & Insights</RadzenText>
-                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Comprehensive view of questionnaire performance and trends</RadzenText>
+                                <RadzenText TextStyle="TextStyle.H5" Class="mb-1">@T("labels.analytics-insights")</RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">@T("messages.analytics-description")</RadzenText>
                             </div>
                             <div>
-                                <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@($"Last Updated: {DateTime.Now:MMM dd, HH:mm}")" />
+                                <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@string.Format(T("labels.last-updated-format"), DateTime.Now.ToString("MMM dd, HH:mm"))" />
                             </div>
                         </div>
                     </RadzenColumn>
@@ -478,7 +478,7 @@
                         <div class="metric-card">
                             <div class="d-flex align-items-center justify-content-between">
                                 <div>
-                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-1">Overall Completion Rate</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-1">@T("labels.overall-completion-rate")</RadzenText>
                                     <RadzenText TextStyle="TextStyle.H5" Class="text-success mb-0">@($"{GetOverallCompletionRate():F1}%")</RadzenText>
                                 </div>
                                 <RadzenIcon Icon="trending_up" Size="2rem" Class="text-success opacity-75" />
@@ -489,8 +489,8 @@
                         <div class="metric-card">
                             <div class="d-flex align-items-center justify-content-between">
                                 <div>
-                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-1">Average Response Time</RadzenText>
-                                    <RadzenText TextStyle="TextStyle.H5" Class="text-primary mb-0">@($"{GetAverageResponseTime():F1} days")</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-1">@T("labels.average-response-time")</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.H5" Class="text-primary mb-0">@($"{GetAverageResponseTime():F1} {T("labels.days").ToLower()}")</RadzenText>
                                 </div>
                                 <RadzenIcon Icon="schedule" Size="2rem" Class="text-primary opacity-75" />
                             </div>
@@ -500,7 +500,7 @@
                         <div class="metric-card">
                             <div class="d-flex align-items-center justify-content-between">
                                 <div>
-                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-1">Participation Rate</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-1">@T("labels.participation-rate")</RadzenText>
                                     <RadzenText TextStyle="TextStyle.H5" Class="text-info mb-0">@($"{GetParticipationRate():F1}%")</RadzenText>
                                 </div>
                                 <RadzenIcon Icon="people" Size="2rem" Class="text-info opacity-75" />
@@ -511,7 +511,7 @@
                         <div class="metric-card">
                             <div class="d-flex align-items-center justify-content-between">
                                 <div>
-                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-1">Overdue Items</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-1">@T("labels.overdue-items")</RadzenText>
                                     <RadzenText TextStyle="TextStyle.H5" Class="@((GetOverdueCount() > 0 ? "text-danger" : "text-muted") + " mb-0")">@GetOverdueCount()</RadzenText>
                                 </div>
                                 <RadzenIcon Icon="warning" Size="2rem" Class="@((GetOverdueCount() > 0 ? "text-danger" : "text-muted") + " opacity-75")" />
@@ -526,7 +526,7 @@
                     <RadzenColumn Size="12" SizeLG="6">
                         <div class="chart-card">
                             <div class="chart-header">
-                                <RadzenText TextStyle="TextStyle.H6" Class="mb-3">Assignment Status Distribution</RadzenText>
+                                <RadzenText TextStyle="TextStyle.H6" Class="mb-3">@T("labels.assignment-status-distribution")</RadzenText>
                             </div>
                             <div class="chart-container">
                                 <RadzenChart>
@@ -542,7 +542,7 @@
                     <RadzenColumn Size="12" SizeLG="6">
                         <div class="chart-card">
                             <div class="chart-header">
-                                <RadzenText TextStyle="TextStyle.H6" Class="mb-3">Department Performance Comparison</RadzenText>
+                                <RadzenText TextStyle="TextStyle.H6" Class="mb-3">@T("labels.department-performance-comparison")</RadzenText>
                             </div>
                             <div class="chart-container">
                                 <RadzenChart>
@@ -552,7 +552,7 @@
                                     <RadzenCategoryAxis Padding="20" />
                                     <RadzenValueAxis>
                                         <RadzenGridLines Visible="true" />
-                                        <RadzenAxisTitle Text="Completion Rate %" />
+                                        <RadzenAxisTitle Text="@T("labels.completion-rate-percent")" />
                                     </RadzenValueAxis>
                                 </RadzenChart>
                             </div>
@@ -566,7 +566,7 @@
                     <RadzenColumn Size="12" SizeLG="8">
                         <div class="chart-card">
                             <div class="chart-header">
-                                <RadzenText TextStyle="TextStyle.H6" Class="mb-3">Questionnaire Template Performance</RadzenText>
+                                <RadzenText TextStyle="TextStyle.H6" Class="mb-3">@T("labels.questionnaire-template-performance")</RadzenText>
                             </div>
                             <div class="table-responsive">
                                 <RadzenDataGrid Data="@GetTemplatePerformanceData()"
@@ -600,7 +600,7 @@
                                         </RadzenDataGridColumn>
                                         <RadzenDataGridColumn TItem="TemplatePerformanceData" Property="AverageResponseTime" Title="Avg Response" Width="120px" TextAlign="TextAlign.Center">
                                             <Template Context="template">
-                                                <span class="small">@($"{template.AverageResponseTime:F1} days")</span>
+                                                <span class="small">@($"{template.AverageResponseTime:F1} {T("labels.days").ToLower()}")</span>
                                             </Template>
                                         </RadzenDataGridColumn>
                                     </Columns>
@@ -613,36 +613,36 @@
                     <RadzenColumn Size="12" SizeLG="4">
                         <div class="chart-card">
                             <div class="chart-header">
-                                <RadzenText TextStyle="TextStyle.H6" Class="mb-3">Quick Insights</RadzenText>
+                                <RadzenText TextStyle="TextStyle.H6" Class="mb-3">@T("labels.quick-insights")</RadzenText>
                             </div>
                             <div class="quick-stats">
                                 <div class="stat-item mb-3 p-3 border-start border-primary border-4">
                                     <div class="d-flex align-items-center mb-2">
                                         <RadzenIcon Icon="star" Class="text-warning me-2" />
-                                        <RadzenText TextStyle="TextStyle.Subtitle2" Class="mb-0">Top Performer</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Subtitle2" Class="mb-0">@T("labels.top-performer")</RadzenText>
                                     </div>
                                     <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">@GetTopPerformingDepartment()</RadzenText>
                                 </div>
                                 <div class="stat-item mb-3 p-3 border-start border-success border-4">
                                     <div class="d-flex align-items-center mb-2">
                                         <RadzenIcon Icon="speed" Class="text-success me-2" />
-                                        <RadzenText TextStyle="TextStyle.Subtitle2" Class="mb-0">Fastest Response</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Subtitle2" Class="mb-0">@T("labels.fastest-response")</RadzenText>
                                     </div>
                                     <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">@GetFastestTemplate()</RadzenText>
                                 </div>
                                 <div class="stat-item mb-3 p-3 border-start border-info border-4">
                                     <div class="d-flex align-items-center mb-2">
                                         <RadzenIcon Icon="trending_up" Class="text-info me-2" />
-                                        <RadzenText TextStyle="TextStyle.Subtitle2" Class="mb-0">Most Popular</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Subtitle2" Class="mb-0">@T("labels.most-popular")</RadzenText>
                                     </div>
                                     <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">@GetMostPopularTemplate()</RadzenText>
                                 </div>
                                 <div class="stat-item p-3 border-start border-warning border-4">
                                     <div class="d-flex align-items-center mb-2">
                                         <RadzenIcon Icon="schedule" Class="text-warning me-2" />
-                                        <RadzenText TextStyle="TextStyle.Subtitle2" Class="mb-0">Attention Needed</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Subtitle2" Class="mb-0">@T("labels.attention-needed")</RadzenText>
                                     </div>
-                                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">@GetAttentionNeededCount() overdue items</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">@string.Format(T("labels.overdue-items-count"), GetAttentionNeededCount())</RadzenText>
                                 </div>
                             </div>
                         </div>
@@ -659,7 +659,7 @@
         {
             <div class="text-center p-5">
                 <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
-                <RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-3">Loading department data...</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-3">@T("messages.loading-department-data")</RadzenText>
             </div>
         }
         else
@@ -668,7 +668,7 @@
 
             @if (!departmentGroups.Any())
             {
-                @RenderEnhancedEmptyState("No departments found", GetDepartmentsEmptyStateMessage(), "corporate_fare", GetDepartmentsEmptyStateActions())
+                @RenderEnhancedEmptyState(T("messages.no-departments-found"), GetDepartmentsEmptyStateMessage(), "corporate_fare", GetDepartmentsEmptyStateActions())
             }
             else
             {
@@ -682,7 +682,7 @@
                                         @dept.OrganizationName
                                     </RadzenText>
                                     <RadzenText TextStyle="TextStyle.Subtitle2" Class="text-muted">
-                                        @dept.EmployeeCount team @(dept.EmployeeCount == 1 ? "member" : "members") • @dept.TotalAssignments @(dept.TotalAssignments == 1 ? "assignment" : "assignments")
+                                        @string.Format(T("labels.department-stats"), dept.EmployeeCount, dept.TotalAssignments)
                                     </RadzenText>
                                 </div>
                                 <div class="d-flex flex-wrap gap-2 align-items-center">
@@ -712,10 +712,10 @@
 
                             <!-- Department Team Members -->
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <RadzenText TextStyle="TextStyle.Subtitle2" Class="text-primary mb-0">Team Members</RadzenText>
+                                <RadzenText TextStyle="TextStyle.Subtitle2" Class="text-primary mb-0">@T("labels.team-members")</RadzenText>
                                 @if (dept.Members.Count > 5)
                                 {
-                                    <RadzenButton Text="@(expandedDepartments.Contains(dept.OrganizationId) ? "Show Less" : $"Show All ({dept.Members.Count})")"
+                                    <RadzenButton Text="@(expandedDepartments.Contains(dept.OrganizationId) ? T("buttons.show-less") : string.Format(T("buttons.show-all-count"), dept.Members.Count))"
                                                  Icon="@(expandedDepartments.Contains(dept.OrganizationId) ? "expand_less" : "expand_more")"
                                                  ButtonStyle="ButtonStyle.Light"
                                                  Size="ButtonSize.Small"
@@ -743,10 +743,10 @@
                                 <div class="text-center p-3 border rounded" style="background-color: var(--rz-background-color-light, rgba(0, 0, 0, 0.05)); color: var(--rz-text-color);">
                                     <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-0">
                                         <RadzenIcon Icon="expand_more" Style="font-size: 1.25rem;" Class="me-1" />
-                                        +@(dept.Members.Count - 5) more team member@(dept.Members.Count - 5 == 1 ? "" : "s")
+                                        @string.Format(T("messages.more-team-members"), dept.Members.Count - 5)
                                     </RadzenText>
                                     <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
-                                        Click "Show All" button above to view all members
+                                        @T("messages.click-show-all-for-members")
                                     </RadzenText>
                                 </div>
                             }
@@ -768,19 +768,19 @@
         {
             <div class="text-center p-5">
                 <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
-                <RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-3">Loading employee data...</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-3">@T("messages.loading-employee-data")</RadzenText>
             </div>
         }
         else if (!employees.Any())
         {
-            @RenderEnhancedEmptyState("No employees found", GetEmployeesEmptyStateMessage(), "people", GetEmployeesEmptyStateActions())
+            @RenderEnhancedEmptyState(T("messages.no-employees-found"), GetEmployeesEmptyStateMessage(), "people", GetEmployeesEmptyStateActions())
         }
         else
         {
             <div class="employee-status-container">
                 <div class="mb-3 d-flex justify-content-between align-items-center">
                     <RadzenText TextStyle="TextStyle.Subtitle1">
-                        Showing @filteredTeamMembers.Count of @employees.Count employees
+                        @string.Format(T("labels.showing-employees-of-total"), filteredTeamMembers.Count, employees.Count)
                     </RadzenText>
                 </div>
 
@@ -794,11 +794,11 @@
                                        AllowColumnResize="true"
                                        GridLines="DataGridGridLines.Both"
                                        Class="mt-3"
-                                       EmptyText="No employees found"
+                                       EmptyText="@T("messages.no-employees-found")"
                                        PageSize="25"
                                        AllowPaging="true"
                                        ShowPagingSummary="true"
-                                       PagingSummaryFormat="Displaying {0} - {1} of {2} employees">
+                                       PagingSummaryFormat="@T("labels.paging-employees-summary")">
                         <Columns>
                             <RadzenDataGridColumn TItem="EmployeeStatusRow" Property="EmployeeName" Title="Employee" Frozen="true" Width="250px">
                                 <Template Context="employee">
@@ -871,7 +871,7 @@
                                     }
                                     else
                                     {
-                                        <span class="text-muted small">No activity</span>
+                                        <span class="text-muted small">@T("labels.no-activity")</span>
                                     }
                                 </Template>
                             </RadzenDataGridColumn>
@@ -919,7 +919,7 @@
             <div class="text-center p-5">
                 <RadzenIcon Icon="quiz" Size="4rem" Class="text-muted mb-3" />
                 <RadzenText TextStyle="TextStyle.H5" Class="text-muted mb-2">@T("messages.no-questionnaires-assigned")</RadzenText>
-                <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">Questionnaire assignments will appear here once available.</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">@T("messages.questionnaire-assignments-available-soon")</RadzenText>
             </div>
         }
         else
@@ -927,7 +927,7 @@
             <div class="questionnaire-performance-container">
                 <div class="mb-3 d-flex justify-content-between align-items-center">
                     <RadzenText TextStyle="TextStyle.Subtitle1">
-                        Showing @GetGroupedQuestionnaires().Count questionnaire @(GetGroupedQuestionnaires().Count == 1 ? "template" : "templates")
+                        @string.Format(T("labels.showing-questionnaire-templates"), GetGroupedQuestionnaires().Count)
                     </RadzenText>
                     <div class="d-flex align-items-center gap-2">
                         <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-0">@T("labels.sort-by")</RadzenText>
@@ -1916,15 +1916,15 @@
 
         if (hasFilters)
         {
-            return "No questionnaires match your current filters. Try adjusting your search criteria or clearing filters to see all available questionnaires.";
+            return T("messages.no-questionnaires-filters-applied");
         }
 
         return Configuration.PageType switch
         {
-            QuestionnairePageType.Employee => "You don't have any questionnaires assigned yet. Check back later or contact your manager if you expected assignments.",
-            QuestionnairePageType.Manager => "No questionnaires have been assigned to your team yet. You can assign questionnaires from the questionnaire builder.",
-            QuestionnairePageType.HR => "No questionnaires have been created yet. Start by creating questionnaire templates in the questionnaire builder.",
-            _ => "No questionnaires are available at this time."
+            QuestionnairePageType.Employee => T("messages.no-questionnaires-employee"),
+            QuestionnairePageType.Manager => T("messages.no-questionnaires-manager"),
+            QuestionnairePageType.HR => T("messages.no-questionnaires-hr"),
+            _ => T("messages.no-questionnaires-generic")
         };
     }
 
@@ -1938,7 +1938,7 @@
         {
             actions.Add(new EmptyStateAction
             {
-                Text = "Clear Filters",
+                Text = T("buttons.clear-filters"),
                 Icon = "clear",
                 Style = ButtonStyle.Light,
                 OnClick = ClearAllFilters
@@ -1952,7 +1952,7 @@
             case QuestionnairePageType.HR:
                 actions.Add(new EmptyStateAction
                 {
-                    Text = "Create Questionnaire",
+                    Text = T("buttons.create-questionnaire"),
                     Icon = "add",
                     Style = ButtonStyle.Primary,
                     OnClick = () => NavigateToQuestionnaireBuilder()
@@ -1965,7 +1965,7 @@
 
     private string GetTeamMembersEmptyStateMessage()
     {
-        return "No team members are currently assigned to you. Team members will appear here once they are added to your organization.";
+        return T("messages.no-team-members-description");
     }
 
     private List<EmptyStateAction> GetTeamMembersEmptyStateActions()
@@ -1979,10 +1979,10 @@
 
         if (hasFilters)
         {
-            return "No departments match your current filters. Try adjusting your search criteria to see department data.";
+            return T("messages.no-departments-filters-applied");
         }
 
-        return "No departments have been set up yet. Department data will appear here once organizational structure is configured.";
+        return T("messages.no-departments-setup");
     }
 
     private List<EmptyStateAction> GetDepartmentsEmptyStateActions()
@@ -1995,7 +1995,7 @@
         {
             actions.Add(new EmptyStateAction
             {
-                Text = "Clear Filters",
+                Text = T("buttons.clear-filters"),
                 Icon = "clear",
                 Style = ButtonStyle.Light,
                 OnClick = ClearAllFilters
@@ -2011,10 +2011,10 @@
 
         if (hasFilters)
         {
-            return "No employees match your current filters. Try adjusting your search criteria to see employee data.";
+            return T("messages.no-employees-filters-applied");
         }
 
-        return "No employees are available in the system yet. Employee data will appear here once user accounts are set up.";
+        return T("messages.no-employees-setup");
     }
 
     private List<EmptyStateAction> GetEmployeesEmptyStateActions()
@@ -2027,7 +2027,7 @@
         {
             actions.Add(new EmptyStateAction
             {
-                Text = "Clear Filters",
+                Text = T("buttons.clear-filters"),
                 Icon = "clear",
                 Style = ButtonStyle.Light,
                 OnClick = ClearAllFilters

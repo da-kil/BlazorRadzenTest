@@ -2194,7 +2194,7 @@
         "english":  "Select all",
         "createdDate":  "2026-03-18T00:00:00.0000000+00:00",
         "key":  "labels.select-all",
-        "german":  "Alle ausw\u00E4hlen",
+        "german":  "Alle auswählen",
         "category":  "labels"
     },
     {
@@ -2208,14 +2208,14 @@
         "english":  "{0} selected",
         "createdDate":  "2026-03-18T00:00:00.0000000+00:00",
         "key":  "labels.n-selected",
-        "german":  "{0} ausgew\u00E4hlt",
+        "german":  "{0} ausgewählt",
         "category":  "labels"
     },
     {
         "english":  "{0} available",
         "createdDate":  "2026-03-18T00:00:00.0000000+00:00",
         "key":  "labels.n-available",
-        "german":  "{0} verf\u00FCgbar",
+        "german":  "{0} verfügbar",
         "category":  "labels"
     },
     {
@@ -6798,21 +6798,21 @@
     },
     {
         "key": "workflow-states.both-submitted-description",
-        "german": "Beide haben den Fragebogen eingereicht, bereit zur \u00dcberpr\u00fcfung",
+        "german": "Beide haben den Fragebogen eingereicht, bereit zur Überprüfung",
         "english": "Both have submitted the questionnaire, ready for review",
         "category": "workflow-states",
         "createdDate": "2026-03-08T12:00:00.0000000+01:00"
     },
     {
         "key": "workflow-states.in-review-description",
-        "german": "Fragebogen wird derzeit \u00fcberpr\u00fcft",
+        "german": "Fragebogen wird derzeit überprüft",
         "english": "Questionnaire is currently under review",
         "category": "workflow-states",
         "createdDate": "2026-03-08T12:00:00.0000000+01:00"
     },
     {
         "key": "workflow-states.employee-review-confirmed-description",
-        "german": "Mitarbeiter hat die \u00dcberpr\u00fcfung best\u00e4tigt",
+        "german": "Mitarbeiter hat die Überprüfung bestätigt",
         "english": "Employee has confirmed the review",
         "category": "workflow-states",
         "createdDate": "2026-03-08T12:00:00.0000000+01:00"
@@ -7309,35 +7309,35 @@
     },
     {
         "key": "messages.review-mode-manager-info",
-        "german": "Als Manager k\u00F6nnen Sie alle Antworten w\u00E4hrend dieses Gespr\u00E4chs einsehen und bearbeiten. Alle \u00C4nderungen werden nachverfolgt.",
+        "german": "Als Manager können Sie alle Antworten während dieses Gesprächs einsehen und bearbeiten. Alle \u00C4nderungen werden nachverfolgt.",
         "english": "As the manager, you can view and edit all answers during this review meeting. All changes are tracked.",
         "category": "messages",
         "createdDate": "2026-03-08T12:00:00.0000000+01:00"
     },
     {
         "key": "messages.unable-validate-manager-access",
-        "german": "Managerzugriff f\u00FCr den \u00DCberpr\u00FCfungsmodus konnte nicht validiert werden: {0}",
+        "german": "Managerzugriff für den Überprüfungsmodus konnte nicht validiert werden: {0}",
         "english": "Unable to validate manager access for review mode: {0}",
         "category": "messages",
         "createdDate": "2026-03-08T12:00:00.0000000+01:00"
     },
     {
         "key": "pages.review-meeting",
-        "german": "\u00DCberpr\u00FCfungsgespr\u00E4ch",
+        "german": "Überprüfungsgespräch",
         "english": "Review Meeting",
         "category": "pages",
         "createdDate": "2026-03-08T12:00:00.0000000+01:00"
     },
     {
         "key": "labels.reviewing-employee",
-        "german": "\u00FCberpr\u00FCfter Mitarbeiter",
+        "german": "überprüfter Mitarbeiter",
         "english": "Reviewing Employee",
         "category": "labels",
         "createdDate": "2026-03-08T12:00:00.0000000+01:00"
     },
     {
         "key": "buttons.complete-review",
-        "german": "\u00DCberpr\u00FCfung abschlie\u00DFen",
+        "german": "Überprüfung abschlie\u00DFen",
         "english": "Complete Review",
         "category": "buttons",
         "createdDate": "2026-03-08T12:00:00.0000000+01:00"
@@ -7372,7 +7372,7 @@
     },
     {
         "key": "dialogs.confirm-copy",
-        "german": "Kopieren best\u00E4tigen",
+        "german": "Kopieren bestätigen",
         "english": "Confirm Copy",
         "category": "dialogs",
         "createdDate": "2026-03-08T12:00:00.0000000+01:00"
@@ -7449,28 +7449,28 @@
     },
     {
         "key": "pages.create-assignment-description",
-        "german": "W\u00e4hlen Sie einen Fragebogen und Mitarbeiter f\u00fcr die Zuweisung aus",
+        "german": "Wählen Sie einen Fragebogen und Mitarbeiter für die Zuweisung aus",
         "english": "Select a questionnaire and employees to assign",
         "category": "pages",
         "createdDate": "2026-03-12T12:00:00.0000000+01:00"
     },
     {
         "key": "steps.select-questionnaire",
-        "german": "Fragebogen w\u00e4hlen",
+        "german": "Fragebogen wählen",
         "english": "Select Questionnaire",
         "category": "steps",
         "createdDate": "2026-03-12T12:00:00.0000000+01:00"
     },
     {
         "key": "steps.select-employees",
-        "german": "Mitarbeiter w\u00e4hlen",
+        "german": "Mitarbeiter wählen",
         "english": "Select Employees",
         "category": "steps",
         "createdDate": "2026-03-12T12:00:00.0000000+01:00"
     },
     {
         "key": "steps.summary",
-        "german": "\u00dcbersicht",
+        "german": "Übersicht",
         "english": "Summary",
         "category": "steps",
         "createdDate": "2026-03-12T12:00:00.0000000+01:00"
@@ -7533,7 +7533,7 @@
     },
     {
         "key": "dialogs.export-pdf-language",
-        "german": "PDF-Sprache w\u00e4hlen",
+        "german": "PDF-Sprache wählen",
         "english": "Select PDF Language",
         "category": "dialogs",
         "createdDate": "2026-03-14T12:00:00.0000000+01:00"
@@ -7817,5 +7817,327 @@
         "english": "Signature:",
         "category": "pdf",
         "createdDate": "2026-03-14T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.process-type-set-at-creation",
+        "german": "Prozesstyp wird bei der Erstellung festgelegt und kann nicht geändert werden",
+        "english": "Process type is set at creation time and cannot be changed",
+        "category": "messages",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "templates.customization-tooltip",
+        "german": "Wenn aktiviert, können Mitarbeiter Vorlagenfragen anpassen",
+        "english": "When enabled, allows employees to customize template questions",
+        "category": "templates",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "templates.auto-initialize-tooltip",
+        "german": "Wenn aktiviert, werden Aufgaben automatisch initialisiert ohne manuelle Bestätigung",
+        "english": "When enabled, assignments are automatically initialized without requiring manual confirmation",
+        "category": "templates",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.loading-analytics-data",
+        "german": "Analysedaten werden geladen...",
+        "english": "Loading analytics data...",
+        "category": "messages",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.analytics-insights",
+        "german": "Analysen & Erkenntnisse",
+        "english": "Analytics & Insights",
+        "category": "labels",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.analytics-description",
+        "german": "Umfassende übersicht über Fragebogenleistung und -trends",
+        "english": "Comprehensive view of questionnaire performance and trends",
+        "category": "messages",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.overall-completion-rate",
+        "german": "Gesamtabschlussrate",
+        "english": "Overall Completion Rate",
+        "category": "labels",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.average-response-time",
+        "german": "Durchschnittliche Antwortzeit",
+        "english": "Average Response Time",
+        "category": "labels",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.participation-rate",
+        "german": "Beteiligungsrate",
+        "english": "Participation Rate",
+        "category": "labels",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.overdue-items",
+        "german": "überfällige Elemente",
+        "english": "Overdue Items",
+        "category": "labels",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.overdue-items-count",
+        "german": "{0} überfällige Elemente",
+        "english": "{0} overdue items",
+        "category": "labels",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.assignment-status-distribution",
+        "german": "Aufgabenstatus-Verteilung",
+        "english": "Assignment Status Distribution",
+        "category": "labels",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.department-performance-comparison",
+        "german": "Abteilungsleistungsvergleich",
+        "english": "Department Performance Comparison",
+        "category": "labels",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.completion-rate-percent",
+        "german": "Abschlussrate %",
+        "english": "Completion Rate %",
+        "category": "labels",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.questionnaire-template-performance",
+        "german": "Fragebogen-Vorlagenleistung",
+        "english": "Questionnaire Template Performance",
+        "category": "labels",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.quick-insights",
+        "german": "Schnellübersicht",
+        "english": "Quick Insights",
+        "category": "labels",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.top-performer",
+        "german": "Bester Performer",
+        "english": "Top Performer",
+        "category": "labels",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.fastest-response",
+        "german": "Schnellste Antwort",
+        "english": "Fastest Response",
+        "category": "labels",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.most-popular",
+        "german": "Am beliebtesten",
+        "english": "Most Popular",
+        "category": "labels",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.attention-needed",
+        "german": "Aufmerksamkeit erforderlich",
+        "english": "Attention Needed",
+        "category": "labels",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.last-updated-format",
+        "german": "Zuletzt aktualisiert: {0}",
+        "english": "Last Updated: {0}",
+        "category": "labels",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.loading-department-data",
+        "german": "Abteilungsdaten werden geladen...",
+        "english": "Loading department data...",
+        "category": "messages",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.no-departments-found",
+        "german": "Keine Abteilungen gefunden",
+        "english": "No departments found",
+        "category": "messages",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.department-stats",
+        "german": "{0} Teammitglieder \u2022 {1} Aufgaben",
+        "english": "{0} team members \u2022 {1} assignments",
+        "category": "labels",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "buttons.show-less",
+        "german": "Weniger anzeigen",
+        "english": "Show Less",
+        "category": "buttons",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "buttons.show-all-count",
+        "german": "Alle anzeigen ({0})",
+        "english": "Show All ({0})",
+        "category": "buttons",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.more-team-members",
+        "german": "+{0} weitere Teammitglieder",
+        "english": "+{0} more team members",
+        "category": "messages",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.click-show-all-for-members",
+        "german": "Klicken Sie auf \"Alle anzeigen\" oben, um alle Mitglieder zu sehen",
+        "english": "Click \"Show All\" button above to view all members",
+        "category": "messages",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.loading-employee-data",
+        "german": "Mitarbeiterdaten werden geladen...",
+        "english": "Loading employee data...",
+        "category": "messages",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.no-employees-found",
+        "german": "Keine Mitarbeiter gefunden",
+        "english": "No employees found",
+        "category": "messages",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.showing-employees-of-total",
+        "german": "Zeige {0} von {1} Mitarbeitern",
+        "english": "Showing {0} of {1} employees",
+        "category": "labels",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.paging-employees-summary",
+        "german": "Zeige {0} - {1} von {2} Mitarbeitern",
+        "english": "Displaying {0} - {1} of {2} employees",
+        "category": "labels",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.no-activity",
+        "german": "Keine Aktivität",
+        "english": "No activity",
+        "category": "labels",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.showing-questionnaire-templates",
+        "german": "{0} Fragebogenvorlagen",
+        "english": "Showing {0} questionnaire templates",
+        "category": "labels",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.questionnaire-assignments-available-soon",
+        "german": "Fragebogenaufgaben werden hier angezeigt, sobald sie verfügbar sind.",
+        "english": "Questionnaire assignments will appear here once available.",
+        "category": "messages",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.no-questionnaires-filters-applied",
+        "german": "Keine Fragebögen entsprechen Ihren aktuellen Filtern. Passen Sie Ihre Suchkriterien an oder setzen Sie Filter zurück, um alle verfügbaren Fragebögen zu sehen.",
+        "english": "No questionnaires match your current filters. Try adjusting your search criteria or clearing filters to see all available questionnaires.",
+        "category": "messages",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.no-questionnaires-employee",
+        "german": "Ihnen wurden noch keine Fragebögen zugewiesen. Versuchen Sie es später erneut oder kontaktieren Sie Ihren Vorgesetzten.",
+        "english": "You don't have any questionnaires assigned yet. Check back later or contact your manager if you expected assignments.",
+        "category": "messages",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.no-questionnaires-manager",
+        "german": "Ihrem Team wurden noch keine Fragebögen zugewiesen. Sie können Fragebögen im Fragebogen-Builder zuweisen.",
+        "english": "No questionnaires have been assigned to your team yet. You can assign questionnaires from the questionnaire builder.",
+        "category": "messages",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.no-questionnaires-hr",
+        "german": "Es wurden noch keine Fragebögen erstellt. Erstellen Sie Fragebogenvorlagen im Fragebogen-Builder.",
+        "english": "No questionnaires have been created yet. Start by creating questionnaire templates in the questionnaire builder.",
+        "category": "messages",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.no-questionnaires-generic",
+        "german": "Zurzeit sind keine Fragebögen verfügbar.",
+        "english": "No questionnaires are available at this time.",
+        "category": "messages",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "buttons.create-questionnaire",
+        "german": "Fragebogen erstellen",
+        "english": "Create Questionnaire",
+        "category": "buttons",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.no-team-members-description",
+        "german": "Ihnen sind derzeit keine Teammitglieder zugewiesen. Teammitglieder werden hier angezeigt, sobald sie Ihrer Organisation hinzugefügt werden.",
+        "english": "No team members are currently assigned to you. Team members will appear here once they are added to your organization.",
+        "category": "messages",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.no-departments-filters-applied",
+        "german": "Keine Abteilungen entsprechen Ihren aktuellen Filtern. Passen Sie Ihre Suchkriterien an, um Abteilungsdaten zu sehen.",
+        "english": "No departments match your current filters. Try adjusting your search criteria to see department data.",
+        "category": "messages",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.no-departments-setup",
+        "german": "Es wurden noch keine Abteilungen eingerichtet. Abteilungsdaten werden angezeigt, sobald die Organisationsstruktur konfiguriert ist.",
+        "english": "No departments have been set up yet. Department data will appear here once organizational structure is configured.",
+        "category": "messages",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.no-employees-filters-applied",
+        "german": "Keine Mitarbeiter entsprechen Ihren aktuellen Filtern. Passen Sie Ihre Suchkriterien an, um Mitarbeiterdaten zu sehen.",
+        "english": "No employees match your current filters. Try adjusting your search criteria to see employee data.",
+        "category": "messages",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.no-employees-setup",
+        "german": "Im System sind noch keine Mitarbeiter vorhanden. Mitarbeiterdaten werden angezeigt, sobald Benutzerkonten eingerichtet sind.",
+        "english": "No employees are available in the system yet. Employee data will appear here once user accounts are set up.",
+        "category": "messages",
+        "createdDate": "2026-03-19T12:00:00.0000000+01:00"
     }
 ]
