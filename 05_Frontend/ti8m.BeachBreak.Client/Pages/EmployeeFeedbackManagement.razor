@@ -394,23 +394,9 @@
         NavigationManager.NavigateTo("/record-employee-feedback");
     }
 
-    private async Task EditFeedback(EmployeeFeedbackSummaryDto feedback)
+    private void EditFeedback(EmployeeFeedbackSummaryDto feedback)
     {
-        var result = await DialogService.OpenAsync<EditEmployeeFeedback>(
-            T("dialogs.edit-feedback-title"),
-            new Dictionary<string, object> { { "FeedbackId", feedback.Id } },
-            new DialogOptions
-            {
-                Width = "800px",
-                Height = "600px",
-                Resizable = true,
-                Draggable = true
-            });
-
-        if (result == true)
-        {
-            await LoadFeedback();
-        }
+        NavigationManager.NavigateTo($"/edit-employee-feedback/{feedback.Id}");
     }
 
     private async Task DeleteFeedback(EmployeeFeedbackSummaryDto feedback)
