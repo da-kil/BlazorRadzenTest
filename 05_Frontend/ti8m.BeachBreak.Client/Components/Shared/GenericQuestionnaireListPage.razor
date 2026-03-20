@@ -1122,6 +1122,9 @@
         // Save filter state to localStorage
         _ = SaveFilterStateAsync(); // Fire and forget - don't block UI
 
+        // Reload the employee data grid explicitly to ensure it reflects the new filtered data
+        employeeDataGrid?.Reload();
+
         // Force immediate synchronous state change
         StateHasChanged();
     }
@@ -1525,13 +1528,35 @@
         // Apply filters to get the filtered assignments
         var filteredAssignments = ApplyFilteringToAssignments(allAssignments);
 
-        // Get all employees for department grouping (ignore filters for department view)
-        // This ensures "Show All" functionality works properly in department view
-        var employeesWithFilteredAssignments = employees;
+        // Determine which organizations to show based on department filter
+        var selectedOrgNumbers = new HashSet<int>();
+        var hasDepartmentFilter = filterState.DepartmentFilter?.Any() == true;
+        if (hasDepartmentFilter)
+        {
+            selectedOrgNumbers = filterState.DepartmentFilter!
+                .Select(ExtractOrganizationNumber)
+                .Where(x => x.HasValue)
+                .Select(x => x!.Value)
+                .ToHashSet();
+        }
+
+        // Apply search filter to employees if active
+        var filteredEmployees = employees.AsEnumerable();
+        if (!string.IsNullOrEmpty(filterState.SearchFilter))
+        {
+            filteredEmployees = filteredEmployees.Where(e =>
+                $"{e.FirstName} {e.LastName}".Contains(filterState.SearchFilter, StringComparison.OrdinalIgnoreCase) ||
+                e.EMail.Contains(filterState.SearchFilter, StringComparison.OrdinalIgnoreCase));
+        }
 
         // Group employees by organization
         var departmentGroups = organizations
             .Where(org => !org.IsDeleted && !org.IsIgnored)
+            .Where(org =>
+            {
+                if (!hasDepartmentFilter || selectedOrgNumbers.Count == 0) return true;
+                return int.TryParse(org.Number, out var num) && selectedOrgNumbers.Contains(num);
+            })
             .Select(org =>
             {
                 // Parse organization number - handle both int and string formats
@@ -1542,8 +1567,7 @@
                     return null;
                 }
 
-                // Use filtered employees instead of all employees
-                var orgEmployees = employeesWithFilteredAssignments
+                var orgEmployees = filteredEmployees
                     .Where(e => e.OrganizationNumber == orgNumber)
                     .ToList();
 
