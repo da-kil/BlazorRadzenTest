@@ -57,127 +57,6 @@
 }
 
 
-.evaluation-item.rating-context {
-    /* Rating-specific styling with bottom borders */
-    padding: 28px;
-    border: none;
-    background: transparent;
-}
-
-.evaluation-item.rating-context:first-child {
-    padding-top: 28px;
-}
-
-/* Rating-specific component styles */
-.evaluation-item.rating-context .question-section-header {
-    margin-bottom: 16px;
-}
-
-/* Context-specific override for evaluation rating titles */
-.evaluation-item.rating-context .question-title {
-    font-size: 1.1rem;
-    margin: 0 0 8px 0;
-}
-
-.evaluation-item.rating-context .question-section-description {
-    font-size: 0.9rem;
-    color: var(--secondary-color);
-    margin: 0;
-    line-height: 1.4;
-}
-
-.evaluation-item.rating-context .rating-section {
-    margin-bottom: 16px;
-}
-
-.evaluation-item.rating-context .rating-label {
-    display: block;
-    font-size: 0.9rem;
-    color: var(--dark-color);
-    margin-bottom: 8px;
-}
-
-.evaluation-item.rating-context .star-rating {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    margin-bottom: 8px;
-}
-
-.evaluation-item.rating-context .star-rating input[type="radio"] {
-    display: none;
-}
-
-.evaluation-item.rating-context .star-label {
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    transition: color 0.2s ease;
-}
-
-.evaluation-item.rating-context .star-label:hover .rzi {
-    color: var(--warning-color) !important;
-}
-
-.evaluation-item.rating-context .star-rating input[type="radio"]:disabled + .star-label {
-    cursor: not-allowed;
-    opacity: 0.6;
-}
-
-.evaluation-item.rating-context .rating-status {
-    font-size: 0.8rem;
-    color: var(--primary-color);
-    font-weight: 500;
-}
-
-.evaluation-item.rating-context .comment-section {
-    margin-top: 16px;
-}
-
-.evaluation-item.rating-context .comment-textarea {
-    width: 100%;
-    padding: 12px;
-    border: 1px solid var(--border-light);
-    border-radius: 4px;
-    font-size: 0.9rem;
-    resize: vertical;
-    min-height: 60px;
-}
-
-.evaluation-item.rating-context .comment-textarea:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 2px rgba(15, 105, 255, 0.1);
-}
-
-.evaluation-item.rating-context .comment-display {
-    margin-top: 16px;
-    padding: 12px;
-    background-color: var(--rz-body-background-color);
-    border-radius: 4px;
-}
-
-.evaluation-item.rating-context .comment-label {
-    display: block;
-    color: var(--secondary-color);
-    font-size: 0.8rem;
-    margin-bottom: 4px;
-}
-
-.evaluation-item.rating-context .comment-text {
-    font-size: 0.9rem;
-    color: var(--dark-color);
-}
-
-.evaluation-item.rating-context .star-rating:focus-within {
-    outline: 2px solid var(--primary-color);
-    outline-offset: 2px;
-    border-radius: 4px;
-}
-
 /* Base goal item styling */
 .collaborative-goal {
     padding: 28px;
@@ -1423,11 +1302,6 @@
     outline: none;
 }
 
-/* Keep focus outline only for rating context */
-.evaluation-item.rating-context:focus-within {
-    outline: 2px solid var(--primary-color);
-    outline-offset: 2px;
-}
 
 /* =============================================
    PRINT STYLES - CONSOLIDATED

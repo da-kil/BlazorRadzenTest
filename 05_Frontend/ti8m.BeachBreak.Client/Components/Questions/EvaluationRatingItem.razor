@@ -4,7 +4,6 @@
 @using ti8m.BeachBreak.Client.Components.Shared
 @inherits CategoryOptimizedTranslatableComponent
 
-@* Simplified evaluation rating item with reduced DOM nesting *@
 <div class="evaluation-item rating-context">
     <header class="question-section-header">
         @{
@@ -21,24 +20,31 @@
     </header>
 
     <div class="rating-section">
-        <div class="star-rating" role="radiogroup" aria-label="Rating scale 1-@RatingScale">
-            @for (int i = 1; i <= RatingScale; i++)
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Wrap="FlexWrap.Wrap">
+            @if (!IsReadOnly)
             {
-                var starIndex = i;
-                var isSelected = i <= currentRating;
-                <input type="radio"
-                       name="rating-@Evaluation.Key"
-                       value="@i"
-                       id="star-@Evaluation.Key-@i"
-                       checked="@isSelected"
-                       @onchange="@(e => SetRating(starIndex))"
-                       disabled="@IsReadOnly" />
-                <label for="star-@Evaluation.Key-@i" class="star-label">
-                    <RadzenIcon Icon="@(isSelected ? "star" : "star_border")" Style="@GetStarStyle(isSelected)" />
-                </label>
+                <RadzenButton Text="@T("buttons.not-rated")"
+                              Size="ButtonSize.ExtraSmall"
+                              ButtonStyle="@(currentRating == 0 ? ButtonStyle.Primary : ButtonStyle.Light)"
+                              Click="@(() => SetRating(0))" />
             }
-        </div>
-        <span class="rating-status">@GetRatingText()</span>
+            <RadzenRating Value="@currentRating"
+                          ValueChanged="@(async (int v) => await SetRating(v))"
+                          Stars="@RatingScale"
+                          ReadOnly="@IsReadOnly" />
+            @if (currentRating > 0)
+            {
+                <RadzenText TextStyle="TextStyle.Body2">
+                    @currentRating/@RatingScale (@GetRatingText())
+                </RadzenText>
+            }
+            else if (IsReadOnly)
+            {
+                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+                    @T("status.not-rated")
+                </RadzenText>
+            }
+        </RadzenStack>
     </div>
 
     @if (!IsReadOnly)
@@ -82,7 +88,6 @@
 
     private int currentRating = 0;
     private string currentComment = "";
-    private string displayTitle = "";
 
     protected override void OnInitialized()
     {
@@ -98,10 +103,6 @@
     {
         currentRating = Rating?.Rating ?? 0;
         currentComment = Rating?.Comment ?? "";
-        var localizedTitle = Evaluation.GetLocalizedTitleWithFallback(CurrentLanguage);
-        displayTitle = string.IsNullOrWhiteSpace(localizedTitle)
-            ? $"[Unnamed Evaluation - {Evaluation.Key}]"
-            : localizedTitle;
     }
 
     private async Task SetRating(int value)
@@ -146,8 +147,4 @@
         };
     }
 
-    private string GetStarStyle(bool isSelected)
-    {
-        return $"font-size: 24px; color: {(isSelected ? "var(--rz-warning)" : "var(--rz-base-400)")};";
-    }
 }
