@@ -11,8 +11,8 @@ public record EvaluationRating
 
     public EvaluationRating(int rating, string comment = "")
     {
-        if (rating < 0 || rating > 4)
-            throw new ArgumentOutOfRangeException(nameof(rating), "Rating must be between 0 and 4");
+        if (rating < 0 || rating > 10)
+            throw new ArgumentOutOfRangeException(nameof(rating), "Rating must be between 0 and 10");
 
         Rating = rating;
         Comment = comment ?? string.Empty;
@@ -29,7 +29,8 @@ public record EvaluationRating
     public static EvaluationRating WithComment(int rating, string comment) => new(rating, comment);
 
     /// <summary>
-    /// Indicates whether this rating has a valid score (greater than 0).
+    /// Indicates whether this rating has been set (greater than 0). 0 means unanswered.
+    /// Max value of 10 aligns with the maximum configurable RatingScale in AssessmentConfiguration.
     /// </summary>
     public bool IsValidRating => Rating > 0;
 }

@@ -191,9 +191,16 @@ public abstract class BaseQuestionnaireListPage : CategoryOptimizedTranslatableC
     /// Handles action button clicks by invoking the action's OnClick delegate.
     /// Shared across all questionnaire list pages.
     /// </summary>
-    protected void HandleActionClick(QuestionnairePageAction action)
+    protected async Task HandleActionClick(QuestionnairePageAction action)
     {
-        action.OnClick?.Invoke();
+        if (action.OnClick != null)
+        {
+            await action.OnClick.Invoke();
+        }
+        else if (action.Id == "refresh")
+        {
+            await RefreshData();
+        }
     }
 
     /// <summary>

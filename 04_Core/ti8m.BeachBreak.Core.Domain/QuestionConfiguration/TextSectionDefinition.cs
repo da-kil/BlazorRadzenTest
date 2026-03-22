@@ -32,16 +32,6 @@ public class TextSectionDefinition
     public string DescriptionGerman { get; set; } = string.Empty;
 
     /// <summary>
-    /// English placeholder text for the text input field.
-    /// </summary>
-    public string PlaceholderEnglish { get; set; } = string.Empty;
-
-    /// <summary>
-    /// German placeholder text for the text input field.
-    /// </summary>
-    public string PlaceholderGerman { get; set; } = string.Empty;
-
-    /// <summary>
     /// Indicates whether this text section must be filled for the question to be considered complete.
     /// </summary>
     public bool IsRequired { get; set; } = false;

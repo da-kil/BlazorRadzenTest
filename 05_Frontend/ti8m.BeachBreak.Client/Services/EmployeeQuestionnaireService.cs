@@ -1,5 +1,6 @@
 using Microsoft.JSInterop;
 using System.Net.Http.Json;
+using System.Text.Json;
 using ti8m.BeachBreak.Client.Models;
 using ti8m.BeachBreak.Client.Models.DTOs.Api;
 
@@ -45,8 +46,18 @@ public class EmployeeQuestionnaireService : BaseApiService, IEmployeeQuestionnai
         {
             // First deserialize to API DTO structure using JsonOptions with custom converter
             var httpResponse = await HttpQueryClient.GetAsync($"{EmployeeQueryEndpoint}/me/responses/assignment/{assignmentId}");
+            if (httpResponse.StatusCode == System.Net.HttpStatusCode.NoContent)
+                return null; // expected: no response stored yet for first-time open
             httpResponse.EnsureSuccessStatusCode();
-            var apiResponseDto = await httpResponse.Content.ReadFromJsonAsync<ApiQuestionnaireResponseDto>(JsonOptions);
+
+            var jsonString = await httpResponse.Content.ReadAsStringAsync();
+            if (string.IsNullOrWhiteSpace(jsonString))
+            {
+                LogError($"Empty response body for assignment {assignmentId} (HTTP {(int)httpResponse.StatusCode})", null);
+                return null;
+            }
+
+            var apiResponseDto = JsonSerializer.Deserialize<ApiQuestionnaireResponseDto>(jsonString, JsonOptions);
 
             if (apiResponseDto == null)
                 return null;

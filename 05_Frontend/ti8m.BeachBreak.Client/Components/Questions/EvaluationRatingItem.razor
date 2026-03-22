@@ -21,13 +21,6 @@
 
     <div class="rating-section">
         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Wrap="FlexWrap.Wrap">
-            @if (!IsReadOnly)
-            {
-                <RadzenButton Text="@T("buttons.not-rated")"
-                              Size="ButtonSize.ExtraSmall"
-                              ButtonStyle="@(currentRating == 0 ? ButtonStyle.Primary : ButtonStyle.Light)"
-                              Click="@(() => SetRating(0))" />
-            }
             <RadzenRating Value="@currentRating"
                           ValueChanged="@(async (int v) => await SetRating(v))"
                           Stars="@RatingScale"

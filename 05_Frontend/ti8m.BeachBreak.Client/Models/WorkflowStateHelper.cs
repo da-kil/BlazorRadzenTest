@@ -56,7 +56,7 @@ public static class WorkflowStateHelper
     {
         return state switch
         {
-            WorkflowState.Assigned => "var(--rz-base-500)",
+            WorkflowState.Assigned => "var(--rz-warning-light)",
             WorkflowState.Initialized => "var(--rz-info)",
             WorkflowState.EmployeeInProgress or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress => "var(--rz-primary)",
             WorkflowState.EmployeeSubmitted or WorkflowState.ManagerSubmitted or WorkflowState.BothSubmitted => "var(--rz-secondary)",

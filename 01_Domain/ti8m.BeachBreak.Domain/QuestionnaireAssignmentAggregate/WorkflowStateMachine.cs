@@ -225,14 +225,10 @@ public class WorkflowStateMachine
     /// </summary>
     public static WorkflowState DetermineSubmissionState(
         bool isEmployeeSubmitted,
-        bool isManagerSubmitted,
-        QuestionnaireProcessType processType)
+        bool isManagerSubmitted)
     {
-        // Simple workflow: Auto-finalize immediately if manager review not required
-        if (isEmployeeSubmitted && !processType.RequiresManagerReview())
-            return WorkflowState.Finalized;
-
-        // Complex workflow: Both must submit before review
+        // Both submitted: proceed to combined review phase
+        // (Auto-finalize for simple workflows is handled separately via QuestionnaireAutoFinalized event)
         if (isEmployeeSubmitted && isManagerSubmitted)
             return WorkflowState.BothSubmitted;
 

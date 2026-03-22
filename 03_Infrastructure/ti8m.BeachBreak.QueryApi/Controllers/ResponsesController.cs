@@ -1,6 +1,5 @@
 using Marten;
 using Microsoft.AspNetCore.Mvc;
-using System.Text.Json;
 using ti8m.BeachBreak.Application.Query.Projections;
 using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
@@ -16,7 +15,6 @@ using ti8m.BeachBreak.Core.Infrastructure.Contexts;
 // FUTURE: Consider moving shared enums to Core layer for proper layering.
 using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
 using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.ValueObjects;
-using ti8m.BeachBreak.Infrastructure.Marten.JsonSerialization;
 using ti8m.BeachBreak.QueryApi.Dto;
 
 namespace ti8m.BeachBreak.QueryApi.Controllers;
@@ -71,14 +69,14 @@ public class ResponsesController : BaseController
 
     [HttpGet("assignment/{assignmentId:guid}")]
     [ProducesResponseType(typeof(QuestionnaireResponseDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> GetResponseByAssignment(Guid assignmentId)
     {
         var query = new GetResponseByAssignmentIdQuery(assignmentId);
         var response = await _queryDispatcher.QueryAsync(query);
 
         if (response == null)
-            return CreateResponse(Result<QuestionnaireResponseDto>.Fail($"Response for assignment {assignmentId} not found", 404));
+            return NoContent(); // 204 - expected for first-time questionnaire open
 
         // Get current user's role for filtering
         if (!Guid.TryParse(_userContext.Id, out var userId))
@@ -290,11 +288,6 @@ public class ResponsesController : BaseController
         Dictionary<Guid, Dictionary<CompletionRole, QuestionResponseValue>> sectionResponses)
     {
         var result = new Dictionary<Guid, SectionResponseDto>();
-        var jsonOptions = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = null,
-            Converters = { new QuestionResponseValueJsonConverter() }
-        };
 
         foreach (var sectionKvp in sectionResponses)
         {
@@ -351,11 +344,6 @@ public class ResponsesController : BaseController
         Dictionary<Guid, Dictionary<CompletionRole, QuestionResponseValue>> sectionResponses)
     {
         var result = new Dictionary<Guid, SectionResponseDto>();
-        var jsonOptions = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = null,
-            Converters = { new QuestionResponseValueJsonConverter() }
-        };
 
         foreach (var sectionKvp in sectionResponses)
         {

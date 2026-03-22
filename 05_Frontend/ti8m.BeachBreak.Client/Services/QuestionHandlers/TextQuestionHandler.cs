@@ -19,6 +19,7 @@ public class TextQuestionHandler : IQuestionTypeHandler
             {
                 new TextSection
                 {
+                    Key = "text_1",
                     TitleEnglish = "",
                     TitleGerman = "",
                     DescriptionEnglish = "",
@@ -37,6 +38,7 @@ public class TextQuestionHandler : IQuestionTypeHandler
             var nextOrder = config.TextSections.Count > 0 ? config.TextSections.Max(s => s.Order) + 1 : 0;
             var newSection = new TextSection
             {
+                Key = $"text_{nextOrder + 1}",
                 TitleEnglish = "",
                 TitleGerman = "",
                 DescriptionEnglish = "",

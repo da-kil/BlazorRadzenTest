@@ -32,9 +32,18 @@ public class QuestionnaireResponseService : BaseApiService, IQuestionnaireRespon
         try
         {
             var response = await HttpQueryClient.GetAsync($"{ResponseQueryEndpoint}/assignment/{assignmentId}");
+            if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
+                return null; // expected: no response stored yet for first-time open
             response.EnsureSuccessStatusCode();
 
             var jsonString = await response.Content.ReadAsStringAsync();
+
+            if (string.IsNullOrWhiteSpace(jsonString))
+            {
+                LogError($"Empty response body for assignment {assignmentId} (HTTP {(int)response.StatusCode})", null);
+                return null;
+            }
+
             var apiResponse = JsonSerializer.Deserialize<ApiQuestionnaireResponseDto>(jsonString, JsonOptions);
 
             if (apiResponse == null)

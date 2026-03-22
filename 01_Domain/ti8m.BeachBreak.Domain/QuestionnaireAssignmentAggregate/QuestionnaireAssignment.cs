@@ -1237,8 +1237,7 @@ public partial class QuestionnaireAssignment : AggregateRoot
     {
         var newState = WorkflowStateMachine.DetermineSubmissionState(
             EmployeeSubmittedDate.HasValue,
-            ManagerSubmittedDate.HasValue,
-            ProcessType);
+            ManagerSubmittedDate.HasValue);
 
         if (newState != WorkflowState)
         {

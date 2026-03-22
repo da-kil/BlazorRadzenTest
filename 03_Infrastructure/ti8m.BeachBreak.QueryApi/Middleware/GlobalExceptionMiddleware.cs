@@ -75,6 +75,13 @@ public class GlobalExceptionMiddleware
             problemDetails.Extensions.Add("stackTrace", exception.StackTrace);
         }
 
+        // If response has already started, we cannot modify it — log and abort
+        if (context.Response.HasStarted)
+        {
+            logger.LogError(exception, "Exception occurred after response started (cannot send error response). RequestId: {RequestId}", context.TraceIdentifier);
+            return;
+        }
+
         // Set response headers and content type
         context.Response.StatusCode = statusCode;
         context.Response.ContentType = "application/problem+json";

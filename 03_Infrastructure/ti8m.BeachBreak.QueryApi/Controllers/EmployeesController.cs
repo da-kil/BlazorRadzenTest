@@ -533,8 +533,8 @@ public class EmployeesController : BaseController
     /// </summary>
     [HttpGet("me/responses/assignment/{assignmentId:guid}")]
     [ProducesResponseType(typeof(QuestionnaireResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetMyResponse(Guid assignmentId)
     {
         // Get employee ID from authenticated user context (security best practice)
@@ -552,8 +552,8 @@ public class EmployeesController : BaseController
 
         if (response == null)
         {
-            logger.LogInformation("Response not found for EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}", employeeId, assignmentId);
-            return CreateResponse(Result.Fail($"Response not found for assignment {assignmentId}", StatusCodes.Status404NotFound));
+            logger.LogInformation("No response yet for EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId} (first-time open)", employeeId, assignmentId);
+            return NoContent(); // 204 - expected for first-time questionnaire open
         }
 
         // Verify this response belongs to the requesting employee

@@ -135,7 +135,7 @@
     [Parameter] public Guid? TemplateId { get; set; }
     [Parameter][SupplyParameterFromQuery] public string? Name { get; set; }
     [Parameter][SupplyParameterFromQuery] public Guid? CategoryId { get; set; }
-    [Parameter][SupplyParameterFromQuery] public string? ProcessTypeParam { get; set; }
+    [Parameter][SupplyParameterFromQuery(Name = "processType")] public string? ProcessTypeParam { get; set; }
 
     // Computed property to parse ProcessType from string parameter
     private QuestionnaireProcessType? ProcessType

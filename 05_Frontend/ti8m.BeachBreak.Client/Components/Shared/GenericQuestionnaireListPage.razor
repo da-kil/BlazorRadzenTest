@@ -74,7 +74,6 @@
     [Parameter, EditorRequired] public QuestionnairePageConfiguration Configuration { get; set; } = default!;
     [Parameter, EditorRequired] public IQuestionnaireDataService DataService { get; set; } = default!;
     [Parameter] public EventCallback<QuestionnaireAssignment> OnStartQuestionnaire { get; set; }
-    [Parameter] public Func<Guid, bool>? HasProgressChecker { get; set; }
     [Parameter] public bool HideHeader { get; set; } = false;
     [Parameter] public bool HideFilterBar { get; set; } = false;
 
@@ -95,6 +94,7 @@
     private List<QuestionnaireAssignment> allAssignments = new();
     private List<EmployeeDto> employees = new();
     private object? additionalData = null;
+    private QuestionnairePageConfiguration? lastConfiguration;
 
     // Lazy loading state
     private int currentPage = 1;
@@ -160,6 +160,19 @@
 
         // Then load data with the restored filters
         await LoadData();
+        lastConfiguration = Configuration;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+
+        // Reload data when the parent refreshes (new Configuration object passed down)
+        if (lastConfiguration != null && !ReferenceEquals(Configuration, lastConfiguration))
+        {
+            lastConfiguration = Configuration;
+            await LoadData();
+        }
     }
 
     protected override bool HasStateChanged()
@@ -1399,7 +1412,7 @@
             // Open the reopen dialog
             var result = await DialogService.OpenAsync<ReopenQuestionnaireDialog>(
                 "Reopen Questionnaire",
-                new Dictionary<string, object>
+                new Dictionary<string, object?>
                 {
                     { "Assignment", assignment }
                 },

@@ -1,0 +1,28 @@
+.comment-section {
+    margin-top: 0.5rem;
+}
+
+.comment-textarea {
+    width: 100%;
+    min-width: 100%;
+    max-width: 100%;
+    padding: 0.5rem;
+    border: 1px solid var(--rz-input-border-color, #dee2e6);
+    border-radius: 4px;
+    font-size: 0.875rem;
+    font-family: inherit;
+    color: var(--rz-text-color, inherit);
+    background-color: var(--rz-input-background-color, #fff);
+    resize: vertical;
+    box-sizing: border-box;
+}
+
+.comment-textarea:focus {
+    outline: none;
+    border-color: var(--rz-primary, #1890ff);
+    box-shadow: 0 0 0 2px var(--rz-primary-lighter, rgba(24, 144, 255, 0.2));
+}
+
+.comment-textarea::placeholder {
+    color: var(--rz-text-disabled-color, #adb5bd);
+}

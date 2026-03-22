@@ -32,7 +32,7 @@
 				<RadzenButton Text="@action.Text"
 							 Icon="@action.Icon"
 							 ButtonStyle="@GetButtonStyle(action.ButtonStyle)"
-							 Click="@(() => HandleActionClick(action))"
+							 Click="@(async () => await HandleActionClick(action))"
 							 Size="ButtonSize.Medium" />
 			}
 		}

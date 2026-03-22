@@ -2,6 +2,8 @@ namespace ti8m.BeachBreak.Client.Models;
 
 public class TextSection
 {
+    public string Key { get; set; } = string.Empty;
+
     // Bilingual content properties - matching QueryApi DTO naming
     public string TitleEnglish { get; set; } = string.Empty;
     public string TitleGerman { get; set; } = string.Empty;
