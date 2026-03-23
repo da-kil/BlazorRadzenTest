@@ -23,9 +23,9 @@ pr:
 variables:
   buildConfiguration: 'Release'
   dotnetVersion: '9.0.x'
-  dockerRegistryServiceConnection: 'ACRServiceConnection'
+  dockerRegistryServiceConnection: 'resourcemanagement-dev'
+  acrLoginServer: 'acrbasicbasiszrh001.azurecr.io'
   imageRepository: 'beachbreak'
-  dockerfilePath: '$(Build.SourcesDirectory)'
   tag: '$(Build.BuildId)'
 
 stages:
@@ -81,16 +81,19 @@ stages:
         pool:
           vmImage: 'ubuntu-latest'
         steps:
-          - task: Docker@2
+          - task: AzureCLI@2
             displayName: 'Build CommandApi Image'
             inputs:
-              containerRegistry: '$(dockerRegistryServiceConnection)'
-              repository: '$(imageRepository)/commandapi'
-              command: 'build'
-              Dockerfile: '03_Infrastructure/ti8m.BeachBreak.CommandApi/Dockerfile'
-              tags: |
-                $(tag)
-                latest
+              azureSubscription: '$(dockerRegistryServiceConnection)'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                az acr login --name $(acrLoginServer)
+                docker build \
+                  -t $(acrLoginServer)/$(imageRepository)/commandapi:$(tag) \
+                  -t $(acrLoginServer)/$(imageRepository)/commandapi:latest \
+                  -f 03_Infrastructure/ti8m.BeachBreak.CommandApi/Dockerfile \
+                  .
 
           - bash: |
               curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
@@ -100,31 +103,29 @@ stages:
               rm -f /tmp/trivy-scan.tar
             displayName: 'Scan CommandApi Image'
 
-          - task: Docker@2
+          - bash: |
+              docker push $(acrLoginServer)/$(imageRepository)/commandapi:$(tag)
+              docker push $(acrLoginServer)/$(imageRepository)/commandapi:latest
             displayName: 'Push CommandApi Image'
-            inputs:
-              containerRegistry: '$(dockerRegistryServiceConnection)'
-              repository: '$(imageRepository)/commandapi'
-              command: 'push'
-              tags: |
-                $(tag)
-                latest
 
       - job: BuildQueryApi
         displayName: 'Build and Push QueryApi Image'
         pool:
           vmImage: 'ubuntu-latest'
         steps:
-          - task: Docker@2
+          - task: AzureCLI@2
             displayName: 'Build QueryApi Image'
             inputs:
-              containerRegistry: '$(dockerRegistryServiceConnection)'
-              repository: '$(imageRepository)/queryapi'
-              command: 'build'
-              Dockerfile: '03_Infrastructure/ti8m.BeachBreak.QueryApi/Dockerfile'
-              tags: |
-                $(tag)
-                latest
+              azureSubscription: '$(dockerRegistryServiceConnection)'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                az acr login --name $(acrLoginServer)
+                docker build \
+                  -t $(acrLoginServer)/$(imageRepository)/queryapi:$(tag) \
+                  -t $(acrLoginServer)/$(imageRepository)/queryapi:latest \
+                  -f 03_Infrastructure/ti8m.BeachBreak.QueryApi/Dockerfile \
+                  .
 
           - bash: |
               curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
@@ -134,31 +135,29 @@ stages:
               rm -f /tmp/trivy-scan.tar
             displayName: 'Scan QueryApi Image'
 
-          - task: Docker@2
+          - bash: |
+              docker push $(acrLoginServer)/$(imageRepository)/queryapi:$(tag)
+              docker push $(acrLoginServer)/$(imageRepository)/queryapi:latest
             displayName: 'Push QueryApi Image'
-            inputs:
-              containerRegistry: '$(dockerRegistryServiceConnection)'
-              repository: '$(imageRepository)/queryapi'
-              command: 'push'
-              tags: |
-                $(tag)
-                latest
 
       - job: BuildFrontend
         displayName: 'Build and Push Frontend Image'
         pool:
           vmImage: 'ubuntu-latest'
         steps:
-          - task: Docker@2
+          - task: AzureCLI@2
             displayName: 'Build Frontend Image'
             inputs:
-              containerRegistry: '$(dockerRegistryServiceConnection)'
-              repository: '$(imageRepository)/frontend'
-              command: 'build'
-              Dockerfile: '05_Frontend/ti8m.BeachBreak/Dockerfile'
-              tags: |
-                $(tag)
-                latest
+              azureSubscription: '$(dockerRegistryServiceConnection)'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                az acr login --name $(acrLoginServer)
+                docker build \
+                  -t $(acrLoginServer)/$(imageRepository)/frontend:$(tag) \
+                  -t $(acrLoginServer)/$(imageRepository)/frontend:latest \
+                  -f 05_Frontend/ti8m.BeachBreak/Dockerfile \
+                  .
 
           - bash: |
               curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
@@ -168,15 +167,10 @@ stages:
               rm -f /tmp/trivy-scan.tar
             displayName: 'Scan Frontend Image'
 
-          - task: Docker@2
+          - bash: |
+              docker push $(acrLoginServer)/$(imageRepository)/frontend:$(tag)
+              docker push $(acrLoginServer)/$(imageRepository)/frontend:latest
             displayName: 'Push Frontend Image'
-            inputs:
-              containerRegistry: '$(dockerRegistryServiceConnection)'
-              repository: '$(imageRepository)/frontend'
-              command: 'push'
-              tags: |
-                $(tag)
-                latest
 
       - job: PublishBuildInfo
         displayName: 'Publish Build Information'
