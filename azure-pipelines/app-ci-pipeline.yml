@@ -92,6 +92,14 @@ stages:
                 $(tag)
                 latest
 
+          - bash: |
+              curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+              IMAGE_ID=$(docker images -q | head -1)
+              docker save "$IMAGE_ID" -o /tmp/trivy-scan.tar
+              trivy image --input /tmp/trivy-scan.tar --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1
+              rm -f /tmp/trivy-scan.tar
+            displayName: 'Scan CommandApi Image'
+
           - task: Docker@2
             displayName: 'Push CommandApi Image'
             inputs:
@@ -101,13 +109,6 @@ stages:
               tags: |
                 $(tag)
                 latest
-
-          - task: AquaSecurityTrivy@1
-            displayName: 'Scan CommandApi Image'
-            inputs:
-              image: '$(imageRepository)/commandapi:$(tag)'
-              severities: 'CRITICAL,HIGH'
-              ignoreUnfixed: true
 
       - job: BuildQueryApi
         displayName: 'Build and Push QueryApi Image'
@@ -125,6 +126,14 @@ stages:
                 $(tag)
                 latest
 
+          - bash: |
+              curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+              IMAGE_ID=$(docker images -q | head -1)
+              docker save "$IMAGE_ID" -o /tmp/trivy-scan.tar
+              trivy image --input /tmp/trivy-scan.tar --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1
+              rm -f /tmp/trivy-scan.tar
+            displayName: 'Scan QueryApi Image'
+
           - task: Docker@2
             displayName: 'Push QueryApi Image'
             inputs:
@@ -134,13 +143,6 @@ stages:
               tags: |
                 $(tag)
                 latest
-
-          - task: AquaSecurityTrivy@1
-            displayName: 'Scan QueryApi Image'
-            inputs:
-              image: '$(imageRepository)/queryapi:$(tag)'
-              severities: 'CRITICAL,HIGH'
-              ignoreUnfixed: true
 
       - job: BuildFrontend
         displayName: 'Build and Push Frontend Image'
@@ -158,6 +160,14 @@ stages:
                 $(tag)
                 latest
 
+          - bash: |
+              curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+              IMAGE_ID=$(docker images -q | head -1)
+              docker save "$IMAGE_ID" -o /tmp/trivy-scan.tar
+              trivy image --input /tmp/trivy-scan.tar --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1
+              rm -f /tmp/trivy-scan.tar
+            displayName: 'Scan Frontend Image'
+
           - task: Docker@2
             displayName: 'Push Frontend Image'
             inputs:
@@ -167,13 +177,6 @@ stages:
               tags: |
                 $(tag)
                 latest
-
-          - task: AquaSecurityTrivy@1
-            displayName: 'Scan Frontend Image'
-            inputs:
-              image: '$(imageRepository)/frontend:$(tag)'
-              severities: 'CRITICAL,HIGH'
-              ignoreUnfixed: true
 
       - job: PublishBuildInfo
         displayName: 'Publish Build Information'
