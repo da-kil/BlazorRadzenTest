@@ -22,7 +22,7 @@ pr:
 
 variables:
   buildConfiguration: 'Release'
-  dotnetVersion: '9.0.x'
+  dotnetVersion: '10.0.x'
   dockerRegistryServiceConnection: 'resourcemanagement-dev'
   acrLoginServer: 'acrbasicbasiszrh001.azurecr.io'
   imageRepository: 'beachbreak'
@@ -82,7 +82,7 @@ stages:
           vmImage: 'ubuntu-latest'
         steps:
           - task: AzureCLI@2
-            displayName: 'Build CommandApi Image'
+            displayName: 'Build, Scan and Push CommandApi Image'
             inputs:
               azureSubscription: '$(dockerRegistryServiceConnection)'
               scriptType: 'bash'
@@ -94,19 +94,12 @@ stages:
                   -t $(acrLoginServer)/$(imageRepository)/commandapi:latest \
                   -f 03_Infrastructure/ti8m.BeachBreak.CommandApi/Dockerfile \
                   .
-
-          - bash: |
-              curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
-              IMAGE_ID=$(docker images -q | head -1)
-              docker save "$IMAGE_ID" -o /tmp/trivy-scan.tar
-              trivy image --input /tmp/trivy-scan.tar --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1
-              rm -f /tmp/trivy-scan.tar
-            displayName: 'Scan CommandApi Image'
-
-          - bash: |
-              docker push $(acrLoginServer)/$(imageRepository)/commandapi:$(tag)
-              docker push $(acrLoginServer)/$(imageRepository)/commandapi:latest
-            displayName: 'Push CommandApi Image'
+                curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+                docker save "$(acrLoginServer)/$(imageRepository)/commandapi:$(tag)" -o /tmp/trivy-scan.tar
+                trivy image --input /tmp/trivy-scan.tar --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1
+                rm -f /tmp/trivy-scan.tar
+                docker push $(acrLoginServer)/$(imageRepository)/commandapi:$(tag)
+                docker push $(acrLoginServer)/$(imageRepository)/commandapi:latest
 
       - job: BuildQueryApi
         displayName: 'Build and Push QueryApi Image'
@@ -114,7 +107,7 @@ stages:
           vmImage: 'ubuntu-latest'
         steps:
           - task: AzureCLI@2
-            displayName: 'Build QueryApi Image'
+            displayName: 'Build, Scan and Push QueryApi Image'
             inputs:
               azureSubscription: '$(dockerRegistryServiceConnection)'
               scriptType: 'bash'
@@ -126,19 +119,12 @@ stages:
                   -t $(acrLoginServer)/$(imageRepository)/queryapi:latest \
                   -f 03_Infrastructure/ti8m.BeachBreak.QueryApi/Dockerfile \
                   .
-
-          - bash: |
-              curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
-              IMAGE_ID=$(docker images -q | head -1)
-              docker save "$IMAGE_ID" -o /tmp/trivy-scan.tar
-              trivy image --input /tmp/trivy-scan.tar --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1
-              rm -f /tmp/trivy-scan.tar
-            displayName: 'Scan QueryApi Image'
-
-          - bash: |
-              docker push $(acrLoginServer)/$(imageRepository)/queryapi:$(tag)
-              docker push $(acrLoginServer)/$(imageRepository)/queryapi:latest
-            displayName: 'Push QueryApi Image'
+                curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+                docker save "$(acrLoginServer)/$(imageRepository)/queryapi:$(tag)" -o /tmp/trivy-scan.tar
+                trivy image --input /tmp/trivy-scan.tar --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1
+                rm -f /tmp/trivy-scan.tar
+                docker push $(acrLoginServer)/$(imageRepository)/queryapi:$(tag)
+                docker push $(acrLoginServer)/$(imageRepository)/queryapi:latest
 
       - job: BuildFrontend
         displayName: 'Build and Push Frontend Image'
@@ -146,7 +132,7 @@ stages:
           vmImage: 'ubuntu-latest'
         steps:
           - task: AzureCLI@2
-            displayName: 'Build Frontend Image'
+            displayName: 'Build, Scan and Push Frontend Image'
             inputs:
               azureSubscription: '$(dockerRegistryServiceConnection)'
               scriptType: 'bash'
@@ -158,19 +144,12 @@ stages:
                   -t $(acrLoginServer)/$(imageRepository)/frontend:latest \
                   -f 05_Frontend/ti8m.BeachBreak/Dockerfile \
                   .
-
-          - bash: |
-              curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
-              IMAGE_ID=$(docker images -q | head -1)
-              docker save "$IMAGE_ID" -o /tmp/trivy-scan.tar
-              trivy image --input /tmp/trivy-scan.tar --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1
-              rm -f /tmp/trivy-scan.tar
-            displayName: 'Scan Frontend Image'
-
-          - bash: |
-              docker push $(acrLoginServer)/$(imageRepository)/frontend:$(tag)
-              docker push $(acrLoginServer)/$(imageRepository)/frontend:latest
-            displayName: 'Push Frontend Image'
+                curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+                docker save "$(acrLoginServer)/$(imageRepository)/frontend:$(tag)" -o /tmp/trivy-scan.tar
+                trivy image --input /tmp/trivy-scan.tar --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1
+                rm -f /tmp/trivy-scan.tar
+                docker push $(acrLoginServer)/$(imageRepository)/frontend:$(tag)
+                docker push $(acrLoginServer)/$(imageRepository)/frontend:latest
 
       - job: PublishBuildInfo
         displayName: 'Publish Build Information'
