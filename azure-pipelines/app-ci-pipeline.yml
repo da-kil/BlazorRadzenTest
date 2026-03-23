@@ -88,7 +88,8 @@ stages:
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
-                az acr login --name $(acrLoginServer)
+                ACR_TOKEN=$(az acr login --name acrbasicbasiszrh001 --expose-token --output tsv --query accessToken)
+                docker login $(acrLoginServer) --username 00000000-0000-0000-0000-000000000000 --password "$ACR_TOKEN"
                 docker build \
                   -t $(acrLoginServer)/$(imageRepository)/commandapi:$(tag) \
                   -t $(acrLoginServer)/$(imageRepository)/commandapi:latest \
@@ -113,7 +114,8 @@ stages:
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
-                az acr login --name $(acrLoginServer)
+                ACR_TOKEN=$(az acr login --name acrbasicbasiszrh001 --expose-token --output tsv --query accessToken)
+                docker login $(acrLoginServer) --username 00000000-0000-0000-0000-000000000000 --password "$ACR_TOKEN"
                 docker build \
                   -t $(acrLoginServer)/$(imageRepository)/queryapi:$(tag) \
                   -t $(acrLoginServer)/$(imageRepository)/queryapi:latest \
@@ -138,7 +140,8 @@ stages:
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
-                az acr login --name $(acrLoginServer)
+                ACR_TOKEN=$(az acr login --name acrbasicbasiszrh001 --expose-token --output tsv --query accessToken)
+                docker login $(acrLoginServer) --username 00000000-0000-0000-0000-000000000000 --password "$ACR_TOKEN"
                 docker build \
                   -t $(acrLoginServer)/$(imageRepository)/frontend:$(tag) \
                   -t $(acrLoginServer)/$(imageRepository)/frontend:latest \
