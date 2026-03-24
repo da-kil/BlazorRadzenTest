@@ -60,9 +60,9 @@ stages:
                     namespace: '$(kubernetesNamespace)'
                     command: 'upgrade'
                     chartType: 'FilePath'
-                    chartPath: '$(Build.SourcesDirectory)/helm/charts/beachbreak-commandapi'
+                    chartPath: '$(Build.SourcesDirectory)/k8s/charts/beachbreak-commandapi'
                     releaseName: 'commandapi'
-                    valueFile: '$(Build.SourcesDirectory)/helm/charts/beachbreak-commandapi/values-dev.yaml'
+                    valueFile: '$(Build.SourcesDirectory)/k8s/charts/beachbreak-commandapi/values.yaml'
                     overrideValues: |
                       image.tag=$(imageTag)
                       image.repository=$(ACR_NAME).azurecr.io/$(imageRepository)/commandapi
@@ -82,9 +82,9 @@ stages:
                     namespace: '$(kubernetesNamespace)'
                     command: 'upgrade'
                     chartType: 'FilePath'
-                    chartPath: '$(Build.SourcesDirectory)/helm/charts/beachbreak-queryapi'
+                    chartPath: '$(Build.SourcesDirectory)/k8s/charts/beachbreak-queryapi'
                     releaseName: 'queryapi'
-                    valueFile: '$(Build.SourcesDirectory)/helm/charts/beachbreak-queryapi/values-dev.yaml'
+                    valueFile: '$(Build.SourcesDirectory)/k8s/charts/beachbreak-queryapi/values.yaml'
                     overrideValues: |
                       image.tag=$(imageTag)
                       image.repository=$(ACR_NAME).azurecr.io/$(imageRepository)/queryapi
@@ -103,9 +103,9 @@ stages:
                     namespace: '$(kubernetesNamespace)'
                     command: 'upgrade'
                     chartType: 'FilePath'
-                    chartPath: '$(Build.SourcesDirectory)/helm/charts/beachbreak-frontend'
+                    chartPath: '$(Build.SourcesDirectory)/k8s/charts/beachbreak-frontend'
                     releaseName: 'frontend'
-                    valueFile: '$(Build.SourcesDirectory)/helm/charts/beachbreak-frontend/values-dev.yaml'
+                    valueFile: '$(Build.SourcesDirectory)/k8s/charts/beachbreak-frontend/values.yaml'
                     overrideValues: |
                       image.tag=$(imageTag)
                       image.repository=$(ACR_NAME).azurecr.io/$(imageRepository)/frontend
@@ -174,9 +174,9 @@ stages:
                     namespace: '$(kubernetesNamespace)'
                     command: 'upgrade'
                     chartType: 'FilePath'
-                    chartPath: '$(Build.SourcesDirectory)/helm/charts/beachbreak-commandapi'
+                    chartPath: '$(Build.SourcesDirectory)/k8s/charts/beachbreak-commandapi'
                     releaseName: 'commandapi'
-                    valueFile: '$(Build.SourcesDirectory)/helm/charts/beachbreak-commandapi/values-production.yaml'
+                    valueFile: '$(Build.SourcesDirectory)/k8s/charts/beachbreak-commandapi/values.yaml'
                     overrideValues: |
                       image.tag=$(imageTag)
                       image.repository=$(ACR_NAME).azurecr.io/$(imageRepository)/commandapi
@@ -196,9 +196,9 @@ stages:
                     namespace: '$(kubernetesNamespace)'
                     command: 'upgrade'
                     chartType: 'FilePath'
-                    chartPath: '$(Build.SourcesDirectory)/helm/charts/beachbreak-queryapi'
+                    chartPath: '$(Build.SourcesDirectory)/k8s/charts/beachbreak-queryapi'
                     releaseName: 'queryapi'
-                    valueFile: '$(Build.SourcesDirectory)/helm/charts/beachbreak-queryapi/values-production.yaml'
+                    valueFile: '$(Build.SourcesDirectory)/k8s/charts/beachbreak-queryapi/values.yaml'
                     overrideValues: |
                       image.tag=$(imageTag)
                       image.repository=$(ACR_NAME).azurecr.io/$(imageRepository)/queryapi
@@ -217,9 +217,9 @@ stages:
                     namespace: '$(kubernetesNamespace)'
                     command: 'upgrade'
                     chartType: 'FilePath'
-                    chartPath: '$(Build.SourcesDirectory)/helm/charts/beachbreak-frontend'
+                    chartPath: '$(Build.SourcesDirectory)/k8s/charts/beachbreak-frontend'
                     releaseName: 'frontend'
-                    valueFile: '$(Build.SourcesDirectory)/helm/charts/beachbreak-frontend/values-production.yaml'
+                    valueFile: '$(Build.SourcesDirectory)/k8s/charts/beachbreak-frontend/values.yaml'
                     overrideValues: |
                       image.tag=$(imageTag)
                       image.repository=$(ACR_NAME).azurecr.io/$(imageRepository)/frontend
