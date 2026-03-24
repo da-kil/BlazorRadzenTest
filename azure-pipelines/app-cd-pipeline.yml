@@ -13,22 +13,22 @@ resources:
             - main
 
 variables:
-  - group: beachbreak-dev-vars
-  - group: beachbreak-prod-vars
+  azureServiceConnection: 'resourcemanagement-dev'
+  imageRepository: 'beachbreak'
+  kubernetesNamespace: 'beachbreak'
+  imageTag: '$(resources.pipeline.ci-pipeline.runID)'
 
 stages:
   - stage: DeployDev
     displayName: 'Deploy to Development'
+    variables:
+      - group: beachbreak-dev
     jobs:
       - deployment: DeployToAKS
         displayName: 'Deploy to Dev AKS'
         environment: 'beachbreak-dev'
         pool:
           vmImage: 'ubuntu-latest'
-        variables:
-          kubernetesNamespace: 'beachbreak'
-          acrName: 'acrbeachbreakdev'
-          imageTag: '$(resources.pipeline.ci-pipeline.runID)'
         strategy:
           runOnce:
             deploy:
@@ -41,37 +41,23 @@ stages:
                 - task: AzureCLI@2
                   displayName: 'Get AKS Credentials'
                   inputs:
-                    azureSubscription: 'AzureServiceConnection'
+                    azureSubscription: '$(azureServiceConnection)'
                     scriptType: 'bash'
                     scriptLocation: 'inlineScript'
                     inlineScript: |
                       az aks get-credentials \
-                        --resource-group $(AKS_RG_DEV) \
-                        --name $(AKS_CLUSTER_DEV) \
+                        --resource-group $(AKS_RG) \
+                        --name $(AKS_CLUSTER) \
                         --overwrite-existing
-
-                - task: Kubernetes@1
-                  displayName: 'Create Namespace'
-                  inputs:
-                    connectionType: 'Azure Resource Manager'
-                    azureSubscriptionEndpoint: 'AzureServiceConnection'
-                    azureResourceGroup: '$(AKS_RG_DEV)'
-                    kubernetesCluster: '$(AKS_CLUSTER_DEV)'
-                    command: 'apply'
-                    arguments: '-f - <<EOF
-                      apiVersion: v1
-                      kind: Namespace
-                      metadata:
-                        name: $(kubernetesNamespace)
-                      EOF'
+                      kubectl create namespace $(kubernetesNamespace) --dry-run=client -o yaml | kubectl apply -f -
 
                 - task: HelmDeploy@0
                   displayName: 'Deploy CommandApi'
                   inputs:
                     connectionType: 'Azure Resource Manager'
-                    azureSubscription: 'AzureServiceConnection'
-                    azureResourceGroup: '$(AKS_RG_DEV)'
-                    kubernetesCluster: '$(AKS_CLUSTER_DEV)'
+                    azureSubscription: '$(azureServiceConnection)'
+                    azureResourceGroup: '$(AKS_RG)'
+                    kubernetesCluster: '$(AKS_CLUSTER)'
                     namespace: '$(kubernetesNamespace)'
                     command: 'upgrade'
                     chartType: 'FilePath'
@@ -80,7 +66,7 @@ stages:
                     valueFile: '$(Pipeline.Workspace)/s/helm/charts/beachbreak-commandapi/values-dev.yaml'
                     overrideValues: |
                       image.tag=$(imageTag)
-                      image.repository=$(acrName).azurecr.io/beachbreak/commandapi
+                      image.repository=$(ACR_NAME).azurecr.io/$(imageRepository)/commandapi
                       serviceAccount.annotations."azure\.workload\.identity/client-id"=$(COMMANDAPI_IDENTITY_CLIENT_ID)
                       keyVault.tenantId=$(AZURE_TENANT_ID)
                     install: true
@@ -91,9 +77,9 @@ stages:
                   displayName: 'Deploy QueryApi'
                   inputs:
                     connectionType: 'Azure Resource Manager'
-                    azureSubscription: 'AzureServiceConnection'
-                    azureResourceGroup: '$(AKS_RG_DEV)'
-                    kubernetesCluster: '$(AKS_CLUSTER_DEV)'
+                    azureSubscription: '$(azureServiceConnection)'
+                    azureResourceGroup: '$(AKS_RG)'
+                    kubernetesCluster: '$(AKS_CLUSTER)'
                     namespace: '$(kubernetesNamespace)'
                     command: 'upgrade'
                     chartType: 'FilePath'
@@ -102,7 +88,7 @@ stages:
                     valueFile: '$(Pipeline.Workspace)/s/helm/charts/beachbreak-queryapi/values-dev.yaml'
                     overrideValues: |
                       image.tag=$(imageTag)
-                      image.repository=$(acrName).azurecr.io/beachbreak/queryapi
+                      image.repository=$(ACR_NAME).azurecr.io/$(imageRepository)/queryapi
                       serviceAccount.annotations."azure\.workload\.identity/client-id"=$(QUERYAPI_IDENTITY_CLIENT_ID)
                       keyVault.tenantId=$(AZURE_TENANT_ID)
                     install: true
@@ -112,9 +98,9 @@ stages:
                   displayName: 'Deploy Frontend'
                   inputs:
                     connectionType: 'Azure Resource Manager'
-                    azureSubscription: 'AzureServiceConnection'
-                    azureResourceGroup: '$(AKS_RG_DEV)'
-                    kubernetesCluster: '$(AKS_CLUSTER_DEV)'
+                    azureSubscription: '$(azureServiceConnection)'
+                    azureResourceGroup: '$(AKS_RG)'
+                    kubernetesCluster: '$(AKS_CLUSTER)'
                     namespace: '$(kubernetesNamespace)'
                     command: 'upgrade'
                     chartType: 'FilePath'
@@ -123,37 +109,37 @@ stages:
                     valueFile: '$(Pipeline.Workspace)/s/helm/charts/beachbreak-frontend/values-dev.yaml'
                     overrideValues: |
                       image.tag=$(imageTag)
-                      image.repository=$(acrName).azurecr.io/beachbreak/frontend
+                      image.repository=$(ACR_NAME).azurecr.io/$(imageRepository)/frontend
                       serviceAccount.annotations."azure\.workload\.identity/client-id"=$(FRONTEND_IDENTITY_CLIENT_ID)
                       keyVault.tenantId=$(AZURE_TENANT_ID)
                     install: true
                     waitForExecution: true
 
-                - task: Kubernetes@1
+                - task: AzureCLI@2
                   displayName: 'Check Deployment Status'
                   inputs:
-                    connectionType: 'Azure Resource Manager'
-                    azureSubscriptionEndpoint: 'AzureServiceConnection'
-                    azureResourceGroup: '$(AKS_RG_DEV)'
-                    kubernetesCluster: '$(AKS_CLUSTER_DEV)'
-                    namespace: '$(kubernetesNamespace)'
-                    command: 'get'
-                    arguments: 'pods,svc,ingress'
+                    azureSubscription: '$(azureServiceConnection)'
+                    scriptType: 'bash'
+                    scriptLocation: 'inlineScript'
+                    inlineScript: |
+                      az aks get-credentials \
+                        --resource-group $(AKS_RG) \
+                        --name $(AKS_CLUSTER) \
+                        --overwrite-existing
+                      kubectl get pods,svc,ingress -n $(kubernetesNamespace)
 
   - stage: DeployProduction
     displayName: 'Deploy to Production'
     dependsOn: DeployDev
     condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    variables:
+      - group: beachbreak-prod
     jobs:
       - deployment: DeployToProduction
         displayName: 'Deploy to Production AKS'
         environment: 'beachbreak-production'
         pool:
           vmImage: 'ubuntu-latest'
-        variables:
-          kubernetesNamespace: 'beachbreak'
-          acrName: 'acrbeachbreakproduction'
-          imageTag: '$(resources.pipeline.ci-pipeline.runID)'
         strategy:
           runOnce:
             deploy:
@@ -166,22 +152,22 @@ stages:
                 - task: AzureCLI@2
                   displayName: 'Get AKS Credentials'
                   inputs:
-                    azureSubscription: 'AzureServiceConnection'
+                    azureSubscription: '$(azureServiceConnection)'
                     scriptType: 'bash'
                     scriptLocation: 'inlineScript'
                     inlineScript: |
                       az aks get-credentials \
-                        --resource-group $(AKS_RG_PROD) \
-                        --name $(AKS_CLUSTER_PROD) \
+                        --resource-group $(AKS_RG) \
+                        --name $(AKS_CLUSTER) \
                         --overwrite-existing
 
                 - task: HelmDeploy@0
                   displayName: 'Deploy CommandApi (Production)'
                   inputs:
                     connectionType: 'Azure Resource Manager'
-                    azureSubscription: 'AzureServiceConnection'
-                    azureResourceGroup: '$(AKS_RG_PROD)'
-                    kubernetesCluster: '$(AKS_CLUSTER_PROD)'
+                    azureSubscription: '$(azureServiceConnection)'
+                    azureResourceGroup: '$(AKS_RG)'
+                    kubernetesCluster: '$(AKS_CLUSTER)'
                     namespace: '$(kubernetesNamespace)'
                     command: 'upgrade'
                     chartType: 'FilePath'
@@ -190,7 +176,7 @@ stages:
                     valueFile: '$(Pipeline.Workspace)/s/helm/charts/beachbreak-commandapi/values-production.yaml'
                     overrideValues: |
                       image.tag=$(imageTag)
-                      image.repository=$(acrName).azurecr.io/beachbreak/commandapi
+                      image.repository=$(ACR_NAME).azurecr.io/$(imageRepository)/commandapi
                       serviceAccount.annotations."azure\.workload\.identity/client-id"=$(COMMANDAPI_IDENTITY_CLIENT_ID)
                       keyVault.tenantId=$(AZURE_TENANT_ID)
                     install: true
@@ -201,9 +187,9 @@ stages:
                   displayName: 'Deploy QueryApi (Production)'
                   inputs:
                     connectionType: 'Azure Resource Manager'
-                    azureSubscription: 'AzureServiceConnection'
-                    azureResourceGroup: '$(AKS_RG_PROD)'
-                    kubernetesCluster: '$(AKS_CLUSTER_PROD)'
+                    azureSubscription: '$(azureServiceConnection)'
+                    azureResourceGroup: '$(AKS_RG)'
+                    kubernetesCluster: '$(AKS_CLUSTER)'
                     namespace: '$(kubernetesNamespace)'
                     command: 'upgrade'
                     chartType: 'FilePath'
@@ -212,7 +198,7 @@ stages:
                     valueFile: '$(Pipeline.Workspace)/s/helm/charts/beachbreak-queryapi/values-production.yaml'
                     overrideValues: |
                       image.tag=$(imageTag)
-                      image.repository=$(acrName).azurecr.io/beachbreak/queryapi
+                      image.repository=$(ACR_NAME).azurecr.io/$(imageRepository)/queryapi
                       serviceAccount.annotations."azure\.workload\.identity/client-id"=$(QUERYAPI_IDENTITY_CLIENT_ID)
                       keyVault.tenantId=$(AZURE_TENANT_ID)
                     install: true
@@ -222,9 +208,9 @@ stages:
                   displayName: 'Deploy Frontend (Production)'
                   inputs:
                     connectionType: 'Azure Resource Manager'
-                    azureSubscription: 'AzureServiceConnection'
-                    azureResourceGroup: '$(AKS_RG_PROD)'
-                    kubernetesCluster: '$(AKS_CLUSTER_PROD)'
+                    azureSubscription: '$(azureServiceConnection)'
+                    azureResourceGroup: '$(AKS_RG)'
+                    kubernetesCluster: '$(AKS_CLUSTER)'
                     namespace: '$(kubernetesNamespace)'
                     command: 'upgrade'
                     chartType: 'FilePath'
@@ -233,19 +219,21 @@ stages:
                     valueFile: '$(Pipeline.Workspace)/s/helm/charts/beachbreak-frontend/values-production.yaml'
                     overrideValues: |
                       image.tag=$(imageTag)
-                      image.repository=$(acrName).azurecr.io/beachbreak/frontend
+                      image.repository=$(ACR_NAME).azurecr.io/$(imageRepository)/frontend
                       serviceAccount.annotations."azure\.workload\.identity/client-id"=$(FRONTEND_IDENTITY_CLIENT_ID)
                       keyVault.tenantId=$(AZURE_TENANT_ID)
                     install: true
                     waitForExecution: true
 
-                - task: Kubernetes@1
+                - task: AzureCLI@2
                   displayName: 'Verify Production Deployment'
                   inputs:
-                    connectionType: 'Azure Resource Manager'
-                    azureSubscriptionEndpoint: 'AzureServiceConnection'
-                    azureResourceGroup: '$(AKS_RG_PROD)'
-                    kubernetesCluster: '$(AKS_CLUSTER_PROD)'
-                    namespace: '$(kubernetesNamespace)'
-                    command: 'get'
-                    arguments: 'pods,svc,ingress -o wide'
+                    azureSubscription: '$(azureServiceConnection)'
+                    scriptType: 'bash'
+                    scriptLocation: 'inlineScript'
+                    inlineScript: |
+                      az aks get-credentials \
+                        --resource-group $(AKS_RG) \
+                        --name $(AKS_CLUSTER) \
+                        --overwrite-existing
+                      kubectl get pods,svc,ingress -n $(kubernetesNamespace) -o wide
