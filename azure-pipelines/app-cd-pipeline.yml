@@ -41,11 +41,12 @@ stages:
                     scriptType: 'bash'
                     scriptLocation: 'inlineScript'
                     inlineScript: |
+                      az aks install-cli
                       az aks get-credentials \
                         --resource-group $(AKS_RG) \
                         --name $(AKS_CLUSTER) \
                         --overwrite-existing
-                      kubectl create namespace $(kubernetesNamespace) --dry-run=client -o yaml | kubectl apply -f -
+                      kubelogin convert-kubeconfig -l workloadidentity
 
                 - task: HelmDeploy@0
                   displayName: 'Deploy CommandApi'
@@ -152,10 +153,12 @@ stages:
                     scriptType: 'bash'
                     scriptLocation: 'inlineScript'
                     inlineScript: |
+                      az aks install-cli
                       az aks get-credentials \
                         --resource-group $(AKS_RG) \
                         --name $(AKS_CLUSTER) \
                         --overwrite-existing
+                      kubelogin convert-kubeconfig -l workloadidentity
 
                 - task: HelmDeploy@0
                   displayName: 'Deploy CommandApi (Production)'
