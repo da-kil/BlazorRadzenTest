@@ -1,22 +1,18 @@
 # Application CD Pipeline - Deploy to AKS using Helm
 # Deploys containerized applications to AKS clusters
 
-trigger: none  # Manual or triggered by CI pipeline completion
+trigger: none
 
-resources:
-  pipelines:
-    - pipeline: ci-pipeline
-      source: 'BeachBreak-CI'
-      trigger:
-        branches:
-          include:
-            - main
+parameters:
+  - name: imageTag
+    displayName: 'Image Tag (Build ID)'
+    type: string
 
 variables:
   azureServiceConnection: 'resourcemanagement-dev'
   imageRepository: 'beachbreak'
   kubernetesNamespace: 'beachbreak'
-  imageTag: '$(resources.pipeline.ci-pipeline.runID)'
+  imageTag: '${{ parameters.imageTag }}'
 
 stages:
   - stage: DeployDev
