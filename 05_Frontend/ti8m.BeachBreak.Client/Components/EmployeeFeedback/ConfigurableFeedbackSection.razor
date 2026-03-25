@@ -33,11 +33,6 @@
 
                         <!-- Rating Stars -->
                         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Wrap="FlexWrap.Wrap" Class="mb-2">
-                            <RadzenButton Text="@T("buttons.not-rated")"
-                                        Size="ButtonSize.ExtraSmall"
-                                        ButtonStyle="@(GetCurrentRating(criterion) == 0 ? ButtonStyle.Primary : ButtonStyle.Light)"
-                                        Click="@(() => SetRating(criterion, 0))" />
-
                             <RadzenRating Value="@GetCurrentRating(criterion)"
                                          ValueChanged="@(async (int v) => await SetRating(criterion, v))"
                                          Stars="@RatingScale" />

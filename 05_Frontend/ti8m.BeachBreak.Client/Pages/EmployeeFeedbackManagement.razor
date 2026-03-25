@@ -201,25 +201,6 @@
                                     </Template>
                                 </RadzenDataGridColumn>
 
-                                <!-- Rating -->
-                                <RadzenDataGridColumn TItem="EmployeeFeedbackSummaryDto"
-                                                    Property="AverageRating"
-                                                    Title="@T("columns.rating")"
-                                                    Width="100px"
-                                                    Sortable="true">
-                                    <Template Context="feedback">
-                                        <div class="rating-display">
-                                            <RadzenText TextStyle="TextStyle.Body1">@feedback.RatingDisplay</RadzenText>
-                                            @if (feedback.RatedCriteriaCount > 0)
-                                            {
-                                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
-                                                    @feedback.RatedCriteriaCount @T("labels.criteria")
-                                                </RadzenText>
-                                            }
-                                        </div>
-                                    </Template>
-                                </RadzenDataGridColumn>
-
                                 <!-- Feedback Date -->
                                 <RadzenDataGridColumn TItem="EmployeeFeedbackSummaryDto"
                                                     Property="FeedbackDate"
@@ -239,17 +220,6 @@
                                                            BadgeStyle="BadgeStyle.Success" />
                                             }
                                         </div>
-                                    </Template>
-                                </RadzenDataGridColumn>
-
-                                <!-- Summary -->
-                                <RadzenDataGridColumn TItem="EmployeeFeedbackSummaryDto"
-                                                    Title="@T("columns.summary")"
-                                                    Width="150px">
-                                    <Template Context="feedback">
-                                        <RadzenText TextStyle="TextStyle.Body2">
-                                            @feedback.FeedbackSummary
-                                        </RadzenText>
                                     </Template>
                                 </RadzenDataGridColumn>
 

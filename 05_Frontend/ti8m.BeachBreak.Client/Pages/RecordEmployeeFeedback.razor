@@ -136,12 +136,12 @@
                             ButtonStyle="ButtonStyle.Light"
                             Click="@Cancel" />
 
-                <RadzenButton Text="@T("buttons.save-feedback")"
-                            ButtonStyle="ButtonStyle.Success"
-                            Icon="save"
-                            Click="@SaveFeedback"
-                            IsBusy="@isSaving"
-                            Disabled="@(!IsFormValid)" />
+                <AsyncButton Text="@T("buttons.save-feedback")"
+                             ProcessingText="@T("messages.saving")"
+                             ButtonStyle="ButtonStyle.Success"
+                             Icon="save"
+                             ClickAsync="@SaveFeedback"
+                             Disabled="@(!IsFormValid)" />
             </RadzenStack>
         </div>
 
@@ -187,7 +187,6 @@
     private Guid? selectedTemplateId;
 
     // UI state
-    private bool isSaving;
     private List<string> validationErrors = new();
 
     // Computed properties
@@ -301,9 +300,6 @@
         if (!ValidateForm())
             return;
 
-        isSaving = true;
-        StateHasChanged();
-
         try
         {
             var dto = new RecordEmployeeFeedbackDto
@@ -347,11 +343,6 @@
                 Summary = T("messages.error"),
                 Detail = $"Unexpected error: {ex.Message}"
             });
-        }
-        finally
-        {
-            isSaving = false;
-            StateHasChanged();
         }
     }
 
