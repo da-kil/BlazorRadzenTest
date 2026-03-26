@@ -218,7 +218,16 @@
             return;
         }
 
-        // For Manager/HR views, load data from API
+        // For Manager/HR views: use pre-loaded data from Configuration if available
+        if (Configuration.AllAssignments.Count > 0)
+        {
+            allAssignments = Configuration.AllAssignments;
+            employees = Configuration.AllEmployees;
+            UpdateFilteredTeamMembers();
+            return;
+        }
+
+        // Fallback: load data from API with loading indicator
         isLoading = true;
         NotifyStateChanged();
 
@@ -226,8 +235,6 @@
         {
             await ErrorService.ExecuteSafelyAsync(ComponentName, async () =>
             {
-                // Load ALL data in parallel for Manager/HR views
-                // These views need complete data to calculate department/team stats
                 var assignmentsTask = DataService.GetAssignmentsAsync();
                 var employeesTask = DataService.GetEmployeesAsync();
                 var additionalDataTask = DataService.GetAdditionalDataAsync();
@@ -238,7 +245,6 @@
                 employees = employeesTask.Result;
                 additionalData = additionalDataTask.Result;
 
-                // Initialize filtered lists after data is loaded
                 UpdateFilteredTeamMembers();
             }, "LoadData");
         }

@@ -48,7 +48,6 @@ public class ManagerQuestionnaireDataService : IQuestionnaireDataService
 {
     private readonly IManagerQuestionnaireService _managerService;
     private readonly IQuestionnaireTemplateService _templateService;
-
     public ManagerQuestionnaireDataService(
         IManagerQuestionnaireService managerService,
         IQuestionnaireTemplateService templateService)

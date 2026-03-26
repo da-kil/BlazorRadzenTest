@@ -177,6 +177,9 @@ public static class QuestionnairePageConfigurationFactory
                 }
             },
 
+            AllAssignments = allAssignments,
+            AllEmployees = teamMembers,
+
             StatsConfig = new QuestionnaireStatsConfig
             {
                 Columns = 6,
@@ -367,6 +370,9 @@ public static class QuestionnairePageConfigurationFactory
                     ButtonStyle = "Light"
                 }
             },
+
+            AllAssignments = allAssignments,
+            AllEmployees = allEmployees,
 
             StatsConfig = new QuestionnaireStatsConfig
             {

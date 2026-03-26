@@ -87,10 +87,8 @@
 
 	protected override async Task LoadRoleSpecificDataAsync()
 	{
-		// Create the data service
 		dataService = new ManagerQuestionnaireDataService(ManagerQuestionnaireService, TemplateService);
 
-		// Load data in parallel
 		var assignmentsTask = ManagerQuestionnaireService.GetTeamAssignmentsAsync();
 		var teamMembersTask = ManagerQuestionnaireService.GetTeamMembersAsync();
 

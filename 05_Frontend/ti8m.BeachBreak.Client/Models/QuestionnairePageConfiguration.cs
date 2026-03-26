@@ -1,3 +1,5 @@
+using ti8m.BeachBreak.Client.Services;
+
 namespace ti8m.BeachBreak.Client.Models;
 
 public class QuestionnairePageConfiguration
@@ -16,4 +18,8 @@ public class QuestionnairePageConfiguration
     public List<QuestionnaireAssignment> UpcomingAssignments { get; set; } = new();
     public List<QuestionnaireAssignment> CompletedAssignments { get; set; } = new();
     public List<QuestionnaireAssignment> OverdueAssignments { get; set; } = new();
+
+    // Pre-loaded data for manager/HR views
+    public List<QuestionnaireAssignment> AllAssignments { get; set; } = new();
+    public List<EmployeeDto> AllEmployees { get; set; } = new();
 }
