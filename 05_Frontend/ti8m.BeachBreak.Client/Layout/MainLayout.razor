@@ -1,6 +1,9 @@
 ﻿@inherits LayoutComponentBase
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Components.UI
+@using ti8m.BeachBreak.Client.Components
+@inject ti8m.BeachBreak.Client.Services.NotesOverlayService NotesOverlayService
+@implements IDisposable
 
 <RadzenComponents @rendermode="InteractiveAuto" />
 
@@ -36,6 +39,29 @@
         </main>
     </div>
 </div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        NotesOverlayService.OnStateChanged += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        NotesOverlayService.OnStateChanged -= StateHasChanged;
+    }
+}
+
+@if (NotesOverlayService.Assignment != null)
+{
+    <NotesFab NoteCount="@NotesOverlayService.Assignment.InReviewNotes.Count"
+              OnClick="@NotesOverlayService.ToggleDrawer" />
+    <NotesDrawer Assignment="@NotesOverlayService.Assignment"
+                 CurrentSection="@NotesOverlayService.CurrentSection"
+                 IsOpen="@NotesOverlayService.IsDrawerOpen"
+                 OnClose="@NotesOverlayService.CloseDrawer"
+                 OnNotesChanged="@NotesOverlayService.NotifyStateChanged" />
+}
 
 <div id="blazor-error-ui" data-nosnippet>
     <div class="error-content">

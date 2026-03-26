@@ -15,6 +15,8 @@
 @inject IQuestionnaireAssignmentService AssignmentService
 @inject IAuthService AuthService
 @inject NavigationManager NavigationManager
+@inject ti8m.BeachBreak.Client.Services.NotesOverlayService NotesOverlayService
+@implements IDisposable
 
 
 @if (isLoading)
@@ -185,13 +187,6 @@ else
                                                 </div>
                                             </div>
                                         </div>
-                                        @if (Assignment.WorkflowState == WorkflowState.InReview)
-                                        {
-                                            <InReviewNotesPanel Assignment="@Assignment"
-                                                               CurrentSection="@currentSection"
-                                                               IsInlineMode="true"
-                                                               OnNotesChanged="@OnNotesUpdated" />
-                                        }
                                     </div>
                                 }
                                 else if (currentSection.CompletionRole == CompletionRole.Both && currentSection.Type == QuestionType.Goal)
@@ -253,13 +248,6 @@ else
                                                                            GoalRefreshToken="@goalRefreshToken" />
                                             </div>
                                         </div>
-                                        @if (Assignment.WorkflowState == WorkflowState.InReview)
-                                        {
-                                            <InReviewNotesPanel Assignment="@Assignment"
-                                                               CurrentSection="@currentSection"
-                                                               IsInlineMode="true"
-                                                               OnNotesChanged="@OnNotesUpdated" />
-                                        }
                                     </div>
                                 }
                             </div>
@@ -337,6 +325,8 @@ else
         finally
         {
             isLoading = false;
+            NotesOverlayService.Show(Assignment);
+            NotesOverlayService.SetCurrentSection(currentSection);
         }
     }
 
@@ -345,6 +335,7 @@ else
         if (newIndex >= 0 && newIndex < (template?.Sections.Count ?? 0))
         {
             currentSectionIndex = newIndex;
+            NotesOverlayService.SetCurrentSection(currentSection);
             StateHasChanged();
         }
     }
@@ -421,6 +412,7 @@ else
         if (currentSectionIndex > 0)
         {
             currentSectionIndex--;
+            NotesOverlayService.SetCurrentSection(currentSection);
             StateHasChanged();
         }
     }
@@ -430,6 +422,7 @@ else
         if (template != null && currentSectionIndex < template.Sections.Count - 1)
         {
             currentSectionIndex++;
+            NotesOverlayService.SetCurrentSection(currentSection);
             StateHasChanged();
         }
     }
@@ -588,5 +581,10 @@ else
         // Optionally reload assignment to get latest notes
         // For now, optimistic updates handle this
         StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        NotesOverlayService.Hide();
     }
 }

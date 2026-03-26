@@ -100,6 +100,7 @@ internal class Program
         // Register state management
         builder.Services.AddScoped<QuestionnaireBuilderState>();
         builder.Services.AddScoped<FeedbackTemplateBuilderState>();
+        builder.Services.AddScoped<NotesOverlayService>();
 
         await builder.Build().RunAsync();
     }

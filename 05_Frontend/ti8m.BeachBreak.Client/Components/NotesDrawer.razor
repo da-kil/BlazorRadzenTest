@@ -1,0 +1,212 @@
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Services
+@using ti8m.BeachBreak.Client.Components.Shared
+@inherits CategoryOptimizedTranslatableComponent
+@inject IQuestionnaireAssignmentService AssignmentService
+
+@if (IsOpen)
+{
+    <div class="notes-drawer-backdrop" @onclick="Close"></div>
+}
+
+<div class="notes-drawer @(IsOpen ? "notes-drawer--open" : "")">
+    <div class="notes-drawer-header">
+        <RadzenStack Orientation="Orientation.Horizontal"
+                     AlignItems="AlignItems.Center"
+                     JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenIcon Icon="comment" />
+                <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold">
+                    @T("sections.discussion-notes")
+                </RadzenText>
+                @if (Assignment.InReviewNotes.Any())
+                {
+                    <RadzenBadge BadgeStyle="BadgeStyle.Info"
+                                 Text="@Assignment.InReviewNotes.Count.ToString()" />
+                }
+            </RadzenStack>
+            <RadzenButton Icon="close"
+                          ButtonStyle="ButtonStyle.Light"
+                          Size="ButtonSize.Small"
+                          Click="@Close" />
+        </RadzenStack>
+    </div>
+
+    <div class="notes-drawer-body">
+        <div class="notes-drawer-add-section">
+            <RadzenTextArea @bind-Value="@newNoteContent"
+                            Rows="3"
+                            MaxLength="2000"
+                            Placeholder="@T("placeholders.enter-discussion-note")"
+                            Class="textarea-full-width"
+                            @oninput="@OnContentChanged" />
+
+            <RadzenStack Orientation="Orientation.Horizontal"
+                         AlignItems="AlignItems.Center"
+                         JustifyContent="JustifyContent.SpaceBetween"
+                         Class="mt-2">
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                    @(newNoteContent?.Length ?? 0) / 2000 @T("forms.characters")
+                </RadzenText>
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                    @if (CurrentSection != null)
+                    {
+                        <RadzenCheckBox @bind-Value="@isGeneralNote" Name="drawerGeneralNote" />
+                        <RadzenLabel Text="@T("sections.general-notes")" Component="drawerGeneralNote" />
+                    }
+                    <RadzenButton Text="@T("buttons.add-note")"
+                                  Icon="add"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Size="ButtonSize.Small"
+                                  Click="@AddNote"
+                                  Disabled="@(string.IsNullOrWhiteSpace(newNoteContent) || isSaving)" />
+                </RadzenStack>
+            </RadzenStack>
+
+            @if (CurrentSection != null)
+            {
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mt-1">
+                    @T("labels.current-section"): <strong>@CurrentSectionTitle</strong>
+                </RadzenText>
+            }
+        </div>
+
+        <InReviewNotesList Notes="@Assignment.InReviewNotes"
+                           AssignmentId="@Assignment.Id"
+                           OnNoteUpdated="@OnNoteUpdated"
+                           OnNoteDeleted="@OnNoteDeleted" />
+    </div>
+</div>
+
+@code {
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Sections,
+            TranslationCategories.Labels,
+            TranslationCategories.Placeholders,
+            TranslationCategories.Buttons,
+            TranslationCategories.Messages,
+            TranslationCategories.Forms
+        };
+    }
+
+    [Parameter, EditorRequired] public QuestionnaireAssignment Assignment { get; set; } = null!;
+    [Parameter] public QuestionSection? CurrentSection { get; set; }
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback OnNotesChanged { get; set; }
+
+    private string newNoteContent = string.Empty;
+    private bool isGeneralNote = false;
+    private bool isSaving = false;
+
+    private string CurrentSectionTitle => isGeneralNote
+        ? T("sections.general-notes")
+        : (CurrentSection?.GetLocalizedTitleWithFallback(CurrentLanguage) ?? T("sections.general-notes"));
+
+    protected override void OnParametersSet()
+    {
+        // Reset general note toggle when section changes
+        isGeneralNote = false;
+        base.OnParametersSet();
+    }
+
+    private void OnContentChanged(ChangeEventArgs e)
+    {
+        newNoteContent = e.Value?.ToString() ?? string.Empty;
+    }
+
+    private async Task Close()
+    {
+        if (OnClose.HasDelegate)
+            await OnClose.InvokeAsync();
+    }
+
+    private async Task AddNote()
+    {
+        if (string.IsNullOrWhiteSpace(newNoteContent))
+            return;
+
+        try
+        {
+            isSaving = true;
+            StateHasChanged();
+
+            var sectionId = isGeneralNote ? null : CurrentSection?.Id;
+
+            var result = await AssignmentService.AddInReviewNoteAsync(
+                Assignment.Id,
+                newNoteContent.Trim(),
+                sectionId,
+                null);
+
+            if (result.Succeeded)
+            {
+                Assignment.InReviewNotes.Add(new InReviewNote
+                {
+                    Id = result.Payload,
+                    Content = newNoteContent.Trim(),
+                    Timestamp = DateTime.Now,
+                    SectionId = sectionId,
+                    SectionTitle = isGeneralNote
+                        ? T("sections.general-notes")
+                        : (CurrentSection?.GetLocalizedTitleWithFallback(CurrentLanguage) ?? T("sections.general-notes"))
+                });
+
+                newNoteContent = string.Empty;
+                isGeneralNote = false;
+
+                NotificationService.Notify(NotificationSeverity.Success,
+                    T("messages.note-saved"),
+                    T("messages.note-saved-successfully"));
+
+                if (OnNotesChanged.HasDelegate)
+                    await OnNotesChanged.InvokeAsync();
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Error,
+                    T("messages.error"),
+                    result.ErrorMessage ?? T("messages.failed-to-save-note"));
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error,
+                T("messages.error"),
+                $"Failed to add note: {ex.Message}");
+        }
+        finally
+        {
+            isSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnNoteUpdated(InReviewNote note)
+    {
+        var existingNote = Assignment.InReviewNotes.FirstOrDefault(n => n.Id == note.Id);
+        if (existingNote != null)
+        {
+            existingNote.Content = note.Content;
+            existingNote.Timestamp = DateTime.Now;
+        }
+
+        if (OnNotesChanged.HasDelegate)
+            await OnNotesChanged.InvokeAsync();
+    }
+
+    private async Task OnNoteDeleted(Guid noteId)
+    {
+        var noteToRemove = Assignment.InReviewNotes.FirstOrDefault(n => n.Id == noteId);
+        if (noteToRemove != null)
+            Assignment.InReviewNotes.Remove(noteToRemove);
+
+        if (OnNotesChanged.HasDelegate)
+            await OnNotesChanged.InvokeAsync();
+    }
+}

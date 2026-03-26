@@ -1,0 +1,18 @@
+@using Radzen
+@using Radzen.Blazor
+
+<div class="notes-fab">
+    @if (NoteCount > 0)
+    {
+        <span class="notes-fab-badge">@NoteCount</span>
+    }
+    <RadzenButton Icon="comment"
+                  ButtonStyle="ButtonStyle.Secondary"
+                  Size="ButtonSize.Large"
+                  Click="@OnClick" />
+</div>
+
+@code {
+    [Parameter] public int NoteCount { get; set; }
+    [Parameter] public EventCallback OnClick { get; set; }
+}

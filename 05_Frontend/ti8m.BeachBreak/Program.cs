@@ -456,6 +456,7 @@ public class Program
         // Register state management
         builder.Services.AddScoped<QuestionnaireBuilderState>();
         builder.Services.AddScoped<FeedbackTemplateBuilderState>();
+        builder.Services.AddScoped<NotesOverlayService>();
 
         var app = builder.Build();
 
