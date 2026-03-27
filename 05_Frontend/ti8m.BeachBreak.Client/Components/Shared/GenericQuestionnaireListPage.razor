@@ -104,14 +104,14 @@
 
     // Centralized filter state managed by QuestionnaireFilterBar component
     private QuestionnaireFilterBar.FilterState filterState = new();
-    private int _lastFilterStateHash;
+    private int lastFilterStateHash;
 
     private bool CheckFilterStateChanged()
     {
         var currentHash = filterState?.GetHashCode() ?? 0;
-        if (_lastFilterStateHash != currentHash)
+        if (lastFilterStateHash != currentHash)
         {
-            _lastFilterStateHash = currentHash;
+            lastFilterStateHash = currentHash;
             return true;
         }
         return false;
@@ -124,15 +124,15 @@
     // Department expansion state
     private HashSet<Guid> expandedDepartments = new();
 
-    private int _selectedTabIndex = 0;
+    private int selectedTabIndex = 0;
     private int SelectedTabIndex
     {
-        get => _selectedTabIndex;
+        get => selectedTabIndex;
         set
         {
-            if (_selectedTabIndex != value)
+            if (selectedTabIndex != value)
             {
-                _selectedTabIndex = value;
+                selectedTabIndex = value;
                 // Save tab state immediately
                 _ = SaveFilterStateAsync(); // Fire and forget - don't block UI
                 StateHasChanged();
@@ -191,7 +191,7 @@
         return StateService.HasParameterChanged(nameof(allAssignments), allAssignments.Count) ||
                StateService.HasParameterChanged(nameof(isLoading), isLoading) ||
                StateService.HasParameterChanged(nameof(isLoadingMore), isLoadingMore) ||
-               StateService.HasParameterChanged(nameof(_selectedTabIndex), _selectedTabIndex) ||
+               StateService.HasParameterChanged(nameof(selectedTabIndex), selectedTabIndex) ||
                StateService.HasParameterChanged(nameof(filteredTeamMembers), filteredMembersIdentity) ||
                StateService.HasParameterChanged(nameof(teamMemberSortBy), teamMemberSortBy) ||
                StateService.HasParameterChanged(nameof(memberAssignmentsCache), memberAssignmentsCache.Count) ||
@@ -2220,9 +2220,6 @@
         public List<string> MultiDepartmentFilter { get; set; } = new();
         public string? DateRangeFrom { get; set; }
         public string? DateRangeTo { get; set; }
-        public int SelectedTabIndex { get; set; } = 0;
-        public string TeamMemberSortBy { get; set; } = "Name";
-        public string QuestionnaireSortBy { get; set; } = "Name";
     }
 
     private async Task SaveFilterStateAsync()
@@ -2235,9 +2232,6 @@
                 MultiDepartmentFilter = filterState.DepartmentFilter.ToList(),
                 MultiCategoryFilter = filterState.CategoryFilter.ToList(),
                 MultiTemplateFilter = filterState.TemplateFilter.ToList(),
-                SelectedTabIndex = _selectedTabIndex,
-                TeamMemberSortBy = teamMemberSortBy,
-                QuestionnaireSortBy = questionnaireSortBy
             };
 
             var json = System.Text.Json.JsonSerializer.Serialize(persistenceState);
@@ -2268,10 +2262,6 @@
                     filterState.DepartmentFilter = loadedFilterState.MultiDepartmentFilter ?? new List<string>();
                     filterState.CategoryFilter = loadedFilterState.MultiCategoryFilter ?? new List<string>();
                     filterState.TemplateFilter = loadedFilterState.MultiTemplateFilter ?? new List<Guid>();
-
-                    _selectedTabIndex = loadedFilterState.SelectedTabIndex;
-                    teamMemberSortBy = loadedFilterState.TeamMemberSortBy ?? "Name";
-                    questionnaireSortBy = loadedFilterState.QuestionnaireSortBy ?? "Name";
                 }
             }
         }
