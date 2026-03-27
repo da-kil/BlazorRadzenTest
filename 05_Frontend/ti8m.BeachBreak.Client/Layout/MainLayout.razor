@@ -54,12 +54,15 @@
 
 @if (NotesOverlayService.Assignment != null)
 {
-    <NotesFab NoteCount="@NotesOverlayService.Assignment.InReviewNotes.Count"
+    <NotesFab NoteCount="@NotesOverlayService.Assignment.InReviewNotes.Count(n => n.ItemKey == null)"
               OnClick="@NotesOverlayService.ToggleDrawer" />
     <NotesDrawer Assignment="@NotesOverlayService.Assignment"
                  CurrentSection="@NotesOverlayService.CurrentSection"
+                 CurrentItemKey="@NotesOverlayService.CurrentItemKey"
+                 CurrentItemTitle="@NotesOverlayService.CurrentItemTitle"
                  IsOpen="@NotesOverlayService.IsDrawerOpen"
                  OnClose="@NotesOverlayService.CloseDrawer"
+                 OnClearItem="@NotesOverlayService.ClearCurrentItem"
                  OnNotesChanged="@NotesOverlayService.NotifyStateChanged" />
 }
 

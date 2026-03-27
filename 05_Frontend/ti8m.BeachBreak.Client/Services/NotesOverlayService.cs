@@ -6,6 +6,8 @@ public class NotesOverlayService
 {
     public QuestionnaireAssignment? Assignment { get; private set; }
     public QuestionSection? CurrentSection { get; private set; }
+    public string? CurrentItemKey { get; private set; }
+    public string? CurrentItemTitle { get; private set; }
     public bool IsDrawerOpen { get; private set; }
 
     public event Action? OnStateChanged;
@@ -21,6 +23,8 @@ public class NotesOverlayService
     {
         Assignment = null;
         CurrentSection = null;
+        CurrentItemKey = null;
+        CurrentItemTitle = null;
         IsDrawerOpen = false;
         NotifyStateChanged();
     }
@@ -28,6 +32,23 @@ public class NotesOverlayService
     public void SetCurrentSection(QuestionSection? section)
     {
         CurrentSection = section;
+        CurrentItemKey = null;
+        CurrentItemTitle = null;
+        NotifyStateChanged();
+    }
+
+    public void OpenDrawerForItem(string itemKey, string itemTitle)
+    {
+        CurrentItemKey = itemKey;
+        CurrentItemTitle = itemTitle;
+        IsDrawerOpen = true;
+        NotifyStateChanged();
+    }
+
+    public void ClearCurrentItem()
+    {
+        CurrentItemKey = null;
+        CurrentItemTitle = null;
         NotifyStateChanged();
     }
 

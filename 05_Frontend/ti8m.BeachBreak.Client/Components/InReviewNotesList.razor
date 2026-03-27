@@ -24,20 +24,32 @@
                     <!-- Note header -->
                     <div class="note-header">
                         <RadzenStack Orientation="Orientation.Horizontal"
-                                   AlignItems="AlignItems.Center"
+                                   AlignItems="AlignItems.Start"
                                    JustifyContent="JustifyContent.SpaceBetween">
-                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                                <RadzenBadge BadgeStyle="@GetNoteBadgeStyle(note)"
-                                           Text="@note.SectionTitle" />
-                                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
-                                    @note.Timestamp.ToString("MMM dd, HH:mm")
-                                </RadzenText>
-                                @if (!string.IsNullOrEmpty(note.AuthorName))
+                            <RadzenStack Orientation="Orientation.Vertical" Gap="0.15rem">
+                                @if (!IsInlineMode)
                                 {
-                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
-                                        by @note.AuthorName
-                                    </RadzenText>
+                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                        <RadzenBadge BadgeStyle="@GetNoteBadgeStyle(note)"
+                                                   Text="@note.SectionTitle" />
+                                        @if (!string.IsNullOrEmpty(note.ItemKey))
+                                        {
+                                            <RadzenBadge BadgeStyle="BadgeStyle.Warning"
+                                                       Text="@note.ItemKey" />
+                                        }
+                                    </RadzenStack>
                                 }
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                                        @note.Timestamp.ToString("MMM dd, HH:mm")
+                                    </RadzenText>
+                                    @if (!string.IsNullOrEmpty(note.AuthorName))
+                                    {
+                                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                                            by @note.AuthorName
+                                        </RadzenText>
+                                    }
+                                </RadzenStack>
                             </RadzenStack>
 
                             @if (!IsReadOnly)

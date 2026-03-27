@@ -21,10 +21,11 @@
                 <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold">
                     @T("sections.discussion-notes")
                 </RadzenText>
-                @if (Assignment.InReviewNotes.Any())
+                @{ var sectionNoteCount = Assignment.InReviewNotes.Count(n => n.ItemKey == null); }
+                @if (sectionNoteCount > 0)
                 {
                     <RadzenBadge BadgeStyle="BadgeStyle.Info"
-                                 Text="@Assignment.InReviewNotes.Count.ToString()" />
+                                 Text="@sectionNoteCount.ToString()" />
                 }
             </RadzenStack>
             <RadzenButton Icon="close"
@@ -65,7 +66,24 @@
                 </RadzenStack>
             </RadzenStack>
 
-            @if (CurrentSection != null)
+            @if (!string.IsNullOrEmpty(CurrentItemTitle) && !isGeneralNote)
+            {
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Class="mt-1">
+                    <RadzenIcon Icon="label" Style="font-size: 0.9rem;" />
+                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                        @T("labels.item"): <strong>@CurrentItemTitle</strong>
+                    </RadzenText>
+                    @if (OnClearItem.HasDelegate)
+                    {
+                        <RadzenButton Icon="close"
+                                      ButtonStyle="ButtonStyle.Light"
+                                      Size="ButtonSize.ExtraSmall"
+                                      Click="@ClearItem"
+                                      title="Clear item context" />
+                    }
+                </RadzenStack>
+            }
+            else if (CurrentSection != null)
             {
                 <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mt-1">
                     @T("labels.current-section"): <strong>@CurrentSectionTitle</strong>
@@ -73,7 +91,7 @@
             }
         </div>
 
-        <InReviewNotesList Notes="@Assignment.InReviewNotes"
+        <InReviewNotesList Notes="@Assignment.InReviewNotes.Where(n => n.ItemKey == null).ToList()"
                            AssignmentId="@Assignment.Id"
                            OnNoteUpdated="@OnNoteUpdated"
                            OnNoteDeleted="@OnNoteDeleted" />
@@ -96,8 +114,11 @@
 
     [Parameter, EditorRequired] public QuestionnaireAssignment Assignment { get; set; } = null!;
     [Parameter] public QuestionSection? CurrentSection { get; set; }
+    [Parameter] public string? CurrentItemKey { get; set; }
+    [Parameter] public string? CurrentItemTitle { get; set; }
     [Parameter] public bool IsOpen { get; set; }
     [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback OnClearItem { get; set; }
     [Parameter] public EventCallback OnNotesChanged { get; set; }
 
     private string newNoteContent = string.Empty;
@@ -126,6 +147,12 @@
             await OnClose.InvokeAsync();
     }
 
+    private async Task ClearItem()
+    {
+        if (OnClearItem.HasDelegate)
+            await OnClearItem.InvokeAsync();
+    }
+
     private async Task AddNote()
     {
         if (string.IsNullOrWhiteSpace(newNoteContent))
@@ -137,12 +164,13 @@
             StateHasChanged();
 
             var sectionId = isGeneralNote ? null : CurrentSection?.Id;
+            var itemKey = isGeneralNote ? null : CurrentItemKey;
 
             var result = await AssignmentService.AddInReviewNoteAsync(
                 Assignment.Id,
                 newNoteContent.Trim(),
                 sectionId,
-                null);
+                itemKey);
 
             if (result.Succeeded)
             {
@@ -152,6 +180,7 @@
                     Content = newNoteContent.Trim(),
                     Timestamp = DateTime.Now,
                     SectionId = sectionId,
+                    ItemKey = itemKey,
                     SectionTitle = isGeneralNote
                         ? T("sections.general-notes")
                         : (CurrentSection?.GetLocalizedTitleWithFallback(CurrentLanguage) ?? T("sections.general-notes"))
