@@ -11,7 +11,8 @@
     position: relative;
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
+    height: 100vh;
+    overflow: hidden;
     background-color: var(--background-color);
 }
 
@@ -92,10 +93,23 @@
    APP BODY AND LAYOUT
    ============================================= */
 
+.review-context-wrapper {
+    margin-left: var(--sidebar-width, 260px);
+    padding-left: 20px;
+}
+
+@media (max-width: 768px) {
+    .review-context-wrapper {
+        margin-left: 0;
+        padding-left: var(--spacing-md);
+    }
+}
+
 .app-body {
     display: flex;
     flex: 1;
-    height: calc(100vh - 64px);
+    min-height: 0;
+    overflow: hidden;
 }
 
 /* =============================================

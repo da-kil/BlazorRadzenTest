@@ -101,6 +101,7 @@ internal class Program
         builder.Services.AddScoped<QuestionnaireBuilderState>();
         builder.Services.AddScoped<FeedbackTemplateBuilderState>();
         builder.Services.AddScoped<NotesOverlayService>();
+        builder.Services.AddScoped<ReviewContextService>();
 
         await builder.Build().RunAsync();
     }

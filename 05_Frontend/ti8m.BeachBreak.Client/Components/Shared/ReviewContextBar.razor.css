@@ -1,0 +1,74 @@
+.review-context-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0 var(--spacing-lg);
+    height: var(--review-context-bar-height, 44px);
+    flex-shrink: 0;
+    background: var(--rz-panel-background-color);
+    border-bottom: 2px solid var(--primary-color);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    z-index: 999;
+}
+
+.review-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    color: white;
+    font-size: 0.7rem;
+    font-weight: var(--font-weight-heading);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    cursor: default;
+}
+
+.review-employee-label {
+    font-size: 0.8rem;
+    color: var(--rz-text-secondary-color);
+    flex-shrink: 0;
+}
+
+.review-employee-name {
+    font-size: 0.875rem;
+    font-weight: var(--font-weight-heading);
+    flex-shrink: 0;
+}
+
+.review-divider {
+    width: 1px;
+    height: 20px;
+    background: var(--border-color);
+    flex-shrink: 0;
+}
+
+.review-questionnaire-name {
+    flex: 1;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: var(--rz-text-secondary-color);
+    font-size: 0.8rem;
+}
+
+.review-mode-badge {
+    font-size: 0.65rem;
+    font-weight: var(--font-weight-heading);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 0.2rem 0.5rem;
+    border-radius: 999px;
+    background: var(--rz-warning-lighter);
+    color: var(--rz-warning-dark);
+    flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+    .review-context-bar {
+        padding: 0 var(--spacing-md);
+    }
+}
+

@@ -457,6 +457,7 @@ public class Program
         builder.Services.AddScoped<QuestionnaireBuilderState>();
         builder.Services.AddScoped<FeedbackTemplateBuilderState>();
         builder.Services.AddScoped<NotesOverlayService>();
+        builder.Services.AddScoped<ReviewContextService>();
 
         var app = builder.Build();
 

@@ -3,6 +3,7 @@
 @using ti8m.BeachBreak.Client.Components.UI
 @using ti8m.BeachBreak.Client.Components
 @inject ti8m.BeachBreak.Client.Services.NotesOverlayService NotesOverlayService
+@inject ti8m.BeachBreak.Client.Services.ReviewContextService ReviewContextService
 @implements IDisposable
 
 <RadzenComponents @rendermode="InteractiveAuto" />
@@ -27,6 +28,14 @@
         </div>
     </header>
 
+    @if (ReviewContextService.IsActive)
+    {
+        <div class="review-context-wrapper">
+            <ReviewContextBar EmployeeName="@(ReviewContextService.EmployeeName!)"
+                              QuestionnaireName="@(ReviewContextService.QuestionnaireName!)" />
+        </div>
+    }
+
     <div class="app-body">
         <aside class="sidebar">
             <NavMenu />
@@ -44,11 +53,13 @@
     protected override void OnInitialized()
     {
         NotesOverlayService.OnStateChanged += StateHasChanged;
+        ReviewContextService.OnStateChanged += StateHasChanged;
     }
 
     public void Dispose()
     {
         NotesOverlayService.OnStateChanged -= StateHasChanged;
+        ReviewContextService.OnStateChanged -= StateHasChanged;
     }
 }
 

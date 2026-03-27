@@ -16,6 +16,7 @@
 @inject IAuthService AuthService
 @inject NavigationManager NavigationManager
 @inject ti8m.BeachBreak.Client.Services.NotesOverlayService NotesOverlayService
+@inject ti8m.BeachBreak.Client.Services.ReviewContextService ReviewContextService
 @implements IDisposable
 
 
@@ -38,15 +39,6 @@ else
                           Title="@($"{T("pages.review-meeting")}: {template.GetLocalizedNameWithFallback(CurrentLanguage)}")"
                         Description="@template.GetLocalizedDescriptionWithFallback(CurrentLanguage)"
                         ShowDefaultFooter="true">
-        <HeaderContent>
-            <div class="questionnaire-info-banner">
-                <RadzenIcon Icon="info" />
-                <div>
-                    <strong>@T("labels.reviewing-employee"):</strong> @Assignment.EmployeeName &nbsp;|&nbsp;
-                    @T("messages.review-mode-manager-info")
-                </div>
-            </div>
-        </HeaderContent>
         <DefaultFooterContent>
             <RadzenButton Text="@T("buttons.previous")"
                           ButtonStyle="ButtonStyle.Light"
@@ -299,6 +291,7 @@ else
         // Initialize the current user role cache before loading review data
         await InitializeCurrentUserRoleAsync();
         await LoadReviewData();
+        ReviewContextService.Show(Assignment.EmployeeName, template?.GetLocalizedNameWithFallback(CurrentLanguage) ?? Assignment.EmployeeName);
     }
 
     private async Task LoadReviewData()
@@ -586,5 +579,6 @@ else
     public void Dispose()
     {
         NotesOverlayService.Hide();
+        ReviewContextService.Hide();
     }
 }
