@@ -36,6 +36,8 @@
     </div>
 
     <div class="notes-drawer-body">
+        @if (!IsReadOnly)
+        {
         <div class="notes-drawer-add-section">
             <RadzenTextArea @bind-Value="@newNoteContent"
                             Rows="3"
@@ -90,9 +92,11 @@
                 </RadzenText>
             }
         </div>
+        }
 
         <InReviewNotesList Notes="@Assignment.InReviewNotes.Where(n => n.ItemKey == null).ToList()"
                            AssignmentId="@Assignment.Id"
+                           IsReadOnly="@IsReadOnly"
                            OnNoteUpdated="@OnNoteUpdated"
                            OnNoteDeleted="@OnNoteDeleted" />
     </div>
@@ -117,6 +121,7 @@
     [Parameter] public string? CurrentItemKey { get; set; }
     [Parameter] public string? CurrentItemTitle { get; set; }
     [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public bool IsReadOnly { get; set; }
     [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public EventCallback OnClearItem { get; set; }
     [Parameter] public EventCallback OnNotesChanged { get; set; }

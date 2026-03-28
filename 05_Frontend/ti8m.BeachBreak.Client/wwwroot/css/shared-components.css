@@ -1,6 +1,72 @@
 /* Shared Component Styles */
 /* This file consolidates repeated CSS patterns across components */
 
+/* Review Comments (rc-*) — used in ReviewComments.razor and ReviewCompletionPage */
+.rc-title {
+    display: flex;
+    align-items: center;
+    font-size: var(--rz-text-h6-font-size, 1rem);
+    font-weight: var(--font-weight-heading, 600);
+    color: var(--rz-text-color);
+    gap: 0.25rem;
+}
+
+.rc-entry {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.rc-meta {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.rc-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border-radius: 3px;
+    padding: 1px 6px;
+}
+
+.rc-label-info    { background: #cff4fc; color: #055160; }
+.rc-label-success { background: #d1e7dd; color: #0a3622; }
+.rc-label-warning { background: #fff3cd; color: #664d03; }
+
+.rc-author {
+    font-size: 0.78rem;
+    color: var(--rz-text-secondary-color, #6c757d);
+}
+
+.rc-date {
+    margin-left: auto;
+    font-size: 0.78rem;
+    color: var(--rz-text-secondary-color, #6c757d);
+    white-space: nowrap;
+}
+
+.rc-body {
+    padding: 0.25rem 0;
+    font-size: var(--rz-text-body2-font-size, 0.875rem);
+    color: var(--rz-text-color);
+}
+
+.rc-empty {
+    color: var(--rz-text-secondary-color, #6c757d);
+    font-style: italic;
+}
+
+.rc-actions {
+    margin-left: auto;
+    display: flex;
+    gap: 0.25rem;
+    align-items: center;
+}
+
 /* Stats Card Styles */
 .stats-card {
     border: 1px solid var(--border-light);

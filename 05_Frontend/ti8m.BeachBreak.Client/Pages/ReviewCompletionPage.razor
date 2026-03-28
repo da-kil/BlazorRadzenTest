@@ -55,18 +55,32 @@ else
             <!-- Review Summary Card -->
             <ReviewSummaryCard Assignment="@assignment" Template="@template" />
 
-            <!-- Display existing discussion notes from the review process -->
-            @if (assignment.InReviewNotes.Any())
+            <!-- Display section-level discussion notes from the review process -->
+            @{
+                var sectionNotes = assignment.InReviewNotes
+                    .Where(n => n.SectionId.HasValue && string.IsNullOrEmpty(n.ItemKey))
+                    .OrderByDescending(n => n.Timestamp)
+                    .ToList();
+            }
+            @if (sectionNotes.Any())
             {
                 <div class="discussion-notes-section mt-4">
-                    <RadzenText TextStyle="TextStyle.H6" Class="mb-3">
-                        @T("sections.discussion-notes")
-                        <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@assignment.InReviewNotes.Count.ToString()" Class="ms-2" />
-                    </RadzenText>
-                    <InReviewNotesList Notes="@assignment.InReviewNotes"
-                                     AssignmentId="@assignment.Id"
-                                     CurrentSection="null"
-                                     IsReadOnly="true" />
+                    <div class="rc-title mb-3">
+                        <RadzenIcon Icon="comment" Class="me-1" />
+                        <span>@T("sections.discussion-notes")</span>
+                    </div>
+                    @foreach (var note in sectionNotes)
+                    {
+                        <div class="rc-entry mb-3">
+                            <div class="rc-meta">
+                                <span class="rc-label rc-label-info">@note.SectionTitle</span>
+                                <span class="rc-author">@note.AuthorName &middot; @note.Timestamp.ToLocalTime().ToString("MMM dd, yyyy HH:mm")</span>
+                            </div>
+                            <div class="rc-body">
+                                <span style="white-space: pre-wrap;">@note.Content</span>
+                            </div>
+                        </div>
+                    }
                 </div>
             }
 
@@ -82,6 +96,7 @@ else
         </ChildContent>
     </PageLayout>
 }
+
 
 @code {
     protected override string[] GetRequiredTranslationCategories()

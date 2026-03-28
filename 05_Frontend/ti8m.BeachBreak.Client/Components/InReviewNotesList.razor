@@ -3,7 +3,6 @@
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components.Shared
-@using ti8m.BeachBreak.Client.Components.Dialogs
 @inherits CategoryOptimizedTranslatableComponent
 @inject IQuestionnaireAssignmentService AssignmentService
 @inject DialogService DialogService
@@ -17,68 +16,68 @@
     }
     else
     {
-        <RadzenStack Gap="1rem">
-            @foreach (var note in Notes.OrderByDescending(n => n.Timestamp))
-            {
-                <div class="note-item">
-                    <!-- Note header -->
-                    <div class="note-header">
-                        <RadzenStack Orientation="Orientation.Horizontal"
-                                   AlignItems="AlignItems.Start"
-                                   JustifyContent="JustifyContent.SpaceBetween">
-                            <RadzenStack Orientation="Orientation.Vertical" Gap="0.15rem">
-                                @if (!IsInlineMode)
-                                {
-                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                                        <RadzenBadge BadgeStyle="@GetNoteBadgeStyle(note)"
-                                                   Text="@note.SectionTitle" />
-                                        @if (!string.IsNullOrEmpty(note.ItemKey))
-                                        {
-                                            <RadzenBadge BadgeStyle="BadgeStyle.Warning"
-                                                       Text="@note.ItemKey" />
-                                        }
-                                    </RadzenStack>
-                                }
-                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
-                                        @note.Timestamp.ToString("MMM dd, HH:mm")
-                                    </RadzenText>
-                                    @if (!string.IsNullOrEmpty(note.AuthorName))
-                                    {
-                                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
-                                            by @note.AuthorName
-                                        </RadzenText>
-                                    }
-                                </RadzenStack>
-                            </RadzenStack>
-
-                            @if (!IsReadOnly)
-                            {
-                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
-                                    <RadzenButton Icon="edit"
-                                                ButtonStyle="ButtonStyle.Light"
-                                                Size="ButtonSize.ExtraSmall"
-                                                Click="@(() => EditNote(note))"
-                                                title="@T("buttons.edit-note")" />
-                                    <RadzenButton Icon="delete"
-                                                ButtonStyle="ButtonStyle.Danger"
-                                                Size="ButtonSize.ExtraSmall"
-                                                Click="@(() => DeleteNote(note))"
-                                                title="@T("buttons.delete-note")" />
-                                </RadzenStack>
-                            }
-                        </RadzenStack>
-                    </div>
-
-                    <!-- Note content -->
-                    <RadzenCard Class="note-content p-3 mt-2">
-                        <RadzenText TextStyle="TextStyle.Body2" Style="white-space: pre-wrap;">
-                            @note.Content
-                        </RadzenText>
-                    </RadzenCard>
+        @foreach (var note in Notes.OrderByDescending(n => n.Timestamp))
+        {
+            <div class="rc-entry mb-3">
+                <div class="rc-meta">
+                    @if (!IsInlineMode)
+                    {
+                        <span class="rc-label rc-label-info">@note.SectionTitle</span>
+                    }
+                    <span class="rc-author">
+                        @if (!string.IsNullOrEmpty(note.AuthorName)) { @note.AuthorName <text> &middot; </text> }
+                        @note.Timestamp.ToLocalTime().ToString("MMM dd, HH:mm")
+                    </span>
+                    @if (!IsReadOnly && editingNoteId != note.Id)
+                    {
+                        <span class="rc-actions">
+                            <RadzenButton Icon="edit"
+                                        ButtonStyle="ButtonStyle.Light"
+                                        Size="ButtonSize.ExtraSmall"
+                                        Click="@(() => StartEditNote(note))"
+                                        title="@T("buttons.edit-note")" />
+                            <RadzenButton Icon="delete"
+                                        ButtonStyle="ButtonStyle.Danger"
+                                        Size="ButtonSize.ExtraSmall"
+                                        Click="@(() => DeleteNote(note))"
+                                        title="@T("buttons.delete-note")" />
+                        </span>
+                    }
                 </div>
-            }
-        </RadzenStack>
+                <div class="rc-body">
+                    @if (editingNoteId == note.Id)
+                    {
+                        <RadzenTextArea @bind-Value="@editingContent"
+                                        Rows="3"
+                                        MaxLength="2000"
+                                        Style="width: 100%; resize: vertical;" />
+                        <RadzenStack Orientation="Orientation.Horizontal"
+                                     JustifyContent="JustifyContent.SpaceBetween"
+                                     AlignItems="AlignItems.Center"
+                                     Class="mt-1">
+                            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                                @(editingContent?.Length ?? 0) / 2000 @T("forms.characters")
+                            </RadzenText>
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                                <RadzenButton Text="@T("buttons.cancel")"
+                                              ButtonStyle="ButtonStyle.Light"
+                                              Size="ButtonSize.Small"
+                                              Click="@CancelEdit" />
+                                <RadzenButton Text="@T("buttons.save")"
+                                              ButtonStyle="ButtonStyle.Primary"
+                                              Size="ButtonSize.Small"
+                                              Click="@(() => SaveEdit(note))"
+                                              Disabled="@(string.IsNullOrWhiteSpace(editingContent) || isSaving)" />
+                            </RadzenStack>
+                        </RadzenStack>
+                    }
+                    else
+                    {
+                        <span style="white-space: pre-wrap;">@note.Content</span>
+                    }
+                </div>
+            </div>
+        }
     }
 </div>
 
@@ -90,7 +89,8 @@
             TranslationCategories.Messages,
             TranslationCategories.Buttons,
             TranslationCategories.Dialogs,
-            TranslationCategories.Sections
+            TranslationCategories.Sections,
+            TranslationCategories.Forms
         };
     }
 
@@ -102,104 +102,75 @@
     [Parameter] public bool IsReadOnly { get; set; } = false;
     [Parameter] public bool IsInlineMode { get; set; } = false;
 
-    private BadgeStyle GetNoteBadgeStyle(InReviewNote note)
+    private Guid? editingNoteId;
+    private string editingContent = string.Empty;
+    private bool isSaving = false;
+
+    private void StartEditNote(InReviewNote note)
     {
-        return note.SectionId.HasValue ? BadgeStyle.Info : BadgeStyle.Secondary;
+        editingNoteId = note.Id;
+        editingContent = note.Content;
     }
 
-    private async Task EditNote(InReviewNote note)
+    private void CancelEdit()
     {
-        var parameters = new Dictionary<string, object>
-        {
-            { "Content", note.Content },
-            { "MaxLength", 2000 },
-            { "IsGeneralNote", !note.SectionId.HasValue }
-        };
+        editingNoteId = null;
+        editingContent = string.Empty;
+    }
 
-        if (CurrentSection != null)
+    private async Task SaveEdit(InReviewNote note)
+    {
+        var trimmed = editingContent.Trim();
+        if (string.IsNullOrWhiteSpace(trimmed))
         {
-            parameters.Add("CurrentSection", CurrentSection);
+            CancelEdit();
+            return;
         }
 
-        var result = await DialogService.OpenAsync<EditNoteDialog>(
-            T("dialogs.edit-note"),
-            parameters,
-            new DialogOptions { Width = "600px", Height = "500px" });
-
-        if (result is not null)
+        if (trimmed == note.Content)
         {
-            try
+            CancelEdit();
+            return;
+        }
+
+        isSaving = true;
+        StateHasChanged();
+
+        var success = await AssignmentService.UpdateInReviewNoteAsync(
+            AssignmentId,
+            note.Id,
+            trimmed);
+
+        isSaving = false;
+
+        if (success)
+        {
+            var updatedNote = new InReviewNote
             {
-                // Handle both old string format and new object format for backward compatibility
-                string newContent;
-                bool isGeneralNote;
+                Id = note.Id,
+                Content = trimmed,
+                Timestamp = DateTime.Now,
+                SectionId = note.SectionId,
+                SectionTitle = note.SectionTitle,
+                AuthorEmployeeId = note.AuthorEmployeeId,
+                AuthorName = note.AuthorName
+            };
 
-                if (result is string stringResult)
-                {
-                    // Old format - content only
-                    newContent = stringResult;
-                    isGeneralNote = !note.SectionId.HasValue; // Keep original status
-                }
-                else if (result.GetType().GetProperty("Content") != null && result.GetType().GetProperty("IsGeneralNote") != null)
-                {
-                    // New format - object with Content and IsGeneralNote
-                    newContent = result.GetType().GetProperty("Content")?.GetValue(result)?.ToString() ?? "";
-                    isGeneralNote = (bool)(result.GetType().GetProperty("IsGeneralNote")?.GetValue(result) ?? false);
-                }
-                else
-                {
-                    return; // Invalid result format
-                }
+            editingNoteId = null;
+            editingContent = string.Empty;
 
-                if (string.IsNullOrWhiteSpace(newContent))
-                    return;
+            NotificationService.Notify(NotificationSeverity.Success,
+                T("messages.note-updated"),
+                T("messages.note-updated-successfully"));
 
-                // Check if anything actually changed
-                var contentChanged = newContent != note.Content;
-                var generalStatusChanged = isGeneralNote != !note.SectionId.HasValue;
-
-                if (!contentChanged && !generalStatusChanged)
-                    return; // No changes made
-
-                var success = await AssignmentService.UpdateInReviewNoteAsync(
-                    AssignmentId,
-                    note.Id,
-                    newContent);
-
-                if (success)
-                {
-                    var updatedNote = new InReviewNote
-                    {
-                        Id = note.Id,
-                        Content = newContent,
-                        Timestamp = DateTime.Now,
-                        SectionId = isGeneralNote ? null : CurrentSection?.Id,
-                        SectionTitle = isGeneralNote ? T("sections.general-notes") :
-                            (CurrentSection?.GetLocalizedTitleWithFallback(CurrentLanguage) ?? T("sections.general-notes")),
-                        AuthorEmployeeId = note.AuthorEmployeeId,
-                        AuthorName = note.AuthorName
-                    };
-
-                    NotificationService.Notify(NotificationSeverity.Success,
-                        T("messages.note-updated"),
-                        T("messages.note-updated-successfully"));
-
-                    if (OnNoteUpdated.HasDelegate)
-                        await OnNoteUpdated.InvokeAsync(updatedNote);
-                }
-                else
-                {
-                    NotificationService.Notify(NotificationSeverity.Error,
-                        T("messages.error"),
-                        T("messages.failed-to-update-note"));
-                }
-            }
-            catch (Exception ex)
-            {
-                NotificationService.Notify(NotificationSeverity.Error,
-                    T("messages.error"),
-                    $"Failed to update note: {ex.Message}");
-            }
+            if (OnNoteUpdated.HasDelegate)
+                await OnNoteUpdated.InvokeAsync(updatedNote);
+        }
+        else
+        {
+            NotificationService.Notify(NotificationSeverity.Error,
+                T("messages.error"),
+                T("messages.failed-to-update-note"));
         }
     }
 
@@ -216,33 +187,24 @@
 
         if (confirmed == true)
         {
-            try
+            var success = await AssignmentService.DeleteInReviewNoteAsync(
+                AssignmentId,
+                note.Id);
+
+            if (success)
             {
-                var success = await AssignmentService.DeleteInReviewNoteAsync(
-                    AssignmentId,
-                    note.Id);
+                NotificationService.Notify(NotificationSeverity.Success,
+                    T("messages.note-deleted"),
+                    T("messages.note-deleted-successfully"));
 
-                if (success)
-                {
-                    NotificationService.Notify(NotificationSeverity.Success,
-                        T("messages.note-deleted"),
-                        T("messages.note-deleted-successfully"));
-
-                    if (OnNoteDeleted.HasDelegate)
-                        await OnNoteDeleted.InvokeAsync(note.Id);
-                }
-                else
-                {
-                    NotificationService.Notify(NotificationSeverity.Error,
-                        T("messages.error"),
-                        T("messages.failed-to-delete-note"));
-                }
+                if (OnNoteDeleted.HasDelegate)
+                    await OnNoteDeleted.InvokeAsync(note.Id);
             }
-            catch (Exception ex)
+            else
             {
                 NotificationService.Notify(NotificationSeverity.Error,
                     T("messages.error"),
-                    $"Failed to delete note: {ex.Message}");
+                    T("messages.failed-to-delete-note"));
             }
         }
     }

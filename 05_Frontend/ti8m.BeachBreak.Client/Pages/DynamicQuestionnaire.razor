@@ -26,7 +26,9 @@
 @inject IJSRuntime JSRuntime
 @inject IAuthService AuthService
 @inject ti8m.BeachBreak.Client.Services.Exports.IPdfExportApiService PdfExportService
+@inject ti8m.BeachBreak.Client.Services.NotesOverlayService NotesOverlayService
 @inherits CategoryOptimizedTranslatableComponent
+@implements IDisposable
 
 
 <PageTitle>@(template?.GetLocalizedNameWithFallback(CurrentLanguage) ?? "Questionnaire")</PageTitle>
@@ -446,6 +448,16 @@ else
         await LoadExistingResponse();
         await FilterVisibleSections();
         UpdateProgress();
+
+        // Activate notes overlay for post-review states so discussion notes remain visible
+        if (assignment != null && assignment.InReviewNotes.Any() &&
+            assignment.WorkflowState is WorkflowState.ReviewFinished or
+                                        WorkflowState.EmployeeReviewConfirmed or
+                                        WorkflowState.Finalized)
+        {
+            NotesOverlayService.Show(assignment);
+            NotesOverlayService.SetCurrentSection(currentSection);
+        }
     }
 
     protected override bool HasStateChanged()
@@ -918,6 +930,23 @@ else
                 SectionData="@currentSectionData" />;
         }
 
+        // In post-review state for Assessment "Both" sections, use ReviewModeAssessmentRenderer
+        // so item-level notes appear inline below their respective competencies (not in the drawer)
+        if (isPostReviewState && isBothSection && sectionData?.Type == QuestionType.Assessment)
+        {
+            var employeeResponse = GetQuestionResponseForRole(sectionData.Id, "Employee");
+            var managerResponse = GetQuestionResponseForRole(sectionData.Id, "Manager");
+            var assignmentRef = assignment!;
+
+            return @<ReviewModeAssessmentRenderer
+                Question="@sectionData"
+                EmployeeResponse="@employeeResponse"
+                ManagerResponse="@managerResponse"
+                Assignment="@assignmentRef"
+                CurrentLanguage="@CurrentLanguage"
+                IsReadOnly="true" />;
+        }
+
         // In post-review state for "Both" sections, show BOTH employee and manager responses (comparison view)
         // Exclude goal sections as they use collaborative view instead
         if (isPostReviewState && isBothSection && sectionData?.Type != QuestionType.Goal)
@@ -1171,6 +1200,8 @@ else
         if (currentSectionIndex > 0)
         {
             currentSectionIndex--;
+            if (NotesOverlayService.Assignment != null)
+                NotesOverlayService.SetCurrentSection(currentSection);
             NotifyStateChanged();
         }
     }
@@ -1183,6 +1214,8 @@ else
             if (currentSectionIndex < visibleSections.Count - 1)
             {
                 currentSectionIndex++;
+                if (NotesOverlayService.Assignment != null)
+                    NotesOverlayService.SetCurrentSection(currentSection);
                 NotifyStateChanged();
             }
             return;
@@ -1193,6 +1226,8 @@ else
         {
             currentSectionIndex++;
             UpdateProgress();
+            if (NotesOverlayService.Assignment != null)
+                NotesOverlayService.SetCurrentSection(currentSection);
             NotifyStateChanged();
         }
     }
@@ -1733,6 +1768,11 @@ else
             "Admin" => ApplicationRole.Admin,
             _ => ApplicationRole.Employee // Default fallback
         };
+    }
+
+    public void Dispose()
+    {
+        NotesOverlayService.Hide();
     }
 
 }

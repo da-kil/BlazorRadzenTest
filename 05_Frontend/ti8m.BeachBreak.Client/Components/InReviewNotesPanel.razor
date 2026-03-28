@@ -36,7 +36,7 @@
             <div class="inline-notes-header">
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
                     <RadzenIcon Icon="comment" Style="font-size: 0.9rem;" />
-                    <span class="inline-notes-label">@(Label ?? T("sections.discussion-notes"))</span>
+                    <span class="inline-notes-label">@T("labels.notes")</span>
                     @if (DisplayedNotes.Any())
                     {
                         <RadzenBadge BadgeStyle="BadgeStyle.Info"
@@ -60,8 +60,10 @@
                 </div>
             }
 
-            <!-- Note input -->
-            <RadzenStack Gap="0.5rem" Class="note-input-container">
+            <!-- Note input (hidden in read-only mode) -->
+            @if (!IsReadOnly)
+            {
+                <RadzenStack Gap="0.5rem" Class="note-input-container">
                     <RadzenTextArea @bind-Value="@newNoteContent"
                                   Placeholder="@T("placeholders.enter-discussion-note")"
                                   Rows="3"
@@ -92,13 +94,15 @@
                                         Disabled="@(string.IsNullOrWhiteSpace(newNoteContent) || isSaving)" />
                         </RadzenStack>
                     </RadzenStack>
-            </RadzenStack>
+                </RadzenStack>
+            }
 
             <!-- Existing notes list -->
             <InReviewNotesList Notes="@DisplayedNotes"
                              AssignmentId="@Assignment.Id"
                              CurrentSection="@CurrentSection"
                              IsInlineMode="@IsInlineMode"
+                             IsReadOnly="@IsReadOnly"
                              OnNoteUpdated="@OnNoteUpdated"
                              OnNoteDeleted="@OnNoteDeleted" />
         }
@@ -110,8 +114,8 @@
     {
         return new[]
         {
-            TranslationCategories.Sections,
             TranslationCategories.Labels,
+            TranslationCategories.Sections,
             TranslationCategories.Placeholders,
             TranslationCategories.Buttons,
             TranslationCategories.Messages,
@@ -123,6 +127,7 @@
     [Parameter] public QuestionSection? CurrentSection { get; set; }
     [Parameter] public EventCallback OnNotesChanged { get; set; }
     [Parameter] public bool IsInlineMode { get; set; } = false;
+    [Parameter] public bool IsReadOnly { get; set; } = false;
     [Parameter] public string? ItemKey { get; set; }
     [Parameter] public string? Label { get; set; }
 

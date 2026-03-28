@@ -2,6 +2,7 @@
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Components.UI
 @using ti8m.BeachBreak.Client.Components
+@using ti8m.BeachBreak.Client.Models
 @inject ti8m.BeachBreak.Client.Services.NotesOverlayService NotesOverlayService
 @inject ti8m.BeachBreak.Client.Services.ReviewContextService ReviewContextService
 @implements IDisposable
@@ -65,13 +66,17 @@
 
 @if (NotesOverlayService.Assignment != null)
 {
-    <NotesFab NoteCount="@NotesOverlayService.Assignment.InReviewNotes.Count(n => n.ItemKey == null)"
+    var notesReadOnly = NotesOverlayService.Assignment.WorkflowState is
+        WorkflowState.ReviewFinished or WorkflowState.EmployeeReviewConfirmed or WorkflowState.Finalized;
+    var noteCount = NotesOverlayService.Assignment.InReviewNotes.Count(n => n.ItemKey == null);
+    <NotesFab NoteCount="@noteCount"
               OnClick="@NotesOverlayService.ToggleDrawer" />
     <NotesDrawer Assignment="@NotesOverlayService.Assignment"
                  CurrentSection="@NotesOverlayService.CurrentSection"
                  CurrentItemKey="@NotesOverlayService.CurrentItemKey"
                  CurrentItemTitle="@NotesOverlayService.CurrentItemTitle"
                  IsOpen="@NotesOverlayService.IsDrawerOpen"
+                 IsReadOnly="@notesReadOnly"
                  OnClose="@NotesOverlayService.CloseDrawer"
                  OnClearItem="@NotesOverlayService.ClearCurrentItem"
                  OnNotesChanged="@NotesOverlayService.NotifyStateChanged" />
