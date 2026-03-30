@@ -169,24 +169,24 @@
 
                             <RadzenDataGridColumn Property="@nameof(QuestionnaireAssignment.AssignedBy)" Title="@T("columns.assigned-by")" Width="150px" />
 
-                            <RadzenDataGridColumn Filterable="false" Sortable="false" Width="250px" TextAlign="TextAlign.Center" Title="@T("columns.actions")">
-                                <Template Context="assignment">
-                                    <div class="d-flex justify-content-center">
-                                        <AssignmentActionButtons Assignment="@assignment"
-                                                                 OnActionClick="@HandleAssignmentActionClick"
-                                                                 ShowViewAction="true"
-                                                                 ShowManageViewersAction="true"
-                                                                 ShowEditAction="true"
-                                                                 ShowReminderAction="true"
-                                                                 ShowCancelAction="true" />
-                                    </div>
-                                </Template>
-                            </RadzenDataGridColumn>
-                        </Columns>
+                                            <RadzenDataGridColumn Filterable="false" Sortable="false" Width="250px" TextAlign="TextAlign.Center" Title="@T("columns.actions")">
+                                                <Template Context="assignment">
+                                                    <div class="d-flex justify-content-center">
+                                                        <AssignmentActionButtons Assignment="@assignment"
+                                                                                 OnActionClick="@HandleAssignmentActionClick"
+                                                                                 ShowViewAction="true"
+                                                                                 ShowManageViewersAction="true"
+                                                                                 ShowEditAction="true"
+                                                                                 ShowReminderAction="true"
+                                                                                 ShowCancelAction="true" />
+                                                    </div>
+                                                </Template>
+                                            </RadzenDataGridColumn>
+                                        </Columns>
                     </RadzenDataGrid>
                 </div>
-            </ChildContent>
-        </PageLayout>
+    </ChildContent>
+</PageLayout>
     </Authorized>
     <NotAuthorized>
         <AccessDeniedComponent RequiredRole="HR" PageName="@T("pages.questionnaire-assignments")" />
@@ -351,9 +351,6 @@
             case "view":
                 await HandleViewAction(eventArgs.Assignment);
                 break;
-            case "manage-viewers":
-                await HandleManageViewersAction(eventArgs.Assignment);
-                break;
             case "edit":
                 await HandleEditAction(eventArgs.Assignment);
                 break;
@@ -362,6 +359,9 @@
                 break;
             case "cancel":
                 await HandleCancelAction(eventArgs.Assignment);
+                break;
+            case "manage-viewers":
+                await HandleManageViewersAction(eventArgs.Assignment);
                 break;
         }
     }
@@ -395,35 +395,6 @@
         {
             NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"),
                 $"{T("notifications.failed-open-details")}: {ex.Message}");
-        }
-    }
-
-    private async Task HandleManageViewersAction(QuestionnaireAssignment assignment)
-    {
-        try
-        {
-            await DialogService.OpenAsync<ManageViewersDialog>($"{T("assignments.viewers.dialogTitle")} - {assignment.EmployeeName}",
-                new Dictionary<string, object>
-                {
-                    { "Assignment", assignment }
-                },
-                new DialogOptions
-                {
-                    Width = "600px",
-                    Height = "auto",
-                    Resizable = false,
-                    Draggable = false,
-                    CloseDialogOnOverlayClick = true,
-                    ShowClose = true
-                });
-
-            // Refresh assignments after managing viewers
-            await LoadAssignments();
-        }
-        catch (Exception ex)
-        {
-            NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"),
-                $"{T("notifications.failed-open-dialog")}: {ex.Message}");
         }
     }
 
@@ -554,6 +525,32 @@
             isProcessingAction = false;
             StateHasChanged();
         }
+    }
+
+    private void HandleAssignToMoreAction(QuestionnaireAssignment assignment)
+    {
+        DialogService.Close();
+        NavigationManager.NavigateTo("/questionnaire-assignments/create");
+    }
+
+    private async Task HandleManageViewersAction(QuestionnaireAssignment assignment)
+    {
+        await DialogService.OpenAsync<ManageViewersDialog>(
+            T("assignments.viewers.dialogTitle"),
+            new Dictionary<string, object>
+            {
+                { "Assignment", assignment }
+            },
+            new DialogOptions
+            {
+                Width = "600px",
+                Height = "auto",
+                Resizable = true,
+                Draggable = true,
+                CloseDialogOnOverlayClick = true,
+                ShowClose = true
+            });
+        await LoadAssignments();
     }
 
     public class StatusOption
