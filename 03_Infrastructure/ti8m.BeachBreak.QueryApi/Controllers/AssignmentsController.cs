@@ -120,6 +120,26 @@ public class AssignmentsController : BaseController
 
 
     /// <summary>
+    /// Gets all assignments where the current user is a viewer.
+    /// Returns assignments for which the authenticated user has been granted viewer access.
+    /// </summary>
+    [HttpGet("viewing")]
+    [Authorize]
+    [ProducesResponseType(typeof(IEnumerable<QuestionnaireAssignmentDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> GetAssignmentsAsViewer()
+    {
+        if (!Guid.TryParse(userContext.Id, out var userId))
+        {
+            logger.LogWarning("Failed to parse user ID from context");
+            return CreateResponse(Result<IEnumerable<QuestionnaireAssignmentDto>>.Fail("User ID not found in authentication context", 401));
+        }
+
+        var result = await queryDispatcher.QueryAsync(new QuestionnaireAssignmentsAsViewerQuery(userId));
+        return CreateResponse(result, assignments => assignments.Select(a => MapToDto(a)));
+    }
+
+    /// <summary>
     /// Maps a QuestionnaireAssignment query result to a QuestionnaireAssignmentDto.
     /// Includes all workflow properties for proper state management on the frontend.
     /// </summary>
@@ -201,6 +221,17 @@ public class AssignmentsController : BaseController
                 SectionTitle = note.SectionTitle,
                 AuthorEmployeeId = note.AuthorEmployeeId,
                 AuthorName = note.AuthorName
+            }).ToList(),
+
+            // Viewers
+            Viewers = assignment.Viewers.Select(v => new ti8m.BeachBreak.QueryApi.Dto.AssignmentViewerDto
+            {
+                EmployeeId = v.EmployeeId,
+                EmployeeName = v.EmployeeName,
+                EmployeeEmail = v.EmployeeEmail,
+                AddedDate = v.AddedDate,
+                AddedByEmployeeId = v.AddedByEmployeeId,
+                AddedByName = v.AddedByName
             }).ToList()
         };
     }

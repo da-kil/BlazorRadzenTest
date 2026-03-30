@@ -726,6 +726,15 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
     }
 
     /// <summary>
+    /// Gets all assignments where the current authenticated user is assigned as a viewer.
+    /// Returns only assignments in states ≥ EmployeeSubmitted (content is available).
+    /// </summary>
+    public async Task<List<QuestionnaireAssignment>> GetAssignmentsAsViewerAsync()
+    {
+        return await GetAllAsync<QuestionnaireAssignment>($"{AssignmentQueryEndpoint}/viewing");
+    }
+
+    /// <summary>
     /// Gets available predecessor assignments for assignment-wide linking.
     /// Returns assignments that can be linked as predecessors to the entire assignment.
     /// </summary>

@@ -227,4 +227,14 @@ public static class WorkflowStateHelper
         // Once initialized, custom sections are locked
         return assignment.WorkflowState == WorkflowState.Assigned;
     }
+
+    /// <summary>
+    /// Determines if a viewer can access (see) an assignment.
+    /// Viewers can only see assignments once there is meaningful submitted content to review.
+    /// Work in progress (states below EmployeeSubmitted) is private and not accessible to viewers.
+    /// </summary>
+    public static bool CanViewerAccess(QuestionnaireAssignment assignment)
+    {
+        return (int)assignment.WorkflowState >= (int)WorkflowState.EmployeeSubmitted;
+    }
 }

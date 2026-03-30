@@ -10,6 +10,7 @@
 @inject IEmployeeQuestionnaireService EmployeeQuestionnaireService
 @inject IQuestionnaireTemplateService TemplateService
 @inject IUITranslationService TranslationService
+@inject IQuestionnaireAssignmentService AssignmentService
 
 <PageTitle>@T("nav.my-questionnaires")</PageTitle>
 
@@ -29,22 +30,79 @@
 		}
 	</HeaderActions>
 	<ChildContent>
-		@if (configuration != null && dataService != null)
-		{
-			<GenericQuestionnaireListPage Configuration="@configuration"
-										  DataService="@dataService"
-										  OnStartQuestionnaire="@StartQuestionnaire"
-										  HideHeader="true"
-										  HideFilterBar="true" />
-		}
-		else if (isLoading)
-		{
-			<LoadingIndicator Message="@T("dashboard.loading-questionnaires")" />
-		}
-		else
-		{
-			<EmptyState Icon="quiz" Title="@T("dashboard.no-questionnaire-data")" />
-		}
+		<RadzenTabs @bind-SelectedIndex="selectedTabIndex" class="questionnaire-tabs mb-0">
+			<Tabs>
+				<RadzenTabsItem Text="@T("tabs.myAssignments")">
+					@if (configuration != null && dataService != null)
+					{
+						<GenericQuestionnaireListPage Configuration="@configuration"
+													  DataService="@dataService"
+													  OnStartQuestionnaire="@StartQuestionnaire"
+													  HasProgressChecker="@((assignmentId) => questionnaireResponses.ContainsKey(assignmentId))"
+													  HideHeader="true"
+													  HideFilterBar="true" />
+					}
+					else if (isLoading)
+					{
+						<LoadingIndicator Message="@T("dashboard.loading-questionnaires")" />
+					}
+					else
+					{
+						<EmptyState Icon="quiz" Title="@T("dashboard.no-questionnaire-data")" />
+					}
+				</RadzenTabsItem>
+				<RadzenTabsItem>
+					<Template>
+						<span>@T("tabs.viewing")</span>
+						@if (viewerAssignments.Count > 0)
+						{
+							<RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@viewerAssignments.Count.ToString()" Class="ms-1" />
+						}
+					</Template>
+					<ChildContent>
+						@if (viewerAssignments.Count > 0)
+						{
+							<div class="viewer-assignments-list p-3">
+								@foreach (var assignment in viewerAssignments)
+								{
+									<RadzenCard Class="mb-3 assignment-card" style="cursor: pointer;" @onclick="@(() => NavigateToViewerAssignment(assignment))">
+										<div class="d-flex justify-content-between align-items-start">
+											<div>
+												<RadzenText TextStyle="TextStyle.H6" Class="mb-1">@assignment.TemplateName</RadzenText>
+												<RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-1">
+													@assignment.EmployeeName
+												</RadzenText>
+												@if (assignment.DueDate.HasValue)
+												{
+													<RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+														@T("labels.due-date"): @assignment.DueDate.Value.ToString("dd.MM.yyyy")
+													</RadzenText>
+												}
+											</div>
+											<div class="d-flex flex-column align-items-end gap-1">
+												<RadzenBadge BadgeStyle="BadgeStyle.Info"
+																Text="@T("assignments.viewers.observerBadge")"
+																Style="font-size: 0.7rem" />
+												<RadzenBadge Style="@($"background-color: {WorkflowStateHelper.GetStateColor(assignment.WorkflowState)}; color: white; font-size: 0.7rem")"
+																Text="@T(WorkflowStateHelper.GetStateDisplayName(assignment.WorkflowState))" />
+											</div>
+										</div>
+									</RadzenCard>
+								}
+							</div>
+						}
+						else if (isLoading)
+						{
+							<LoadingIndicator />
+						}
+						else
+						{
+							<EmptyState Icon="visibility_off" Title="@T("assignments.viewers.noViewerAssignments")" />
+						}
+					</ChildContent>
+				</RadzenTabsItem>
+			</Tabs>
+		</RadzenTabs>
 	</ChildContent>
 </PageLayout>
 
@@ -56,12 +114,18 @@
 			TranslationCategories.Navigation,
 			TranslationCategories.Pages,
 			TranslationCategories.Dashboard,
-			TranslationCategories.Messages
+			TranslationCategories.Messages,
+			TranslationCategories.Tabs,
+			TranslationCategories.Labels,
+			TranslationCategories.Assignments,
+			TranslationCategories.WorkflowStates
 		};
 	}
 
 	// Employee-specific state
 	private List<QuestionnaireAssignment> allAssignments = new();
+	private List<QuestionnaireAssignment> viewerAssignments = new();
+	private int selectedTabIndex = 0;
 	private List<QuestionnaireAssignment> newQuestionnaires = new();
 	private List<QuestionnaireAssignment> inProgressQuestionnaires = new();
 	private List<QuestionnaireAssignment> completedQuestionnaires = new();
@@ -91,6 +155,9 @@
 
 		// Load assignments (templates are denormalized in query handler)
 		allAssignments = await EmployeeQuestionnaireService.GetMyAssignmentsAsync();
+
+		// Load viewer assignments in parallel
+		viewerAssignments = await AssignmentService.GetAssignmentsAsViewerAsync();
 
 		// Categorize assignments
 		CategorizeQuestionnaires();
@@ -182,6 +249,11 @@
 		{
 			HandleError(ex, "starting questionnaire");
 		}
+	}
+
+	private void NavigateToViewerAssignment(QuestionnaireAssignment assignment)
+	{
+		NavigationManager.NavigateTo($"/questionnaire/{assignment.Id}");
 	}
 
 

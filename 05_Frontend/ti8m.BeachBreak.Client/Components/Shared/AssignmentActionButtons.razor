@@ -4,6 +4,24 @@
 @inherits CategoryOptimizedTranslatableComponent
 
 <div class="template-actions">
+    @if (ShowViewAction)
+    {
+        <RadzenButton ButtonStyle="ButtonStyle.Light"
+                     Icon="visibility"
+                     Size="ButtonSize.Small"
+                     Title="@T("tooltips.view-details")"
+                     Click="@(() => OnActionClick.InvokeAsync(new AssignmentActionEventArgs { Assignment = Assignment, Action = "view" }))" />
+    }
+
+    @if (ShowManageViewersAction && CanManageViewers())
+    {
+        <RadzenButton ButtonStyle="ButtonStyle.Light"
+                     Icon="group"
+                     Size="ButtonSize.Small"
+                     Title="@T("tooltips.manage-viewers")"
+                     Click="@(() => OnActionClick.InvokeAsync(new AssignmentActionEventArgs { Assignment = Assignment, Action = "manage-viewers" }))" />
+    }
+
     @if (ShowEditAction && CanEdit())
     {
         <RadzenButton ButtonStyle="ButtonStyle.Light"
@@ -35,6 +53,8 @@
 @code {
     [Parameter] public QuestionnaireAssignment Assignment { get; set; } = default!;
     [Parameter] public EventCallback<AssignmentActionEventArgs> OnActionClick { get; set; }
+    [Parameter] public bool ShowViewAction { get; set; } = true;
+    [Parameter] public bool ShowManageViewersAction { get; set; } = false;
     [Parameter] public bool ShowEditAction { get; set; } = true;
     [Parameter] public bool ShowReminderAction { get; set; } = true;
     [Parameter] public bool ShowCancelAction { get; set; } = true;
@@ -50,6 +70,11 @@
     private bool CanEdit()
     {
         return Assignment.WorkflowState != WorkflowState.Finalized;
+    }
+
+    private bool CanManageViewers()
+    {
+        return !Assignment.IsWithdrawn;
     }
 
     private bool CanSendReminder()
