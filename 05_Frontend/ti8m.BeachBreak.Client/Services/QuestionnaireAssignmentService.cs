@@ -726,6 +726,22 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
     }
 
     /// <summary>
+    /// Gets all assignments where the current user is a viewer (observer).
+    /// </summary>
+    public async Task<List<QuestionnaireAssignment>> GetAssignmentsAsViewerAsync()
+    {
+        return await GetAllAsync<QuestionnaireAssignment>($"{AssignmentQueryEndpoint}/viewing");
+    }
+
+    /// <summary>
+    /// Gets a specific assignment by ID where the current user is a viewer.
+    /// </summary>
+    public async Task<QuestionnaireAssignment?> GetAssignmentAsViewerAsync(Guid assignmentId)
+    {
+        return await GetByIdAsync<QuestionnaireAssignment>($"{AssignmentQueryEndpoint}/viewing", assignmentId);
+    }
+
+    /// <summary>
     /// Gets available predecessor assignments for assignment-wide linking.
     /// Returns assignments that can be linked as predecessors to the entire assignment.
     /// </summary>

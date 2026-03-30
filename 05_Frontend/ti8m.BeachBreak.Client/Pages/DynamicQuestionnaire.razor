@@ -103,8 +103,18 @@ else
         </DefaultFooterContent>
         <ChildContent>
 
+            @* Observer banner for viewers *@
+            @if (isViewer)
+            {
+                <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter" Class="workflow-alert mb-4" ShowIcon="true">
+                    <RadzenText TextStyle="TextStyle.Body1">
+                        <strong>@T("assignments.viewers.observerBanner")</strong>
+                    </RadzenText>
+                </RadzenAlert>
+            }
+
             @* Workflow Action Buttons - Sticky Banner *@
-            @if (assignment != null && assignmentId.HasValue)
+            @if (!isViewer && assignment != null && assignmentId.HasValue)
             {
                 <WorkflowActionButtons Assignment="@assignment"
                                       IsEmployee="@isEmployeeOnly"
@@ -282,15 +292,19 @@ else
             TranslationCategories.WorkflowStates,
             TranslationCategories.Roles,
             TranslationCategories.Warnings,
-            TranslationCategories.Language
+            TranslationCategories.Language,
+            TranslationCategories.Assignments
         };
     }
 
     [Parameter] public Guid? TemplateId { get; set; }
     [Parameter] public Guid? AssignmentId { get; set; }
+    [SupplyParameterFromQuery(Name = "viewer")] public bool Viewer { get; set; }
 
     private Guid? assignmentId;
     private QuestionnaireAssignment? assignment;
+    private bool isViewer;
+    private Guid currentUserId;
     private bool isExportingPdf;
 
     private async Task OnExportPdf(RadzenSplitButtonItem item)
@@ -385,6 +399,9 @@ else
         // The response.Status is for domain-level validation, not UI read-only logic
         if (assignment == null)
             return false;
+
+        // Viewers always get read-only access
+        if (isViewer) return true;
 
         // Phase 2 Read-Only (Permanent): After finalization
         var isPhase2ReadOnly = assignment.WorkflowState == WorkflowState.Finalized;
@@ -492,6 +509,7 @@ else
 
             // Store the actual ApplicationRole - computed properties derive behavior from it
             userRole = roleData.ApplicationRole;
+            currentUserId = roleData.EmployeeId;
 
             // Cache role for Manager's Answer sections filtering
             var userRoleString = userRole.ToString();
@@ -520,7 +538,12 @@ else
                 // - Managers use the general assignment endpoint (can view team's assignments)
                 // - Employees use the "me/assignments" endpoint (only their own assignments)
                 // Note: A TeamLead IS an employee with additional privileges, not a separate role
-                if (isManager)
+                if (Viewer)
+                {
+                    // Viewer mode: load via viewer-specific endpoint
+                    assignment = await AssignmentService.GetAssignmentAsViewerAsync(assignmentId.Value);
+                }
+                else if (isManager)
                 {
                     // Managers use the general assignment service
                     // Backend validates manager has this employee in their team
@@ -530,6 +553,16 @@ else
                 {
                     // Regular employees use the "me/assignments/{id}" endpoint which validates ownership
                     assignment = await EmployeeQuestionnaireService.GetMyAssignmentByIdAsync(assignmentId.Value);
+                }
+
+                // Detect viewer mode: either URL param or user is in viewers list
+                if (assignment != null && !Viewer && currentUserId != Guid.Empty)
+                {
+                    isViewer = assignment.Viewers.Any(v => v.EmployeeId == currentUserId);
+                }
+                else if (Viewer)
+                {
+                    isViewer = true;
                 }
 
                 if (assignment == null)

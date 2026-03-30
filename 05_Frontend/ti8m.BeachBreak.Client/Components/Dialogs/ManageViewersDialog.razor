@@ -1,0 +1,215 @@
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Components.Shared
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Models.Dto
+@using ti8m.BeachBreak.Client.Services
+@inject DialogService DialogService
+@inject IQuestionnaireAssignmentService AssignmentService
+@inject IEmployeeApiService EmployeeApiService
+@inherits CategoryOptimizedTranslatableComponent
+
+<div style="padding: 0.25rem 0;">
+
+    @* Context strip *@
+    <div class="dialog-context-strip">
+        <RadzenIcon Icon="assignment" Style="color: var(--rz-primary); font-size: 1.1rem;" Class="flex-shrink-0" />
+        <RadzenText TextStyle="TextStyle.Body2" Class="mb-0 fw-semibold text-truncate flex-grow-1">@Assignment.TemplateName</RadzenText>
+        <RadzenBadge Text="@Assignment.EmployeeName" BadgeStyle="BadgeStyle.Light" Style="font-size: 0.72rem;" Class="flex-shrink-0" />
+    </div>
+
+    @* Current Viewers Section *@
+    <div class="mb-4">
+        <div class="section-header">
+            <RadzenIcon Icon="group" Style="color: var(--rz-text-secondary-color, #6c757d); font-size: 1rem;" />
+            <RadzenText TextStyle="TextStyle.Subtitle2" Class="mb-0 text-emphasis">@T("assignments.viewers.currentSection")</RadzenText>
+            @if (Assignment.Viewers.Any())
+            {
+                <RadzenBadge Text="@Assignment.Viewers.Count.ToString()" BadgeStyle="BadgeStyle.Primary" Style="font-size: 0.7rem;" />
+            }
+        </div>
+
+        @if (!Assignment.Viewers.Any())
+        {
+            <div class="viewers-empty">
+                <RadzenIcon Icon="visibility_off" Style="font-size: 1.25rem; opacity: 0.5;" />
+                <RadzenText TextStyle="TextStyle.Body2" Class="mb-0">@T("assignments.viewers.empty")</RadzenText>
+            </div>
+        }
+        else
+        {
+            <div class="viewers-list">
+                @foreach (var viewer in Assignment.Viewers)
+                {
+                    <div class="viewer-row">
+                        <RadzenIcon Icon="person" Style="color: var(--rz-text-secondary-color, #6c757d); font-size: 1rem;" Class="flex-shrink-0" />
+                        <div class="viewer-info">
+                            <div class="viewer-name-row">
+                                <span class="viewer-name">@viewer.EmployeeName</span>
+                                <span class="viewer-email">@viewer.EmployeeEmail</span>
+                            </div>
+                            @if (!string.IsNullOrEmpty(viewer.AddedByName))
+                            {
+                                <div class="viewer-meta">
+                                    @T("assignments.viewers.addedBy") @viewer.AddedByName &mdash; @viewer.AddedDate.ToString("dd/MM/yyyy")
+                                </div>
+                            }
+                        </div>
+                        <RadzenButton ButtonStyle="ButtonStyle.Light"
+                                     Variant="Variant.Outlined"
+                                     Size="ButtonSize.ExtraSmall"
+                                     Icon="person_remove"
+                                     Title="@T("assignments.viewers.removeButton")"
+                                     Disabled="@isProcessing"
+                                     Click="@(() => RemoveViewer(viewer))"
+                                     Class="btn-remove-viewer" />
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    @* Divider *@
+    <hr style="margin: 1rem 0; border-color: var(--rz-border-color, #dee2e6);" />
+
+    @* Add Viewer Section *@
+    <div>
+        <div class="section-header">
+            <RadzenIcon Icon="person_add" Style="color: var(--rz-text-secondary-color, #6c757d); font-size: 1rem;" />
+            <RadzenText TextStyle="TextStyle.Subtitle2" Class="mb-0 text-emphasis">@T("assignments.viewers.addSection")</RadzenText>
+        </div>
+        <div class="d-flex flex-column gap-2">
+            <RadzenDropDown @bind-Value="@selectedEmployeeId"
+                           Data="@availableEmployees"
+                           TextProperty="FullName"
+                           ValueProperty="Id"
+                           AllowFiltering="true"
+                           FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                           Placeholder="@T("assignments.viewers.selectPlaceholder")"
+                           Class="w-100"
+                           Disabled="@isProcessing" />
+            <div class="d-flex justify-end">
+                <RadzenButton ButtonStyle="ButtonStyle.Primary"
+                             Icon="add"
+                             Text="@T("assignments.viewers.addButton")"
+                             Size="ButtonSize.Medium"
+                             Disabled="@(selectedEmployeeId == Guid.Empty || isProcessing)"
+                             Click="@AddViewer" />
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@code {
+    [Parameter] public QuestionnaireAssignment Assignment { get; set; } = default!;
+
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Assignments,
+            TranslationCategories.Buttons
+        };
+    }
+
+    private List<EmployeeDto> availableEmployees = new();
+    private Guid selectedEmployeeId = Guid.Empty;
+    private bool isProcessing = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        await LoadAvailableEmployees();
+    }
+
+    private async Task LoadAvailableEmployees()
+    {
+        var allEmployees = await EmployeeApiService.GetAllEmployeesAsync();
+        var currentViewerIds = Assignment.Viewers.Select(v => v.EmployeeId).ToHashSet();
+
+        availableEmployees = allEmployees
+            .Where(e => !e.IsDeleted
+                && e.Id != Assignment.EmployeeId
+                && !currentViewerIds.Contains(e.Id))
+            .OrderBy(e => e.FullName)
+            .ToList();
+    }
+
+    private async Task AddViewer()
+    {
+        if (selectedEmployeeId == Guid.Empty) return;
+
+        isProcessing = true;
+        StateHasChanged();
+
+        try
+        {
+            var success = await AssignmentService.AddViewerAsync(Assignment.Id, selectedEmployeeId);
+
+            if (success)
+            {
+                var added = availableEmployees.FirstOrDefault(e => e.Id == selectedEmployeeId);
+                if (added != null)
+                {
+                    Assignment.Viewers.Add(new AssignmentViewerDto
+                    {
+                        EmployeeId = added.Id,
+                        EmployeeName = added.FullName,
+                        EmployeeEmail = added.EMail,
+                        AddedDate = DateTime.Now,
+                        AddedByEmployeeId = Guid.Empty
+                    });
+                    availableEmployees.Remove(added);
+                }
+
+                selectedEmployeeId = Guid.Empty;
+                NotificationService.Notify(NotificationSeverity.Success, string.Empty, T("assignments.viewers.addedSuccess"));
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Error, string.Empty, T("assignments.viewers.addFailed"));
+            }
+        }
+        finally
+        {
+            isProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task RemoveViewer(AssignmentViewerDto viewer)
+    {
+        isProcessing = true;
+        StateHasChanged();
+
+        try
+        {
+            var success = await AssignmentService.RemoveViewerAsync(Assignment.Id, viewer.EmployeeId);
+
+            if (success)
+            {
+                Assignment.Viewers.Remove(viewer);
+                availableEmployees.Add(new EmployeeDto
+                {
+                    Id = viewer.EmployeeId,
+                    FirstName = viewer.EmployeeName.Split(' ').FirstOrDefault() ?? viewer.EmployeeName,
+                    LastName = string.Join(" ", viewer.EmployeeName.Split(' ').Skip(1)),
+                    EMail = viewer.EmployeeEmail
+                });
+                availableEmployees = availableEmployees.OrderBy(e => e.FullName).ToList();
+
+                NotificationService.Notify(NotificationSeverity.Success, string.Empty, T("assignments.viewers.removedSuccess"));
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Error, string.Empty, T("assignments.viewers.removeFailed"));
+            }
+        }
+        finally
+        {
+            isProcessing = false;
+            StateHasChanged();
+        }
+    }
+}

@@ -90,6 +90,51 @@ public class AssignmentsController : BaseController
     }
 
     /// <summary>
+    /// Gets all assignments where the authenticated user is a viewer (observer).
+    /// </summary>
+    [HttpGet("viewing")]
+    [Authorize(Policy = "Employee")]
+    [ProducesResponseType(typeof(IEnumerable<QuestionnaireAssignmentDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAssignmentsAsViewer()
+    {
+        if (!Guid.TryParse(userContext.Id, out var viewerEmployeeId))
+        {
+            logger.LogWarning("GetAssignmentsAsViewer: failed to parse user ID from context");
+            return CreateResponse(Result<IEnumerable<QuestionnaireAssignmentDto>>.Fail("User ID not found in authentication context", 401));
+        }
+
+        var query = new QuestionnaireAssignmentsAsViewerQuery { ViewerEmployeeId = viewerEmployeeId };
+        var result = await queryDispatcher.QueryAsync(query, HttpContext.RequestAborted);
+        return CreateResponse(result, assignments => assignments.Select(MapToDto));
+    }
+
+    /// <summary>
+    /// Gets a specific assignment by ID where the authenticated user is a viewer.
+    /// </summary>
+    [HttpGet("viewing/{id:guid}")]
+    [Authorize(Policy = "Employee")]
+    [ProducesResponseType(typeof(QuestionnaireAssignmentDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetAssignmentAsViewer(Guid id)
+    {
+        if (!Guid.TryParse(userContext.Id, out var viewerEmployeeId))
+        {
+            logger.LogWarning("GetAssignmentAsViewer: failed to parse user ID from context");
+            return CreateResponse(Result<QuestionnaireAssignmentDto>.Fail("User ID not found in authentication context", 401));
+        }
+
+        var result = await queryDispatcher.QueryAsync(new QuestionnaireAssignmentQuery(id), HttpContext.RequestAborted);
+        if (!result.Succeeded || result.Payload == null)
+            return CreateResponse(Result<QuestionnaireAssignmentDto>.Fail($"Assignment {id} not found", 404));
+
+        if (!result.Payload.Viewers.Any(v => v.EmployeeId == viewerEmployeeId))
+            return CreateResponse(Result<QuestionnaireAssignmentDto>.Fail("You are not a viewer on this assignment", 403));
+
+        return CreateResponse(Result<QuestionnaireAssignmentDto>.Success(MapToDto(result.Payload)));
+    }
+
+    /// <summary>
     /// Gets all assignments for a specific employee.
     /// Managers can only view assignments for their direct reports.
     /// HR/Admin can view assignments for any employee.
@@ -201,6 +246,17 @@ public class AssignmentsController : BaseController
                 SectionTitle = note.SectionTitle,
                 AuthorEmployeeId = note.AuthorEmployeeId,
                 AuthorName = note.AuthorName
+            }).ToList(),
+
+            // Viewers
+            Viewers = assignment.Viewers.Select(v => new ti8m.BeachBreak.QueryApi.Dto.AssignmentViewerDto
+            {
+                EmployeeId = v.EmployeeId,
+                EmployeeName = v.EmployeeName,
+                EmployeeEmail = v.EmployeeEmail,
+                AddedDate = v.AddedDate,
+                AddedByEmployeeId = v.AddedByEmployeeId,
+                AddedByName = v.AddedByName
             }).ToList()
         };
     }

@@ -10,6 +10,7 @@
 @inject IEmployeeQuestionnaireService EmployeeQuestionnaireService
 @inject IQuestionnaireTemplateService TemplateService
 @inject IUITranslationService TranslationService
+@inject IQuestionnaireAssignmentService AssignmentService
 
 <PageTitle>@T("nav.my-questionnaires")</PageTitle>
 
@@ -29,22 +30,64 @@
 		}
 	</HeaderActions>
 	<ChildContent>
-		@if (configuration != null && dataService != null)
-		{
-			<GenericQuestionnaireListPage Configuration="@configuration"
-										  DataService="@dataService"
-										  OnStartQuestionnaire="@StartQuestionnaire"
-										  HideHeader="true"
-										  HideFilterBar="true" />
-		}
-		else if (isLoading)
-		{
-			<LoadingIndicator Message="@T("dashboard.loading-questionnaires")" />
-		}
-		else
-		{
-			<EmptyState Icon="quiz" Title="@T("dashboard.no-questionnaire-data")" />
-		}
+		<RadzenTabs @bind-SelectedIndex="@selectedTabIndex">
+			<Tabs>
+				<RadzenTabsItem Text="@T("tabs.myAssignments")">
+					@if (configuration != null && dataService != null)
+					{
+						<GenericQuestionnaireListPage Configuration="@configuration"
+													  DataService="@dataService"
+													  OnStartQuestionnaire="@StartQuestionnaire"
+													  HideHeader="true"
+													  HideFilterBar="true" />
+					}
+					else if (isLoading)
+					{
+						<LoadingIndicator Message="@T("dashboard.loading-questionnaires")" />
+					}
+					else
+					{
+						<EmptyState Icon="quiz" Title="@T("dashboard.no-questionnaire-data")" />
+					}
+				</RadzenTabsItem>
+
+				<RadzenTabsItem Text="@T("tabs.viewing")" BadgeTitle="@(viewerAssignments.Count(a => WorkflowStateHelper.CanViewerAccess(a)).ToString())" Visible="@(viewerAssignments.Any(a => WorkflowStateHelper.CanViewerAccess(a)))">
+					@if (isLoading)
+					{
+						<LoadingIndicator Message="@T("dashboard.loading-questionnaires")" />
+					}
+					else
+					{
+						var accessibleViewerAssignments = viewerAssignments.Where(a => WorkflowStateHelper.CanViewerAccess(a)).ToList();
+						@if (!accessibleViewerAssignments.Any())
+						{
+							<EmptyState Icon="visibility" Title="@T("assignments.viewers.noViewerAssignments")" />
+						}
+						else
+						{
+							@foreach (var assignment in accessibleViewerAssignments)
+							{
+								<div class="d-flex align-items-center justify-content-between py-3 border-bottom cursor-pointer"
+									 @onclick="@(() => NavigationManager.NavigateTo($"/questionnaire/{assignment.Id}?viewer=true"))">
+									<div>
+										<div class="d-flex align-items-center gap-2">
+											<RadzenText TextStyle="TextStyle.Body2" Class="fw-bold mb-0">@assignment.TemplateName</RadzenText>
+											<RadzenBadge Text="@T("assignments.viewers.observerBadge")"
+														 BadgeStyle="BadgeStyle.Info"
+														 Style="font-size: 0.7rem;" />
+										</div>
+										<RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-0">@assignment.EmployeeName</RadzenText>
+									</div>
+									<RadzenBadge Text="@T(WorkflowStateHelper.GetStateDisplayName(assignment.WorkflowState))"
+												 BadgeStyle="BadgeStyle.Light"
+												 Style="@($"font-size: 0.75rem; background-color: {WorkflowStateHelper.GetStateColor(assignment.WorkflowState)}; color: white;")" />
+								</div>
+							}
+						}
+					}
+				</RadzenTabsItem>
+			</Tabs>
+		</RadzenTabs>
 	</ChildContent>
 </PageLayout>
 
@@ -56,7 +99,10 @@
 			TranslationCategories.Navigation,
 			TranslationCategories.Pages,
 			TranslationCategories.Dashboard,
-			TranslationCategories.Messages
+			TranslationCategories.Messages,
+			TranslationCategories.Assignments,
+			TranslationCategories.WorkflowStates,
+			TranslationCategories.Tabs
 		};
 	}
 
@@ -66,6 +112,8 @@
 	private List<QuestionnaireAssignment> inProgressQuestionnaires = new();
 	private List<QuestionnaireAssignment> completedQuestionnaires = new();
 	private List<QuestionnaireAssignment> overdueQuestionnaires = new();
+	private List<QuestionnaireAssignment> viewerAssignments = new();
+	private int selectedTabIndex = 0;
 	private bool hasInitialized = false;
 
 	protected override string GetInitializationContext() => "InitializeMyQuestionnaires";
@@ -89,8 +137,14 @@
 		// Create the data service
 		dataService = new EmployeeQuestionnaireDataService(EmployeeQuestionnaireService, TemplateService);
 
-		// Load assignments (templates are denormalized in query handler)
-		allAssignments = await EmployeeQuestionnaireService.GetMyAssignmentsAsync();
+		// Load assignments and viewer assignments in parallel
+		var assignmentsTask = EmployeeQuestionnaireService.GetMyAssignmentsAsync();
+		var viewerAssignmentsTask = AssignmentService.GetAssignmentsAsViewerAsync();
+
+		await Task.WhenAll(assignmentsTask, viewerAssignmentsTask);
+
+		allAssignments = await assignmentsTask;
+		viewerAssignments = await viewerAssignmentsTask;
 
 		// Categorize assignments
 		CategorizeQuestionnaires();

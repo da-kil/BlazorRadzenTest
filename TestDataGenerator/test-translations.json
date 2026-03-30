@@ -8174,5 +8174,131 @@
         "english": "No employees are available in the system yet. Employee data will appear here once user accounts are set up.",
         "category": "messages",
         "createdDate": "2026-03-19T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "tabs.myAssignments",
+        "german": "Meine Aufgaben",
+        "english": "My Assignments",
+        "category": "tabs",
+        "createdDate": "2026-03-30T10:00:00.0000000+01:00"
+    },
+    {
+        "key": "tabs.viewing",
+        "german": "Beobachtend",
+        "english": "Viewing",
+        "category": "tabs",
+        "createdDate": "2026-03-30T10:00:00.0000000+01:00"
+    },
+    {
+        "key": "tooltips.manage-viewers",
+        "german": "Beobachter verwalten",
+        "english": "Manage Viewers",
+        "category": "tooltips",
+        "createdDate": "2026-03-30T10:00:00.0000000+01:00"
+    },
+    {
+        "key": "assignments.viewers.dialogTitle",
+        "german": "Beobachter verwalten",
+        "english": "Manage Viewers",
+        "category": "assignments",
+        "createdDate": "2026-03-30T10:00:00.0000000+01:00"
+    },
+    {
+        "key": "assignments.viewers.addSection",
+        "german": "Beobachter hinzufügen",
+        "english": "Add Viewer",
+        "category": "assignments",
+        "createdDate": "2026-03-30T10:00:00.0000000+01:00"
+    },
+    {
+        "key": "assignments.viewers.currentSection",
+        "german": "Aktuelle Beobachter",
+        "english": "Current Viewers",
+        "category": "assignments",
+        "createdDate": "2026-03-30T10:00:00.0000000+01:00"
+    },
+    {
+        "key": "assignments.viewers.removeButton",
+        "german": "Entfernen",
+        "english": "Remove",
+        "category": "assignments",
+        "createdDate": "2026-03-30T10:00:00.0000000+01:00"
+    },
+    {
+        "key": "assignments.viewers.addButton",
+        "german": "Hinzufügen",
+        "english": "Add",
+        "category": "assignments",
+        "createdDate": "2026-03-30T10:00:00.0000000+01:00"
+    },
+    {
+        "key": "assignments.viewers.empty",
+        "german": "Diesem Fragebogen sind keine Beobachter zugewiesen.",
+        "english": "No viewers assigned to this questionnaire.",
+        "category": "assignments",
+        "createdDate": "2026-03-30T10:00:00.0000000+01:00"
+    },
+    {
+        "key": "assignments.viewers.addedSuccess",
+        "german": "Beobachter erfolgreich hinzugefügt.",
+        "english": "Viewer added successfully.",
+        "category": "assignments",
+        "createdDate": "2026-03-30T10:00:00.0000000+01:00"
+    },
+    {
+        "key": "assignments.viewers.addFailed",
+        "german": "Beobachter konnte nicht hinzugefügt werden.",
+        "english": "Failed to add viewer.",
+        "category": "assignments",
+        "createdDate": "2026-03-30T10:00:00.0000000+01:00"
+    },
+    {
+        "key": "assignments.viewers.removedSuccess",
+        "german": "Beobachter erfolgreich entfernt.",
+        "english": "Viewer removed successfully.",
+        "category": "assignments",
+        "createdDate": "2026-03-30T10:00:00.0000000+01:00"
+    },
+    {
+        "key": "assignments.viewers.removeFailed",
+        "german": "Beobachter konnte nicht entfernt werden.",
+        "english": "Failed to remove viewer.",
+        "category": "assignments",
+        "createdDate": "2026-03-30T10:00:00.0000000+01:00"
+    },
+    {
+        "key": "assignments.viewers.observerBanner",
+        "german": "Sie betrachten diesen Fragebogen als Beobachter. Es k\u00f6nnen keine \u00c4nderungen vorgenommen werden.",
+        "english": "You are viewing this questionnaire as an observer. No changes can be made.",
+        "category": "assignments",
+        "createdDate": "2026-03-30T10:00:00.0000000+01:00"
+    },
+    {
+        "key": "assignments.viewers.observerBadge",
+        "german": "Beobachter",
+        "english": "Observer",
+        "category": "assignments",
+        "createdDate": "2026-03-30T10:00:00.0000000+01:00"
+    },
+    {
+        "key": "assignments.viewers.noViewerAssignments",
+        "german": "Sie sind als Beobachter keinen Fragebögen zugewiesen.",
+        "english": "You are not assigned as a viewer to any questionnaires.",
+        "category": "assignments",
+        "createdDate": "2026-03-30T10:00:00.0000000+01:00"
+    },
+    {
+        "key": "assignments.viewers.selectPlaceholder",
+        "german": "Mitarbeiter suchen\u2026",
+        "english": "Search for an employee\u2026",
+        "category": "assignments",
+        "createdDate": "2026-03-30T10:00:00.0000000+01:00"
+    },
+    {
+        "key": "assignments.viewers.addedBy",
+        "german": "Hinzugefügt von",
+        "english": "Added by",
+        "category": "assignments",
+        "createdDate": "2026-03-30T10:00:00.0000000+01:00"
     }
 ]

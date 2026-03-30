@@ -11,4 +11,5 @@ public interface IQuestionnaireAssignmentRepository : IRepository
     Task<IEnumerable<QuestionnaireAssignmentReadModel>> GetAssignmentsByTemplateIdAsync(Guid templateId, CancellationToken cancellationToken = default);
     Task<IEnumerable<QuestionnaireAssignmentReadModel>> GetAssignmentsByWorkflowStateAsync(WorkflowState workflowState, CancellationToken cancellationToken = default);
     Task<IEnumerable<QuestionnaireAssignmentReadModel>> GetOverdueAssignmentsAsync(CancellationToken cancellationToken = default);
+    Task<IEnumerable<QuestionnaireAssignmentReadModel>> GetAssignmentsByViewerIdAsync(Guid viewerEmployeeId, CancellationToken cancellationToken = default);
 }

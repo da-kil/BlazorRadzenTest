@@ -227,4 +227,10 @@ public static class WorkflowStateHelper
         // Once initialized, custom sections are locked
         return assignment.WorkflowState == WorkflowState.Assigned;
     }
+
+    public static bool CanViewerAccess(QuestionnaireAssignment assignment)
+    {
+        // Viewers can access once the employee has submitted their answers
+        return !IsStateBefore(assignment.WorkflowState, WorkflowState.EmployeeSubmitted);
+    }
 }

@@ -59,4 +59,13 @@ internal class QuestionnaireAssignmentRepository(IDocumentStore store) : IQuesti
             .OrderBy(a => a.DueDate)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<IEnumerable<QuestionnaireAssignmentReadModel>> GetAssignmentsByViewerIdAsync(Guid viewerEmployeeId, CancellationToken cancellationToken = default)
+    {
+        using var session = await store.LightweightSerializableSessionAsync();
+        return await session.Query<QuestionnaireAssignmentReadModel>()
+            .Where(a => !a.IsWithdrawn && a.Viewers.Any(v => v.EmployeeId == viewerEmployeeId))
+            .OrderBy(a => a.AssignedDate)
+            .ToListAsync(cancellationToken);
+    }
 }

@@ -30,6 +30,15 @@
                      Title="@T("tooltips.cancel-assignment")"
                      Click="@(() => OnActionClick.InvokeAsync(new AssignmentActionEventArgs { Assignment = Assignment, Action = "cancel" }))" />
     }
+
+    @if (ShowManageViewersAction && CanManageViewers())
+    {
+        <RadzenButton ButtonStyle="ButtonStyle.Light"
+                     Icon="group"
+                     Size="ButtonSize.Small"
+                     Title="@T("tooltips.manage-viewers")"
+                     Click="@(() => OnActionClick.InvokeAsync(new AssignmentActionEventArgs { Assignment = Assignment, Action = "manage-viewers" }))" />
+    }
 </div>
 
 @code {
@@ -38,6 +47,7 @@
     [Parameter] public bool ShowEditAction { get; set; } = true;
     [Parameter] public bool ShowReminderAction { get; set; } = true;
     [Parameter] public bool ShowCancelAction { get; set; } = true;
+    [Parameter] public bool ShowManageViewersAction { get; set; }
 
     protected override string[] GetRequiredTranslationCategories()
     {
@@ -63,6 +73,11 @@
     private bool CanCancel()
     {
         return Assignment.WorkflowState == WorkflowState.Assigned;
+    }
+
+    private bool CanManageViewers()
+    {
+        return !Assignment.IsWithdrawn;
     }
 
     public class AssignmentActionEventArgs

@@ -10,7 +10,8 @@ namespace ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueri
 public class QuestionnaireAssignmentQueryHandler :
     IQueryHandler<QuestionnaireAssignmentListQuery, Result<IEnumerable<QuestionnaireAssignment>>>,
     IQueryHandler<QuestionnaireAssignmentQuery, Result<QuestionnaireAssignment>>,
-    IQueryHandler<QuestionnaireEmployeeAssignmentListQuery, Result<IEnumerable<QuestionnaireAssignment>>>
+    IQueryHandler<QuestionnaireEmployeeAssignmentListQuery, Result<IEnumerable<QuestionnaireAssignment>>>,
+    IQueryHandler<QuestionnaireAssignmentsAsViewerQuery, Result<IEnumerable<QuestionnaireAssignment>>>
 {
     private readonly IQuestionnaireAssignmentRepository repository;
     private readonly IQuestionnaireTemplateRepository templateRepository;
@@ -82,6 +83,25 @@ public class QuestionnaireAssignmentQueryHandler :
         }
     }
 
+    public async Task<Result<IEnumerable<QuestionnaireAssignment>>> HandleAsync(QuestionnaireAssignmentsAsViewerQuery query, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            logger.LogInformation("Retrieving assignments for viewer {ViewerEmployeeId}", query.ViewerEmployeeId);
+
+            var assignmentReadModels = await repository.GetAssignmentsByViewerIdAsync(query.ViewerEmployeeId, cancellationToken);
+            var assignments = await EnrichAssignmentsAsync(assignmentReadModels, cancellationToken);
+
+            logger.LogInformation("Retrieved {AssignmentCount} viewer assignments for employee {ViewerEmployeeId}", assignments.Count(), query.ViewerEmployeeId);
+            return Result<IEnumerable<QuestionnaireAssignment>>.Success(assignments);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error retrieving viewer assignments for employee {ViewerEmployeeId}", query.ViewerEmployeeId);
+            return Result<IEnumerable<QuestionnaireAssignment>>.Fail("Failed to retrieve viewer assignments: " + ex.Message, 500);
+        }
+    }
+
     public async Task<Result<IEnumerable<QuestionnaireAssignment>>> HandleAsync(QuestionnaireEmployeeAssignmentListQuery query, CancellationToken cancellationToken = default)
     {
         try
@@ -145,6 +165,7 @@ public class QuestionnaireAssignmentQueryHandler :
                 .SelectMany(rm => rm.InReviewNotes.Select(note => (Guid?)note.AuthorEmployeeId)))
             .Concat(readModelsList.Select(rm => (Guid?)rm.AssignedByUserId))
             .Concat(readModelsList.Select(rm => (Guid?)rm.EmployeeId))
+            .Concat(readModelsList.SelectMany(rm => rm.Viewers.Select(v => (Guid?)v.AddedByEmployeeId)))
             .Where(id => id.HasValue)
             .Select(id => id!.Value)
             .Distinct()
@@ -282,6 +303,15 @@ public class QuestionnaireAssignmentQueryHandler :
                 }
             }
 
+            // Enrich viewer AddedByName
+            foreach (var viewer in assignment.Viewers)
+            {
+                if (employeeLookup.TryGetValue(viewer.AddedByEmployeeId, out var addedByName))
+                {
+                    viewer.AddedByName = addedByName;
+                }
+            }
+
             return assignment;
         });
     }
@@ -345,6 +375,17 @@ public class QuestionnaireAssignmentQueryHandler :
             LastReopenedByEmployeeId = readModel.LastReopenedByEmployeeId,
             LastReopenedByRole = readModel.LastReopenedByRole,
             LastReopenReason = readModel.LastReopenReason,
+
+            // Viewers
+            Viewers = readModel.Viewers.Select(v => new AssignmentViewerDto
+            {
+                EmployeeId = v.EmployeeId,
+                EmployeeName = v.EmployeeName,
+                EmployeeEmail = v.EmployeeEmail,
+                AddedDate = v.AddedDate,
+                AddedByEmployeeId = v.AddedByEmployeeId,
+                AddedByName = null // Enriched in EnrichAssignmentsAsync
+            }).ToList(),
 
             // Assignment-wide predecessor linking
             AssignmentPredecessorId = readModel.AssignmentPredecessorId,

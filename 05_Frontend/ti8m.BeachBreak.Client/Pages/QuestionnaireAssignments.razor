@@ -175,7 +175,8 @@
                                                              OnActionClick="@HandleAssignmentActionClick"
                                                              ShowEditAction="true"
                                                              ShowReminderAction="true"
-                                                             ShowCancelAction="true" />
+                                                             ShowCancelAction="true"
+                                                             ShowManageViewersAction="true" />
                                 </Template>
                             </RadzenDataGridColumn>
                         </Columns>
@@ -221,7 +222,9 @@
             TranslationCategories.Notifications,
             TranslationCategories.Dialogs,
             TranslationCategories.WorkflowStates,
-            TranslationCategories.Actions
+            TranslationCategories.Actions,
+            TranslationCategories.Assignments,
+            TranslationCategories.Tooltips
         };
     }
 
@@ -351,6 +354,9 @@
             case "cancel":
                 await HandleCancelAction(eventArgs.Assignment);
                 break;
+            case "manage-viewers":
+                await HandleManageViewersAction(eventArgs.Assignment);
+                break;
         }
     }
 
@@ -359,7 +365,7 @@
         try
         {
             var result = await DialogService.OpenAsync<EditAssignmentDialog>($"{T("dialogs.edit-assignment")} - {assignment.EmployeeName}",
-                new Dictionary<string, object>
+                new Dictionary<string, object?>
                 {
                     { "Assignment", assignment }
                 },
@@ -480,6 +486,35 @@
         {
             isProcessingAction = false;
             StateHasChanged();
+        }
+    }
+
+    private async Task HandleManageViewersAction(QuestionnaireAssignment assignment)
+    {
+        try
+        {
+            var result = await DialogService.OpenAsync<ManageViewersDialog>(
+                $"{T("assignments.viewers.dialogTitle")} - {assignment.EmployeeName}",
+                new Dictionary<string, object?>
+                {
+                    { "Assignment", assignment }
+                },
+                new DialogOptions
+                {
+                    Width = "600px",
+                    Height = "auto",
+                    Resizable = true,
+                    Draggable = true,
+                    CloseDialogOnOverlayClick = true,
+                    ShowClose = true
+                });
+
+            await LoadAssignments();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"),
+                $"{T("notifications.error")}: {ex.Message}");
         }
     }
 

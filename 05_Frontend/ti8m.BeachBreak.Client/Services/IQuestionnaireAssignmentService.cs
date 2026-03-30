@@ -67,4 +67,6 @@ public interface IQuestionnaireAssignmentService
     // Viewer management
     Task<bool> AddViewerAsync(Guid assignmentId, Guid viewerEmployeeId);
     Task<bool> RemoveViewerAsync(Guid assignmentId, Guid viewerEmployeeId);
+    Task<List<QuestionnaireAssignment>> GetAssignmentsAsViewerAsync();
+    Task<QuestionnaireAssignment?> GetAssignmentAsViewerAsync(Guid assignmentId);
 }

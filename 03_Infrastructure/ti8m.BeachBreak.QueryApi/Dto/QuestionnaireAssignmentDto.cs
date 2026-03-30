@@ -70,4 +70,7 @@ public class QuestionnaireAssignmentDto
 
     // InReview notes system
     public List<ti8m.BeachBreak.QueryApi.Dto.InReviewNoteDto> InReviewNotes { get; set; } = new();
+
+    // Viewers (observers with read-only access)
+    public List<ti8m.BeachBreak.QueryApi.Dto.AssignmentViewerDto> Viewers { get; set; } = new();
 }

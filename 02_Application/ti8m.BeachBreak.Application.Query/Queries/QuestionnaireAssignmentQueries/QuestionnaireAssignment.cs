@@ -71,6 +71,9 @@ public class QuestionnaireAssignment
     public string? LastReopenedByRole { get; set; }
     public string? LastReopenReason { get; set; }
 
+    // Viewers (observers with read-only access)
+    public List<AssignmentViewerDto> Viewers { get; set; } = new();
+
     // Assignment-wide predecessor linking (for goal ratings)
     public Guid? AssignmentPredecessorId { get; set; }
 }
