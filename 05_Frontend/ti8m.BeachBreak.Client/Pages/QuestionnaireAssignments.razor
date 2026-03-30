@@ -423,6 +423,7 @@
                                                         <AssignmentActionButtons Assignment="@assignment"
                                                                                  OnActionClick="@HandleAssignmentActionClick"
                                                                                  ShowViewAction="true"
+                                                                                 ShowManageViewersAction="true"
                                                                                  ShowEditAction="true"
                                                                                  ShowReminderAction="true"
                                                                                  ShowCancelAction="true" />
@@ -496,7 +497,9 @@
             TranslationCategories.Notifications,
             TranslationCategories.Dialogs,
             TranslationCategories.WorkflowStates,
-            TranslationCategories.Actions
+            TranslationCategories.Actions,
+            TranslationCategories.Assignments,
+            TranslationCategories.Tooltips
         };
     }
 
@@ -809,6 +812,9 @@
             case "view":
                 await HandleViewAction(eventArgs.Assignment);
                 break;
+            case "manage-viewers":
+                await HandleManageViewersAction(eventArgs.Assignment);
+                break;
             case "edit":
                 await HandleEditAction(eventArgs.Assignment);
                 break;
@@ -850,6 +856,35 @@
         {
             NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"),
                 $"{T("notifications.failed-open-details")}: {ex.Message}");
+        }
+    }
+
+    private async Task HandleManageViewersAction(QuestionnaireAssignment assignment)
+    {
+        try
+        {
+            await DialogService.OpenAsync<ManageViewersDialog>($"{T("assignments.viewers.dialogTitle")} - {assignment.EmployeeName}",
+                new Dictionary<string, object>
+                {
+                    { "Assignment", assignment }
+                },
+                new DialogOptions
+                {
+                    Width = "600px",
+                    Height = "auto",
+                    Resizable = false,
+                    Draggable = false,
+                    CloseDialogOnOverlayClick = true,
+                    ShowClose = true
+                });
+
+            // Refresh assignments after managing viewers
+            await LoadAssignments();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"),
+                $"{T("notifications.failed-open-dialog")}: {ex.Message}");
         }
     }
 

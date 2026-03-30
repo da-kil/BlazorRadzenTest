@@ -1,0 +1,229 @@
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Components.Shared
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Models.Dto
+@using ti8m.BeachBreak.Client.Services
+@inject IQuestionnaireAssignmentService AssignmentService
+@inject IEmployeeApiService EmployeeApiService
+@inherits CategoryOptimizedTranslatableComponent
+
+<div class="manage-viewers-dialog">
+    @* Current Viewers Section *@
+    <div class="section-header mb-3">
+        <RadzenText TextStyle="TextStyle.H6">@T("assignments.viewers.currentSection")</RadzenText>
+    </div>
+
+    @if (currentViewers.Count == 0)
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Info" ShowIcon="true" Class="mb-3">
+            @T("assignments.viewers.empty")
+        </RadzenAlert>
+    }
+    else
+    {
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" Class="mb-4">
+            @foreach (var viewer in currentViewers)
+            {
+                <RadzenCard class="viewer-card p-3">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="viewer-avatar">
+                                <RadzenGravatar Email="@viewer.EmployeeEmail" Size="36" AlternateText="@GetInitials(viewer.EmployeeName)" />
+                            </div>
+                            <div>
+                                <RadzenText TextStyle="TextStyle.Body1" class="mb-0 fw-semibold">@viewer.EmployeeName</RadzenText>
+                                <RadzenText TextStyle="TextStyle.Caption" class="text-muted">@viewer.EmployeeEmail</RadzenText>
+                            </div>
+                        </div>
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger"
+                                     Variant="Variant.Text"
+                                     Icon="person_remove"
+                                     Size="ButtonSize.Small"
+                                     Title="@T("assignments.viewers.removeButton")"
+                                     Disabled="@isRemoving"
+                                     Click="@(() => RemoveViewerAsync(viewer))" />
+                    </div>
+                </RadzenCard>
+            }
+        </RadzenStack>
+    }
+
+    @* Add Viewer Section *@
+    <div class="section-header mb-2">
+        <RadzenText TextStyle="TextStyle.H6">@T("assignments.viewers.addSection")</RadzenText>
+    </div>
+
+    <div class="d-flex gap-2 align-items-end">
+        <div class="flex-grow-1">
+            <RadzenDropDown @bind-Value="selectedEmployeeId"
+                           Data="@availableEmployees"
+                           TextProperty="FullName"
+                           ValueProperty="Id"
+                           AllowFiltering="true"
+                           FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                           Placeholder="@T("assignments.viewers.selectPlaceholder")"
+                           Style="width: 100%"
+                           Disabled="@isAdding" />
+        </div>
+        <RadzenButton Text="@T("assignments.viewers.addButton")"
+                     ButtonStyle="ButtonStyle.Primary"
+                     Icon="person_add"
+                     Size="ButtonSize.Medium"
+                     Disabled="@(selectedEmployeeId == Guid.Empty || isAdding)"
+                     Click="@AddViewerAsync" />
+    </div>
+
+    @* Footer *@
+    <div class="d-flex justify-content-end mt-4">
+        <RadzenButton Text="@T("buttons.close")"
+                     ButtonStyle="ButtonStyle.Light"
+                     Click="@(() => DialogService.Close())" />
+    </div>
+</div>
+
+@code {
+    [Parameter] public QuestionnaireAssignment Assignment { get; set; } = default!;
+    [Inject] private DialogService DialogService { get; set; } = default!;
+
+    private List<AssignmentViewerDto> currentViewers = new();
+    private List<EmployeeDto> availableEmployees = new();
+    private Guid selectedEmployeeId = Guid.Empty;
+    private bool isAdding = false;
+    private bool isRemoving = false;
+
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Assignments,
+            TranslationCategories.Buttons,
+            TranslationCategories.Notifications
+        };
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        InitializeViewers();
+        await LoadAvailableEmployeesAsync();
+    }
+
+    private void InitializeViewers()
+    {
+        currentViewers = Assignment.Viewers?.ToList() ?? new List<AssignmentViewerDto>();
+    }
+
+    private async Task LoadAvailableEmployeesAsync()
+    {
+        try
+        {
+            var allEmployees = await EmployeeApiService.GetAllEmployeesAsync();
+            // Exclude the assignment's subject employee and already-added viewers
+            var excludedIds = new HashSet<Guid>(currentViewers.Select(v => v.EmployeeId))
+            {
+                Assignment.EmployeeId
+            };
+            availableEmployees = allEmployees
+                .Where(e => !excludedIds.Contains(e.Id))
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading employees: {ex.Message}");
+        }
+    }
+
+    private async Task AddViewerAsync()
+    {
+        if (selectedEmployeeId == Guid.Empty) return;
+
+        isAdding = true;
+        try
+        {
+            var success = await AssignmentService.AddViewerAsync(Assignment.Id, selectedEmployeeId);
+            if (success)
+            {
+                var addedEmployee = availableEmployees.FirstOrDefault(e => e.Id == selectedEmployeeId);
+                if (addedEmployee != null)
+                {
+                    currentViewers.Add(new AssignmentViewerDto
+                    {
+                        EmployeeId = addedEmployee.Id,
+                        EmployeeName = addedEmployee.FullName,
+                        EmployeeEmail = addedEmployee.EMail,
+                        AddedDate = DateTime.UtcNow
+                    });
+                    availableEmployees.RemoveAll(e => e.Id == selectedEmployeeId);
+                    selectedEmployeeId = Guid.Empty;
+
+                    NotificationService.Notify(NotificationSeverity.Success,
+                        T("notifications.success"),
+                        T("assignments.viewers.addedSuccess"));
+                }
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Error,
+                    T("notifications.error"),
+                    T("assignments.viewers.addFailed"));
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error adding viewer: {ex.Message}");
+            NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), ex.Message);
+        }
+        finally
+        {
+            isAdding = false;
+        }
+    }
+
+    private async Task RemoveViewerAsync(AssignmentViewerDto viewer)
+    {
+        isRemoving = true;
+        try
+        {
+            var success = await AssignmentService.RemoveViewerAsync(Assignment.Id, viewer.EmployeeId);
+            if (success)
+            {
+                currentViewers.RemoveAll(v => v.EmployeeId == viewer.EmployeeId);
+                availableEmployees.Add(new EmployeeDto
+                {
+                    Id = viewer.EmployeeId,
+                    FirstName = viewer.EmployeeName,
+                    EMail = viewer.EmployeeEmail
+                });
+
+                NotificationService.Notify(NotificationSeverity.Success,
+                    T("notifications.success"),
+                    T("assignments.viewers.removedSuccess"));
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Error,
+                    T("notifications.error"),
+                    T("assignments.viewers.removeFailed"));
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error removing viewer: {ex.Message}");
+            NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), ex.Message);
+        }
+        finally
+        {
+            isRemoving = false;
+        }
+    }
+
+    private static string GetInitials(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "?";
+        var parts = name.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length >= 2
+            ? $"{parts[0][0]}{parts[^1][0]}".ToUpperInvariant()
+            : name[0].ToString().ToUpperInvariant();
+    }
+}

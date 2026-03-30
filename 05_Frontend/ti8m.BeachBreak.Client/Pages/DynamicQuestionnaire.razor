@@ -101,13 +101,20 @@ else
         <ChildContent>
 
             @* Workflow Action Buttons - Sticky Banner *@
-            @if (assignment != null && assignmentId.HasValue)
+            @if (!isViewer && assignment != null && assignmentId.HasValue)
             {
                 <WorkflowActionButtons Assignment="@assignment"
                                       IsEmployee="@isEmployeeOnly"
                                       IsManager="@isManager"
                                       UserName="@currentUserName"
                                       OnActionCompleted="@OnWorkflowActionCompleted" />
+            }
+
+            @if (isViewer)
+            {
+                <RadzenAlert AlertStyle="AlertStyle.Info" ShowIcon="true" AllowClose="false" Class="mb-3">
+                    @T("assignments.viewers.observerBanner")
+                </RadzenAlert>
             }
 
             @if (IsQuestionnaireCompleted())
@@ -268,7 +275,8 @@ else
             TranslationCategories.Status,
             TranslationCategories.WorkflowStates,
             TranslationCategories.Roles,
-            TranslationCategories.Warnings
+            TranslationCategories.Warnings,
+            TranslationCategories.Assignments
         };
     }
 
@@ -283,6 +291,14 @@ else
 
     // Store references to question renderers for calling SavePendingGoalChanges
     private Dictionary<Guid, OptimizedQuestionRenderer> questionRenderers = new();
+
+    /// <summary>
+    /// Whether the current user is viewing this assignment as an observer (viewer), not as a participant.
+    /// Viewers always see read-only mode regardless of workflow state.
+    /// </summary>
+    private bool isViewer = false;
+
+    private Guid currentUserId = Guid.Empty;
 
     /// <summary>
     /// The user's organizational role determining data access permissions.
@@ -346,6 +362,9 @@ else
 
     private bool IsQuestionnaireCompleted()
     {
+        // Viewers always see read-only mode
+        if (isViewer) return true;
+
         // Read-only state is determined ONLY by the assignment's WorkflowState
         // The response.Status is for domain-level validation, not UI read-only logic
         if (assignment == null)
@@ -447,6 +466,7 @@ else
 
             // Store the actual ApplicationRole - computed properties derive behavior from it
             userRole = roleData.ApplicationRole;
+            currentUserId = roleData.EmployeeId;
 
             // Cache role for Manager's Answer sections filtering
             var userRoleString = userRole.ToString();
@@ -485,6 +505,12 @@ else
                 {
                     // Regular employees use the "me/assignments/{id}" endpoint which validates ownership
                     assignment = await EmployeeQuestionnaireService.GetMyAssignmentByIdAsync(assignmentId.Value);
+
+                    // If not found via employee endpoint, check if the user is a viewer of this assignment
+                    if (assignment == null && currentUserId != Guid.Empty)
+                    {
+                        assignment = await AssignmentService.GetAssignmentByIdAsync(assignmentId.Value);
+                    }
                 }
 
                 if (assignment == null)
@@ -492,6 +518,13 @@ else
                     NotificationService.Notify(NotificationSeverity.Error, "Error", "Assignment not found");
                     NavigateBack();
                     return;
+                }
+
+                // Detect if current user is a viewer (not the subject employee or the manager)
+                if (currentUserId != Guid.Empty && assignment.Viewers != null)
+                {
+                    isViewer = assignment.Viewers.Any(v => v.EmployeeId == currentUserId)
+                               && currentUserId != assignment.EmployeeId;
                 }
 
                 template = await TemplateService.GetTemplateByIdAsync(assignment.TemplateId);
