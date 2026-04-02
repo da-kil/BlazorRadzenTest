@@ -1,24 +1,29 @@
-﻿using ti8m.BeachBreak.Core.Domain.BuildingBlocks;
+using ti8m.BeachBreak.Core.Domain.BuildingBlocks;
 using ti8m.BeachBreak.Domain.EmployeeAggregate.Events;
 
 namespace ti8m.BeachBreak.Domain.EmployeeAggregate;
 
 public partial class Employee : AggregateRoot
 {
-    public string EmployeeId { get; private set; }
-    public string FirstName { get; private set; }
-    public string LastName { get; private set; }
+    public Identity Identity { get; private set; }
+    public PersonName Name { get; private set; }
     public string Role { get; private set; }
     public string EMail { get; private set; }
-    public DateOnly StartDate { get; private set; }
-    public DateOnly? EndDate { get; private set; }
-    public DateOnly? LastStartDate { get; private set; }
-    public string ManagerId { get; private set; }
+    public EmploymentPeriod Employment { get; private set; }
     public string LoginName { get; private set; }
-    public int OrganizationNumber { get; private set; }
     public bool IsDeleted { get; private set; }
     public ApplicationRole ApplicationRole { get; private set; }
     public Language PreferredLanguage { get; private set; }
+
+    // Convenience passthroughs
+    public string EmployeeId => Identity.EmployeeId;
+    public string FirstName => Name.FirstName;
+    public string LastName => Name.LastName;
+    public string ManagerId => Identity.ManagerId;
+    public int OrganizationNumber => Identity.OrganizationNumber;
+    public DateOnly StartDate => Employment.StartDate;
+    public DateOnly? EndDate => Employment.EndDate;
+    public DateOnly? LastStartDate => Employment.LastStartDate;
 
     private Employee() { }
 
@@ -40,17 +45,12 @@ public partial class Employee : AggregateRoot
     {
         RaiseEvent(new EmployeeAdded(
             id,
-            employeeId,
-            firstName,
-            lastName,
+            new Identity(employeeId, managerId, organizationNumber),
+            new PersonName(firstName, lastName),
             role,
             email,
-            startDate,
-            endDate,
-            lastStartDate,
-            managerId,
+            new EmploymentPeriod(startDate, endDate, lastStartDate),
             loginName,
-            organizationNumber,
             applicationRole,
             preferredLanguage));
     }
@@ -58,9 +58,7 @@ public partial class Employee : AggregateRoot
     public void Delete()
     {
         if (!IsDeleted)
-        {
             RaiseEvent(new EmployeeDeleted());
-        }
     }
 
     public void Undelete()
@@ -68,17 +66,12 @@ public partial class Employee : AggregateRoot
         if (IsDeleted)
         {
             RaiseEvent(new EmployeeUndeleted(
-                EmployeeId,
-                FirstName,
-                LastName,
+                Identity,
+                Name,
                 Role,
                 EMail,
-                StartDate,
-                EndDate,
-                LastStartDate,
-                ManagerId,
+                Employment,
                 LoginName,
-                OrganizationNumber,
                 ApplicationRole,
                 PreferredLanguage));
         }
@@ -86,50 +79,38 @@ public partial class Employee : AggregateRoot
 
     public void ChangeDepartment(int organizationNumber)
     {
-        if (OrganizationNumber != organizationNumber)
-        {
+        if (Identity.OrganizationNumber != organizationNumber)
             RaiseEvent(new EmployeeDepartmentChanged(organizationNumber));
-        }
     }
 
     public void ChangeEmail(string email)
     {
         if (EMail != email)
-        {
             RaiseEvent(new EmployeeEmailChanged(email));
-        }
     }
 
     public void ChangeLoginName(string loginName)
     {
         if (LoginName != loginName)
-        {
             RaiseEvent(new EmployeeLoginNameChanged(loginName));
-        }
     }
 
     public void ChangeManager(string managerId)
     {
-        if (ManagerId != managerId)
-        {
+        if (Identity.ManagerId != managerId)
             RaiseEvent(new EmployeeManagerChanged(managerId));
-        }
     }
 
     public void ChangeName(string firstName, string lastName)
     {
-        if (FirstName != firstName || LastName != lastName)
-        {
-            RaiseEvent(new EmployeeNameChanged(firstName, lastName));
-        }
+        if (Name.FirstName != firstName || Name.LastName != lastName)
+            RaiseEvent(new EmployeeNameChanged(new PersonName(firstName, lastName)));
     }
 
     public void ChangeRole(string role)
     {
         if (Role != role)
-        {
             RaiseEvent(new EmployeeRoleChanged(role));
-        }
     }
 
     public DomainResult ChangeApplicationRole(
@@ -138,13 +119,9 @@ public partial class Employee : AggregateRoot
         Guid changedByUserId,
         string changedByUserName)
     {
-        // Validate authorization using domain service
         var authResult = ApplicationRoleAuthorizationService.CanAssignRole(requesterRole, newRole);
-
         if (!authResult.IsSuccess)
-        {
             return authResult;
-        }
 
         if (ApplicationRole != newRole)
         {
@@ -161,64 +138,45 @@ public partial class Employee : AggregateRoot
 
     public void ChangeEndDate(DateOnly? endDate)
     {
-        if (EndDate != endDate)
-        {
+        if (Employment.EndDate != endDate)
             RaiseEvent(new EmployeeEndDateChanged(endDate));
-        }
     }
 
     public void ChangeStartDate(DateOnly startDate)
     {
-        if (StartDate != startDate)
-        {
+        if (Employment.StartDate != startDate)
             RaiseEvent(new EmployeeStartDateChanged(startDate));
-        }
     }
 
     public void ChangePreferredLanguage(Language preferredLanguage)
     {
         if (PreferredLanguage != preferredLanguage)
-        {
             RaiseEvent(new EmployeePreferredLanguageChanged(preferredLanguage));
-        }
     }
 
     public void Apply(EmployeeAdded @event)
     {
         Id = @event.AggregateId;
-        EmployeeId = @event.EmployeeId;
-        FirstName = @event.FirstName;
-        LastName = @event.LastName;
+        Identity = @event.Identity;
+        Name = @event.Name;
         Role = @event.Role;
         EMail = @event.EMail;
-        StartDate = @event.StartDate;
-        EndDate = @event.EndDate;
-        LastStartDate = @event.LastStartDate;
-        ManagerId = @event.ManagerId;
+        Employment = @event.Employment;
         LoginName = @event.LoginName;
-        OrganizationNumber = @event.OrganizationNumber;
         ApplicationRole = @event.ApplicationRole;
         IsDeleted = false;
     }
 
-    public void Apply(EmployeeDeleted @event)
-    {
-        IsDeleted = true;
-    }
+    public void Apply(EmployeeDeleted @event) => IsDeleted = true;
 
     public void Apply(EmployeeUndeleted @event)
     {
-        EmployeeId = @event.EmployeeId;
-        FirstName = @event.FirstName;
-        LastName = @event.LastName;
+        Identity = @event.Identity;
+        Name = @event.Name;
         Role = @event.Role;
         EMail = @event.EMail;
-        StartDate = @event.StartDate;
-        EndDate = @event.EndDate;
-        LastStartDate = @event.LastStartDate;
-        ManagerId = @event.ManagerId;
+        Employment = @event.Employment;
         LoginName = @event.LoginName;
-        OrganizationNumber = @event.OrganizationNumber;
         ApplicationRole = @event.ApplicationRole;
         PreferredLanguage = @event.PreferredLanguage;
         IsDeleted = false;
@@ -226,52 +184,33 @@ public partial class Employee : AggregateRoot
 
     public void Apply(EmployeeDepartmentChanged @event)
     {
-        OrganizationNumber = @event.OrganizationNumber;
+        Identity = new Identity(Identity.EmployeeId, Identity.ManagerId, @event.OrganizationNumber);
     }
 
-    public void Apply(EmployeeEmailChanged @event)
-    {
-        EMail = @event.Email;
-    }
+    public void Apply(EmployeeEmailChanged @event) => EMail = @event.Email;
 
-    public void Apply(EmployeeLoginNameChanged @event)
-    {
-        LoginName = @event.LoginName;
-    }
+    public void Apply(EmployeeLoginNameChanged @event) => LoginName = @event.LoginName;
 
     public void Apply(EmployeeManagerChanged @event)
     {
-        ManagerId = @event.ManagerId;
+        Identity = new Identity(Identity.EmployeeId, @event.ManagerId, Identity.OrganizationNumber);
     }
 
-    public void Apply(EmployeeNameChanged @event)
-    {
-        FirstName = @event.FirstName;
-        LastName = @event.LastName;
-    }
+    public void Apply(EmployeeNameChanged @event) => Name = @event.Name;
 
-    public void Apply(EmployeeRoleChanged @event)
-    {
-        Role = @event.Role;
-    }
+    public void Apply(EmployeeRoleChanged @event) => Role = @event.Role;
 
     public void Apply(EmployeeEndDateChanged @event)
     {
-        EndDate = @event.EndDate;
+        Employment = new EmploymentPeriod(Employment.StartDate, @event.EndDate, Employment.LastStartDate);
     }
 
     public void Apply(EmployeeStartDateChanged @event)
     {
-        StartDate = @event.StartDate;
+        Employment = new EmploymentPeriod(@event.StartDate, Employment.EndDate, Employment.LastStartDate);
     }
 
-    public void Apply(EmployeeApplicationRoleChanged @event)
-    {
-        ApplicationRole = @event.NewRole;
-    }
+    public void Apply(EmployeeApplicationRoleChanged @event) => ApplicationRole = @event.NewRole;
 
-    public void Apply(EmployeePreferredLanguageChanged @event)
-    {
-        PreferredLanguage = @event.PreferredLanguage;
-    }
+    public void Apply(EmployeePreferredLanguageChanged @event) => PreferredLanguage = @event.PreferredLanguage;
 }

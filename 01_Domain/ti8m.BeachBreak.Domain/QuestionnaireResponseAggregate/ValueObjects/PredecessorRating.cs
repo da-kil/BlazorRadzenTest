@@ -1,3 +1,4 @@
+using ti8m.BeachBreak.Core.Domain.BuildingBlocks;
 using ti8m.BeachBreak.Domain.EmployeeAggregate;
 
 namespace ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.ValueObjects;
@@ -6,14 +7,14 @@ namespace ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.ValueObjects;
 /// Represents a rating of a goal from a previous questionnaire.
 /// Provides type safety for predecessor goal evaluation.
 /// </summary>
-public record PredecessorRating
+public class PredecessorRating : ValueObject
 {
-    public Guid SourceGoalId { get; init; }
-    public int DegreeOfAchievement { get; init; }
-    public string Justification { get; init; }
-    public ApplicationRole RatedByRole { get; init; }
-    public string OriginalObjective { get; init; }
-    public ApplicationRole OriginalAddedByRole { get; init; }
+    public Guid SourceGoalId { get; }
+    public int DegreeOfAchievement { get; }
+    public string Justification { get; }
+    public ApplicationRole RatedByRole { get; }
+    public string OriginalObjective { get; }
+    public ApplicationRole OriginalAddedByRole { get; }
 
     public PredecessorRating(
         Guid sourceGoalId,
@@ -44,4 +45,14 @@ public record PredecessorRating
         SourceGoalId != Guid.Empty &&
         DegreeOfAchievement >= 0 && DegreeOfAchievement <= 100 &&
         !string.IsNullOrWhiteSpace(OriginalObjective);
+
+    protected override IEnumerable<object?> GetEqualityComponents()
+    {
+        yield return SourceGoalId;
+        yield return DegreeOfAchievement;
+        yield return Justification;
+        yield return RatedByRole;
+        yield return OriginalObjective;
+        yield return OriginalAddedByRole;
+    }
 }

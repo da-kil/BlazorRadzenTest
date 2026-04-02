@@ -1,13 +1,15 @@
+using ti8m.BeachBreak.Core.Domain.BuildingBlocks;
+
 namespace ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.ValueObjects;
 
 /// <summary>
 /// Represents an evaluation rating with score and optional comment.
 /// Ensures type safety for assessment question responses.
 /// </summary>
-public record EvaluationRating
+public class EvaluationRating : ValueObject
 {
-    public int Rating { get; init; }
-    public string Comment { get; init; }
+    public int Rating { get; }
+    public string Comment { get; }
 
     public EvaluationRating(int rating, string comment = "")
     {
@@ -33,4 +35,10 @@ public record EvaluationRating
     /// Max value of 10 aligns with the maximum configurable RatingScale in AssessmentConfiguration.
     /// </summary>
     public bool IsValidRating => Rating > 0;
+
+    protected override IEnumerable<object?> GetEqualityComponents()
+    {
+        yield return Rating;
+        yield return Comment;
+    }
 }

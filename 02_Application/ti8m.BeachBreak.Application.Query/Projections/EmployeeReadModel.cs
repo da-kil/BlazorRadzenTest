@@ -26,17 +26,17 @@ public class EmployeeReadModel
     public void Apply(EmployeeAdded @event)
     {
         Id = @event.AggregateId;
-        EmployeeId = @event.EmployeeId;
-        FirstName = @event.FirstName;
-        LastName = @event.LastName;
+        EmployeeId = @event.Identity.EmployeeId;
+        FirstName = @event.Name.FirstName;
+        LastName = @event.Name.LastName;
         Role = @event.Role;
         EMail = @event.EMail;
-        StartDate = @event.StartDate;
-        EndDate = @event.EndDate;
-        LastStartDate = @event.LastStartDate;
-        ManagerId = @event.ManagerId;
+        StartDate = @event.Employment.StartDate;
+        EndDate = @event.Employment.EndDate;
+        LastStartDate = @event.Employment.LastStartDate;
+        ManagerId = @event.Identity.ManagerId;
         LoginName = @event.LoginName;
-        OrganizationNumber = @event.OrganizationNumber;
+        OrganizationNumber = @event.Identity.OrganizationNumber;
         ApplicationRole = ApplicationRoleMapper.MapFromDomain(@event.ApplicationRole);
         PreferredLanguage = LanguageMapper.MapFromDomain(@event.PreferredLanguage);
         IsDeleted = false;
@@ -49,17 +49,17 @@ public class EmployeeReadModel
 
     public void Apply(EmployeeUndeleted @event)
     {
-        EmployeeId = @event.EmployeeId;
-        FirstName = @event.FirstName;
-        LastName = @event.LastName;
+        EmployeeId = @event.Identity.EmployeeId;
+        FirstName = @event.Name.FirstName;
+        LastName = @event.Name.LastName;
         Role = @event.Role;
         EMail = @event.EMail;
-        StartDate = @event.StartDate;
-        EndDate = @event.EndDate;
-        LastStartDate = @event.LastStartDate;
-        ManagerId = @event.ManagerId;
+        StartDate = @event.Employment.StartDate;
+        EndDate = @event.Employment.EndDate;
+        LastStartDate = @event.Employment.LastStartDate;
+        ManagerId = @event.Identity.ManagerId;
         LoginName = @event.LoginName;
-        OrganizationNumber = @event.OrganizationNumber;
+        OrganizationNumber = @event.Identity.OrganizationNumber;
         ApplicationRole = ApplicationRoleMapper.MapFromDomain(@event.ApplicationRole);
         PreferredLanguage = LanguageMapper.MapFromDomain(@event.PreferredLanguage);
         IsDeleted = false;
@@ -87,8 +87,8 @@ public class EmployeeReadModel
 
     public void Apply(EmployeeNameChanged @event)
     {
-        FirstName = @event.FirstName;
-        LastName = @event.LastName;
+        FirstName = @event.Name.FirstName;
+        LastName = @event.Name.LastName;
     }
 
     public void Apply(EmployeeRoleChanged @event)

@@ -86,8 +86,6 @@ public class QuestionnaireAssignmentReadModel
         TemplateId = @event.TemplateId;
         ProcessType = @event.ProcessType;
         EmployeeId = @event.EmployeeId;
-        EmployeeName = @event.EmployeeName;
-        EmployeeEmail = @event.EmployeeEmail;
         AssignedDate = @event.AssignedDate;
         DueDate = @event.DueDate;
         AssignedByUserId = @event.AssignedByUserId;
@@ -102,9 +100,9 @@ public class QuestionnaireAssignmentReadModel
 
     public void Apply(AssignmentInitialized @event)
     {
-        InitializedDate = @event.InitializedDate;
-        InitializedByEmployeeId = @event.InitializedByEmployeeId;
-        InitializationNotes = @event.InitializationNotes;
+        InitializedDate = @event.Initialization.Date;
+        InitializedByEmployeeId = @event.Initialization.ByEmployeeId;
+        InitializationNotes = @event.Initialization.Notes;
         WorkflowState = WorkflowState.Initialized;
     }
 
@@ -140,9 +138,9 @@ public class QuestionnaireAssignmentReadModel
     public void Apply(AssignmentWithdrawn @event)
     {
         IsWithdrawn = true;
-        WithdrawnDate = @event.WithdrawnDate;
-        WithdrawnByEmployeeId = @event.WithdrawnByEmployeeId;
-        WithdrawalReason = @event.WithdrawalReason;
+        WithdrawnDate = @event.Withdrawal.Date;
+        WithdrawnByEmployeeId = @event.Withdrawal.ByEmployeeId;
+        WithdrawalReason = @event.Withdrawal.Reason;
     }
 
     public void Apply(EmployeeSectionCompleted @event)
@@ -189,15 +187,15 @@ public class QuestionnaireAssignmentReadModel
 
     public void Apply(EmployeeQuestionnaireSubmitted @event)
     {
-        EmployeeSubmittedDate = @event.SubmittedDate;
-        EmployeeSubmittedByEmployeeId = @event.SubmittedByEmployeeId;
+        EmployeeSubmittedDate = @event.Submission.Date;
+        EmployeeSubmittedByEmployeeId = @event.Submission.ByEmployeeId;
         UpdateWorkflowStateOnSubmission();
     }
 
     public void Apply(ManagerQuestionnaireSubmitted @event)
     {
-        ManagerSubmittedDate = @event.SubmittedDate;
-        ManagerSubmittedByEmployeeId = @event.SubmittedByEmployeeId;
+        ManagerSubmittedDate = @event.Submission.Date;
+        ManagerSubmittedByEmployeeId = @event.Submission.ByEmployeeId;
         UpdateWorkflowStateOnSubmission();
     }
 
@@ -231,25 +229,25 @@ public class QuestionnaireAssignmentReadModel
     public void Apply(EmployeeConfirmedReviewOutcome @event)
     {
         WorkflowState = WorkflowState.EmployeeReviewConfirmed;
-        EmployeeReviewConfirmedDate = @event.ConfirmedDate;
-        EmployeeReviewConfirmedByEmployeeId = @event.ConfirmedByEmployeeId;
-        EmployeeReviewComments = @event.EmployeeComments;
+        EmployeeReviewConfirmedDate = @event.Confirmation.Date;
+        EmployeeReviewConfirmedByEmployeeId = @event.Confirmation.ByEmployeeId;
+        EmployeeReviewComments = @event.Confirmation.Comments;
     }
 
     public void Apply(ManagerFinalizedQuestionnaire @event)
     {
         WorkflowState = WorkflowState.Finalized;
-        FinalizedDate = @event.FinalizedDate;
-        FinalizedByEmployeeId = @event.FinalizedByEmployeeId;
-        ManagerFinalNotes = @event.ManagerFinalNotes;
+        FinalizedDate = @event.Finalization.Date;
+        FinalizedByEmployeeId = @event.Finalization.ByEmployeeId;
+        ManagerFinalNotes = @event.Finalization.Notes;
     }
 
     public void Apply(QuestionnaireAutoFinalized @event)
     {
         WorkflowState = WorkflowState.Finalized;
-        FinalizedDate = @event.FinalizedDate;
-        FinalizedByEmployeeId = @event.FinalizedByEmployeeId;
-        ManagerFinalNotes = @event.Reason;
+        FinalizedDate = @event.Finalization.Date;
+        FinalizedByEmployeeId = @event.Finalization.ByEmployeeId;
+        ManagerFinalNotes = @event.Finalization.Notes;
     }
 
     public void Apply(WorkflowReopened @event)

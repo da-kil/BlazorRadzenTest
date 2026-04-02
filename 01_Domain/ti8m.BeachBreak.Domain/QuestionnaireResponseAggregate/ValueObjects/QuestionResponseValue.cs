@@ -1,35 +1,11 @@
+using ti8m.BeachBreak.Core.Domain.BuildingBlocks;
+
 namespace ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.ValueObjects;
 
 /// <summary>
 /// Discriminated union representing different types of question responses.
-/// Replaces Dictionary<string, object> with compile-time type safety.
+/// Replaces Dictionary&lt;string, object&gt; with compile-time type safety.
 /// </summary>
-public abstract record QuestionResponseValue
+public abstract partial class QuestionResponseValue : ValueObject
 {
-    /// <summary>
-    /// Response for text-based questions with one or more text sections.
-    /// </summary>
-    public sealed record TextResponse(
-        IReadOnlyList<string> TextSections
-    ) : QuestionResponseValue
-    {
-        public static TextResponse Single(string text) => new([text]);
-        public static TextResponse Multiple(params string[] texts) => new(texts);
-    }
-
-    /// <summary>
-    /// Response for assessment questions with evaluation ratings and comments.
-    /// </summary>
-    public sealed record AssessmentResponse(
-        IReadOnlyDictionary<string, EvaluationRating> Evaluations
-    ) : QuestionResponseValue;
-
-    /// <summary>
-    /// Response for goal questions including goals and predecessor ratings.
-    /// </summary>
-    public sealed record GoalResponse(
-        IReadOnlyList<GoalData> Goals,
-        IReadOnlyList<PredecessorRating> PredecessorRatings,
-        Guid? PredecessorAssignmentId = null
-    ) : QuestionResponseValue;
 }

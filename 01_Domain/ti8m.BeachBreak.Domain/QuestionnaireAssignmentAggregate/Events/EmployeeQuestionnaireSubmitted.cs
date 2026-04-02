@@ -1,7 +1,6 @@
 using ti8m.BeachBreak.Core.Domain.BuildingBlocks;
+using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate.PhaseRecords;
 
 namespace ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate.Events;
 
-public record EmployeeQuestionnaireSubmitted(
-    DateTime SubmittedDate,
-    Guid SubmittedByEmployeeId) : IDomainEvent;
+public record EmployeeQuestionnaireSubmitted(EmployeeSubmissionRecord Submission) : IDomainEvent;

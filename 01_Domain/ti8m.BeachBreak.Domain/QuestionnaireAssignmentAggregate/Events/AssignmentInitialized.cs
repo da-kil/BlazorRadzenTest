@@ -1,4 +1,5 @@
 using ti8m.BeachBreak.Core.Domain.BuildingBlocks;
+using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate.PhaseRecords;
 
 namespace ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate.Events;
 
@@ -7,7 +8,4 @@ namespace ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate.Events;
 /// Initialization is the first step after assignment, enabling optional tasks
 /// like linking predecessor questionnaires and adding custom questions.
 /// </summary>
-public record AssignmentInitialized(
-    DateTime InitializedDate,
-    Guid InitializedByEmployeeId,
-    string? InitializationNotes) : IDomainEvent;
+public record AssignmentInitialized(InitializationRecord Initialization) : IDomainEvent;

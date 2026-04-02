@@ -111,9 +111,9 @@ public partial class QuestionnaireResponse : AggregateRoot
                 .ToList();
 
             var updatedResponse = new QuestionResponseValue.GoalResponse(
-                Goals: updatedGoals,
-                PredecessorRatings: existingGoalResponse.PredecessorRatings, // Preserve!
-                PredecessorAssignmentId: existingGoalResponse.PredecessorAssignmentId
+                goals: updatedGoals,
+                predecessorRatings: existingGoalResponse.PredecessorRatings, // Preserve!
+                predecessorAssignmentId: existingGoalResponse.PredecessorAssignmentId
             );
 
             RecordSectionResponse(sectionId, completionRole, updatedResponse);
@@ -122,8 +122,8 @@ public partial class QuestionnaireResponse : AggregateRoot
         {
             // No existing goal response, create new one
             var newResponse = new QuestionResponseValue.GoalResponse(
-                Goals: new[] { updatedGoal },
-                PredecessorRatings: Array.Empty<PredecessorRating>()
+                goals: new[] { updatedGoal },
+                predecessorRatings: Array.Empty<PredecessorRating>()
             );
 
             RecordSectionResponse(sectionId, completionRole, newResponse);

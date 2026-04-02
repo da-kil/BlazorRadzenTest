@@ -2,6 +2,7 @@ using ti8m.BeachBreak.Core.Domain;
 using ti8m.BeachBreak.Core.Domain.BuildingBlocks;
 using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate.Events;
 using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate.Services;
+using ti8m.BeachBreak.Domain.Shared;
 
 namespace ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 
@@ -14,10 +15,13 @@ public partial class QuestionnaireTemplate : AggregateRoot
     public bool IsCustomizable { get; private set; } = false;
     public bool AutoInitialize { get; private set; } = false;
 
-    public TemplateStatus Status { get; private set; } = TemplateStatus.Draft;
-    public DateTime? PublishedDate { get; private set; }
-    public DateTime? LastPublishedDate { get; private set; }
-    public Guid? PublishedByEmployeeId { get; private set; }
+    public PublicationInfo Publication { get; private set; } = PublicationInfo.Draft();
+
+    // Convenience passthroughs
+    public TemplateStatus Status => Publication.Status;
+    public DateTime? PublishedDate => Publication.PublishedDate;
+    public DateTime? LastPublishedDate => Publication.LastPublishedDate;
+    public Guid? PublishedByEmployeeId => Publication.PublishedByEmployeeId;
 
     public List<QuestionSection> Sections { get; private set; } = new();
 
@@ -356,7 +360,7 @@ public partial class QuestionnaireTemplate : AggregateRoot
         IsCustomizable = @event.IsCustomizable;
         AutoInitialize = @event.AutoInitialize;
         Sections = QuestionnaireTemplateEventDataMapper.MapDataToSections(@event.Sections);
-        Status = TemplateStatus.Draft;
+        Publication = PublicationInfo.Draft();
         CreatedDate = @event.CreatedDate;
         IsDeleted = false;
     }
@@ -398,28 +402,26 @@ public partial class QuestionnaireTemplate : AggregateRoot
 
     public void Apply(QuestionnaireTemplatePublished @event)
     {
-        Status = TemplateStatus.Published;
-        PublishedByEmployeeId = @event.PublishedByEmployeeId;
-        LastPublishedDate = @event.LastPublishedDate;
-
-        if (PublishedDate == null)
-            PublishedDate = @event.PublishedDate;
+        Publication = new PublicationInfo(
+            TemplateStatus.Published,
+            Publication.PublishedDate ?? @event.PublishedDate,
+            @event.LastPublishedDate,
+            @event.PublishedByEmployeeId);
     }
 
     public void Apply(QuestionnaireTemplateUnpublishedToDraft @event)
     {
-        Status = TemplateStatus.Draft;
-        PublishedByEmployeeId = null;
+        Publication = new PublicationInfo(TemplateStatus.Draft, Publication.PublishedDate, Publication.LastPublishedDate, null);
     }
 
     public void Apply(QuestionnaireTemplateArchived @event)
     {
-        Status = TemplateStatus.Archived;
+        Publication = new PublicationInfo(TemplateStatus.Archived, Publication.PublishedDate, Publication.LastPublishedDate, Publication.PublishedByEmployeeId);
     }
 
     public void Apply(QuestionnaireTemplateRestoredFromArchive @event)
     {
-        Status = TemplateStatus.Draft;
+        Publication = new PublicationInfo(TemplateStatus.Draft, Publication.PublishedDate, Publication.LastPublishedDate, Publication.PublishedByEmployeeId);
     }
 
     public void Apply(QuestionnaireTemplateDeleted @event)
@@ -437,11 +439,8 @@ public partial class QuestionnaireTemplate : AggregateRoot
         IsCustomizable = @event.IsCustomizable;
         AutoInitialize = @event.AutoInitialize;
         Sections = QuestionnaireTemplateEventDataMapper.MapDataToSections(@event.Sections);
-        Status = TemplateStatus.Draft;  // Always draft
+        Publication = PublicationInfo.Draft();  // Always draft with no publication data
         CreatedDate = @event.CreatedDate;
-        PublishedDate = null;  // Reset publication data
-        LastPublishedDate = null;
-        PublishedByEmployeeId = null;
         IsDeleted = false;
     }
 }

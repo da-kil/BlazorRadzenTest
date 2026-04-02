@@ -4,6 +4,7 @@ using ti8m.BeachBreak.Domain.EmployeeAggregate;
 using ti8m.BeachBreak.Domain.EmployeeFeedbackAggregate;
 using ti8m.BeachBreak.Domain.FeedbackTemplateAggregate.Events;
 using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
+using ti8m.BeachBreak.Domain.Shared;
 
 namespace ti8m.BeachBreak.Domain.FeedbackTemplateAggregate;
 
@@ -23,10 +24,14 @@ public partial class FeedbackTemplate : AggregateRoot
     public Guid CreatedByEmployeeId { get; private set; }
     public ApplicationRole CreatedByRole { get; private set; }
 
-    public TemplateStatus Status { get; private set; } = TemplateStatus.Draft;
+    public PublicationInfo Publication { get; private set; } = PublicationInfo.Draft();
+
+    // Convenience passthroughs
+    public TemplateStatus Status => Publication.Status;
+    public DateTime? PublishedDate => Publication.PublishedDate;
+    public Guid? PublishedByEmployeeId => Publication.PublishedByEmployeeId;
+
     public DateTime CreatedDate { get; private set; }
-    public DateTime? PublishedDate { get; private set; }
-    public Guid? PublishedByEmployeeId { get; private set; }
     public bool IsDeleted { get; private set; }
 
     private FeedbackTemplate() { }
@@ -303,7 +308,7 @@ public partial class FeedbackTemplate : AggregateRoot
         AllowedSourceTypes = @event.AllowedSourceTypes;
         CreatedByEmployeeId = @event.CreatedByEmployeeId;
         CreatedByRole = @event.CreatedByRole;
-        Status = TemplateStatus.Draft;
+        Publication = PublicationInfo.Draft();
         CreatedDate = @event.CreatedDate;
         IsDeleted = false;
     }
@@ -342,14 +347,12 @@ public partial class FeedbackTemplate : AggregateRoot
 
     public void Apply(FeedbackTemplatePublished @event)
     {
-        Status = TemplateStatus.Published;
-        PublishedDate = @event.PublishedDate;
-        PublishedByEmployeeId = @event.PublishedByEmployeeId;
+        Publication = new PublicationInfo(TemplateStatus.Published, @event.PublishedDate, null, @event.PublishedByEmployeeId);
     }
 
     public void Apply(FeedbackTemplateArchived @event)
     {
-        Status = TemplateStatus.Archived;
+        Publication = new PublicationInfo(TemplateStatus.Archived, Publication.PublishedDate, Publication.LastPublishedDate, Publication.PublishedByEmployeeId);
     }
 
     public void Apply(FeedbackTemplateDeleted @event)
@@ -370,10 +373,8 @@ public partial class FeedbackTemplate : AggregateRoot
         AllowedSourceTypes = @event.AllowedSourceTypes;
         CreatedByEmployeeId = @event.ClonedByEmployeeId;
         CreatedByRole = @event.ClonedByRole;
-        Status = TemplateStatus.Draft;  // Always draft
+        Publication = PublicationInfo.Draft();  // Always draft with no publication data
         CreatedDate = @event.CreatedDate;
-        PublishedDate = null;  // Reset publication data
-        PublishedByEmployeeId = null;
         IsDeleted = false;
     }
 }

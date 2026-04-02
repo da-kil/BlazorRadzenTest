@@ -50,9 +50,7 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
     {
         var employeeAssignments = employees.Select(emp => new EmployeeAssignmentDto
         {
-            EmployeeId = emp.Id,
-            EmployeeName = emp.FullName,
-            EmployeeEmail = emp.EMail
+            EmployeeId = emp.Id
         }).ToList();
 
         var createRequest = new CreateBulkAssignmentsDto
@@ -112,9 +110,7 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
     {
         var employeeAssignments = employees.Select(emp => new EmployeeAssignmentDto
         {
-            EmployeeId = emp.Id,
-            EmployeeName = emp.FullName,
-            EmployeeEmail = emp.EMail
+            EmployeeId = emp.Id
         }).ToList();
 
         var createRequest = new CreateBulkAssignmentsDto
