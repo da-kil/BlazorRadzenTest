@@ -1148,13 +1148,6 @@
         "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
     },
     {
-        "key":  "dialogs.can-edit-replace-summary",
-        "german":  "Sie können diese bearbeiten oder ersetzen",
-        "english":  "You can edit or replace this",
-        "category":  "dialogs",
-        "createdDate":  "2025-12-29T12:00:00.0000000+00:00"
-    },
-    {
         "key":  "dialogs.clone-template-confirm",
         "german":  "Dies erstellt eine Kopie von \u0027{0}\u0027 im Entwurfsstatus. Fortfahren?",
         "english":  "This will create a copy of \u0027{0}\u0027 in Draft status. Continue?",
@@ -1288,13 +1281,6 @@
         "createdDate":  "2025-12-03T12:17:11.8998648+00:00"
     },
     {
-        "key":  "dialogs.existing-summary-loaded",
-        "german":  "Vorhandene Zusammenfassung geladen",
-        "english":  "Existing summary loaded",
-        "category":  "dialogs",
-        "createdDate":  "2025-12-29T12:00:00.0000000+00:00"
-    },
-    {
         "key":  "dialogs.finalize-questionnaire",
         "german":  "Fragebogen abschliessen",
         "english":  "Finalize Questionnaire",
@@ -1344,13 +1330,6 @@
         "createdDate":  "2025-12-31T23:09:52.0616018+01:00"
     },
     {
-        "key":  "dialogs.review-summary-optional",
-        "german":  "Bewertungszusammenfassung (optional)",
-        "english":  "Review Summary (Optional)",
-        "category":  "dialogs",
-        "createdDate":  "2025-12-29T12:00:00.0000000+00:00"
-    },
-    {
         "key":  "dialogs.save-changes",
         "german":  "Änderungen speichern",
         "english":  "Save Changes",
@@ -1391,13 +1370,6 @@
         "english":  "Sign Off on Review",
         "category":  "dialogs",
         "createdDate":  "2025-12-03T12:17:11.8998682+00:00"
-    },
-    {
-        "key":  "dialogs.summarize-key-points-discussed",
-        "german":  "Fassen Sie die wichtigsten besprochenen Punkte zusammen",
-        "english":  "Summarize the key points discussed",
-        "category":  "dialogs",
-        "createdDate":  "2025-12-29T12:00:00.0000000+00:00"
     },
     {
         "key":  "dialogs.update-goal",
@@ -4669,13 +4641,6 @@
         "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
     },
     {
-        "key":  "placeholders.enter-review-summary-optional",
-        "german":  "Geben Sie eine optionale Bewertungszusammenfassung ein...",
-        "english":  "Enter an optional review summary...",
-        "category":  "placeholders",
-        "createdDate":  "2025-12-29T12:00:00.0000000+00:00"
-    },
-    {
         "key":  "placeholders.enter-template-name-english",
         "german":  "Vorlagennamen auf Englisch eingeben",
         "english":  "Enter template name in English",
@@ -5150,13 +5115,6 @@
         "key":  "sections.link-employee-feedback",
         "german":  "Mitarbeiter-Feedback verknüpfen",
         "category":  "sections"
-    },
-    {
-        "key":  "sections.managers-review-summary",
-        "german":  "Manager-Überprüfungszusammenfassung",
-        "english":  "Manager\u0027s Review Summary",
-        "category":  "sections",
-        "createdDate":  "2026-01-01T12:00:00.0000000+00:00"
     },
     {
         "key":  "sections.multiple-text-sections-to-complete",
@@ -8296,9 +8254,51 @@
     },
     {
         "key": "assignments.viewers.addedBy",
-        "german": "Hinzugefügt von",
+        "german": "Hinzugef\u00fcgt von",
         "english": "Added by",
         "category": "assignments",
         "createdDate": "2026-03-30T10:00:00.0000000+01:00"
+    },
+    {
+        "key": "sections.review-comments",
+        "german": "Bewertungskommentare",
+        "english": "Review Comments",
+        "category": "sections",
+        "createdDate": "2026-04-07T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "sections.manager-final-notes",
+        "german": "Endnotizen des Vorgesetzten",
+        "english": "Manager Final Notes",
+        "category": "sections",
+        "createdDate": "2026-04-07T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.when-confirming-review-outcome",
+        "german": "bei der Best\u00e4tigung des Bewertungsergebnisses",
+        "english": "when confirming the review outcome",
+        "category": "labels",
+        "createdDate": "2026-04-07T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.when-finalizing-internal",
+        "german": "bei der Finalisierung (intern, nicht f\u00fcr Mitarbeiter sichtbar)",
+        "english": "when finalizing (internal, not visible to employee)",
+        "category": "labels",
+        "createdDate": "2026-04-07T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.no-comments-provided",
+        "german": "Keine Kommentare angegeben",
+        "english": "No comments provided",
+        "category": "messages",
+        "createdDate": "2026-04-07T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.no-final-notes-provided",
+        "german": "Keine finalen Notizen angegeben",
+        "english": "No final notes provided",
+        "category": "messages",
+        "createdDate": "2026-04-07T12:00:00.0000000+01:00"
     }
 ]

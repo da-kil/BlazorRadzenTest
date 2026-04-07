@@ -30,7 +30,7 @@ public class FinishReviewMeetingCommandHandler
                 command.AssignmentId,
                 command.ExpectedVersion,
                 cancellationToken);
-            assignment.FinishReviewMeeting(command.FinishedByEmployeeId, command.ReviewSummary);
+            assignment.FinishReviewMeeting(command.FinishedByEmployeeId);
             await repository.StoreAsync(assignment, cancellationToken);
 
             logger.LogInformation("Successfully finished review meeting for assignment {AssignmentId}", command.AssignmentId);

@@ -225,9 +225,8 @@ public class ManagersController : BaseController
                 // Review phase
                 ReviewInitiatedDate = assignment.ReviewInitiatedDate,
                 ReviewInitiatedBy = assignment.ReviewInitiatedByEmployeeName,
-                ManagerReviewFinishedDate = assignment.ManagerReviewFinishedDate,
-                ManagerReviewFinishedBy = assignment.ManagerReviewFinishedByEmployeeName,
-                ManagerReviewSummary = assignment.ManagerReviewSummary,
+                ReviewMeetingFinishedDate = assignment.ReviewMeetingFinishedDate,
+                ReviewMeetingFinishedBy = assignment.ReviewMeetingFinishedByEmployeeName,
                 EmployeeReviewConfirmedDate = assignment.EmployeeReviewConfirmedDate,
                 EmployeeReviewConfirmedBy = assignment.EmployeeReviewConfirmedByEmployeeName,
                 EmployeeReviewComments = assignment.EmployeeReviewComments,
@@ -476,9 +475,8 @@ public class ManagersController : BaseController
                 // Review phase
                 ReviewInitiatedDate = assignment.ReviewInitiatedDate,
                 ReviewInitiatedBy = assignment.ReviewInitiatedByEmployeeName,
-                ManagerReviewFinishedDate = assignment.ManagerReviewFinishedDate,
-                ManagerReviewFinishedBy = assignment.ManagerReviewFinishedByEmployeeName,
-                ManagerReviewSummary = assignment.ManagerReviewSummary,
+                ReviewMeetingFinishedDate = assignment.ReviewMeetingFinishedDate,
+                ReviewMeetingFinishedBy = assignment.ReviewMeetingFinishedByEmployeeName,
                 EmployeeReviewConfirmedDate = assignment.EmployeeReviewConfirmedDate,
                 EmployeeReviewConfirmedBy = assignment.EmployeeReviewConfirmedByEmployeeName,
                 EmployeeReviewComments = assignment.EmployeeReviewComments,

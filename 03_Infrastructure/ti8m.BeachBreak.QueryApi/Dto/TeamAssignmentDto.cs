@@ -35,9 +35,8 @@ public class TeamAssignmentDto
     // Review phase
     public DateTime? ReviewInitiatedDate { get; set; }
     public string? ReviewInitiatedBy { get; set; }
-    public DateTime? ManagerReviewFinishedDate { get; set; }
-    public string? ManagerReviewFinishedBy { get; set; }
-    public string? ManagerReviewSummary { get; set; }
+    public DateTime? ReviewMeetingFinishedDate { get; set; }
+    public string? ReviewMeetingFinishedBy { get; set; }
     public DateTime? EmployeeReviewConfirmedDate { get; set; }
     public string? EmployeeReviewConfirmedBy { get; set; }
     public string? EmployeeReviewComments { get; set; }

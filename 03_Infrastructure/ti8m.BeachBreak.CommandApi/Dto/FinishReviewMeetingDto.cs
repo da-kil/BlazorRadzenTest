@@ -9,11 +9,6 @@ namespace ti8m.BeachBreak.CommandApi.Dto;
 public class FinishReviewMeetingDto
 {
     /// <summary>
-    /// Optional summary of the review meeting discussion
-    /// </summary>
-    public string? ReviewSummary { get; set; }
-
-    /// <summary>
     /// Optional version for optimistic concurrency control
     /// </summary>
     public int? ExpectedVersion { get; set; }

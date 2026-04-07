@@ -45,10 +45,9 @@ public class QuestionnaireAssignmentDto
     public DateTime? ReviewInitiatedDate { get; set; }
     public Guid? ReviewInitiatedByEmployeeId { get; set; }
     public string? ReviewInitiatedByEmployeeName { get; set; }
-    public DateTime? ManagerReviewFinishedDate { get; set; }
-    public Guid? ManagerReviewFinishedByEmployeeId { get; set; }
-    public string? ManagerReviewFinishedByEmployeeName { get; set; }
-    public string? ManagerReviewSummary { get; set; }
+    public DateTime? ReviewMeetingFinishedDate { get; set; }
+    public Guid? ReviewMeetingFinishedByEmployeeId { get; set; }
+    public string? ReviewMeetingFinishedByEmployeeName { get; set; }
     public DateTime? EmployeeReviewConfirmedDate { get; set; }
     public Guid? EmployeeReviewConfirmedByEmployeeId { get; set; }
     public string? EmployeeReviewConfirmedByEmployeeName { get; set; }

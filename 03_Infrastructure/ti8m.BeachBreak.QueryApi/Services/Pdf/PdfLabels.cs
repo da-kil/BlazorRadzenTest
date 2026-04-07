@@ -38,7 +38,6 @@ public record PdfLabels(
     string RatedBy,
     string InReviewNotes,
     string SectionPrefix,
-    string ReviewSummary,
     string ManagerFinalNotes,
     string SignOff,
     string Employee,

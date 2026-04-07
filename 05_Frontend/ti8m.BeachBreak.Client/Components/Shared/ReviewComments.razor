@@ -1,45 +1,22 @@
 @using ti8m.BeachBreak.Client.Models
 @using Radzen
 @using Radzen.Blazor
+@inherits CategoryOptimizedTranslatableComponent
 
 @if (ShouldShowComments())
 {
     <div class="review-comments-section mb-4">
         <div class="rc-title mb-3">
             <RadzenIcon Icon="comment" Class="me-1" />
-            <span>Review Comments</span>
+            <span>@T("sections.review-comments")</span>
         </div>
-
-        @if (ShouldShowManagerReviewSummary())
-        {
-            <div class="rc-entry manager-entry mb-3">
-                <div class="rc-meta">
-                    <span class="rc-label rc-label-info">Manager Review Summary</span>
-                    <span class="rc-author">@(Assignment?.ManagerReviewFinishedByEmployeeName ?? "manager") &middot; after finishing the review meeting</span>
-                    @if (Assignment?.ManagerReviewFinishedDate.HasValue == true)
-                    {
-                        <span class="rc-date">@Assignment.ManagerReviewFinishedDate.Value.ToLocalTime().ToString("MMM dd, yyyy HH:mm")</span>
-                    }
-                </div>
-                <div class="rc-body rc-body-info">
-                    @if (!string.IsNullOrWhiteSpace(Assignment?.ManagerReviewSummary))
-                    {
-                        <span style="white-space: pre-wrap;">@Assignment.ManagerReviewSummary</span>
-                    }
-                    else
-                    {
-                        <span class="rc-empty">No review summary provided</span>
-                    }
-                </div>
-            </div>
-        }
 
         @if (ShouldShowEmployeeComments())
         {
             <div class="rc-entry employee-entry mb-3">
                 <div class="rc-meta">
-                    <span class="rc-label rc-label-success">Employee Comments</span>
-                    <span class="rc-author">@Assignment?.EmployeeName &middot; when confirming the review outcome</span>
+                    <span class="rc-label rc-label-success">@T("sections.employee-comments")</span>
+                    <span class="rc-author">@Assignment?.EmployeeName &middot; @T("labels.when-confirming-review-outcome")</span>
                     @if (Assignment?.EmployeeReviewConfirmedDate.HasValue == true)
                     {
                         <span class="rc-date">@Assignment.EmployeeReviewConfirmedDate.Value.ToLocalTime().ToString("MMM dd, yyyy HH:mm")</span>
@@ -52,7 +29,7 @@
                     }
                     else
                     {
-                        <span class="rc-empty">No comments provided</span>
+                        <span class="rc-empty">@T("messages.no-comments-provided")</span>
                     }
                 </div>
             </div>
@@ -62,8 +39,8 @@
         {
             <div class="rc-entry final-entry mb-3">
                 <div class="rc-meta">
-                    <span class="rc-label rc-label-warning">Manager Final Notes</span>
-                    <span class="rc-author">@(Assignment?.FinalizedByEmployeeName ?? "manager") &middot; when finalizing (internal, not visible to employee)</span>
+                    <span class="rc-label rc-label-warning">@T("sections.manager-final-notes")</span>
+                    <span class="rc-author">@(Assignment?.FinalizedByEmployeeName ?? T("labels.manager")) &middot; @T("labels.when-finalizing-internal")</span>
                     @if (Assignment?.FinalizedDate.HasValue == true)
                     {
                         <span class="rc-date">@Assignment.FinalizedDate.Value.ToLocalTime().ToString("MMM dd, yyyy HH:mm")</span>
@@ -76,7 +53,7 @@
                     }
                     else
                     {
-                        <span class="rc-empty">No final notes provided</span>
+                        <span class="rc-empty">@T("messages.no-final-notes-provided")</span>
                     }
                 </div>
             </div>
@@ -86,6 +63,13 @@
 
 
 @code {
+    protected override string[] GetRequiredTranslationCategories() =>
+    [
+        TranslationCategories.Sections,
+        TranslationCategories.Labels,
+        TranslationCategories.Messages
+    ];
+
     [Parameter]
     public QuestionnaireAssignment? Assignment { get; set; }
 
@@ -96,16 +80,6 @@
     public bool IsManager { get; set; }
 
     private bool ShouldShowComments()
-    {
-        if (Assignment == null) return false;
-
-        return Assignment.WorkflowState is
-            WorkflowState.ReviewFinished or
-            WorkflowState.EmployeeReviewConfirmed or
-            WorkflowState.Finalized;
-    }
-
-    private bool ShouldShowManagerReviewSummary()
     {
         if (Assignment == null) return false;
 

@@ -31,7 +31,6 @@ public static class PdfExportMapper
             EmployeeSubmittedByEmployeeName = a.EmployeeSubmittedByEmployeeName,
             EmployeeReviewConfirmedDate = a.EmployeeReviewConfirmedDate,
             EmployeeReviewConfirmedByEmployeeName = a.EmployeeReviewConfirmedByEmployeeName,
-            ManagerReviewSummary = a.ManagerReviewSummary,
             FinalizedDate = a.FinalizedDate,
             FinalizedByEmployeeId = a.FinalizedByEmployeeId,
             FinalizedByEmployeeName = a.FinalizedByEmployeeName,

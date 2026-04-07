@@ -25,49 +25,6 @@
                 </RadzenAlert>
             </div>
 
-            <!-- Review Summary Section -->
-            <div class="review-summary-section">
-                <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">
-                    @T("dialogs.review-summary-optional")
-                </RadzenText>
-                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">
-                    @T("dialogs.summarize-key-points-discussed")
-                </RadzenText>
-
-                @if (!string.IsNullOrWhiteSpace(ExistingReviewSummary))
-                {
-                    <div class="existing-summary-warning mb-3">
-                        <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter" ShowIcon="true">
-                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Start" Gap="0.5rem">
-                                <div>
-                                    <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold mb-1">
-                                        @T("dialogs.existing-summary-loaded")
-                                    </RadzenText>
-                                    <RadzenText TextStyle="TextStyle.Body2">
-                                        @T("dialogs.can-edit-replace-summary")
-                                    </RadzenText>
-                                </div>
-                            </RadzenStack>
-                        </RadzenAlert>
-                    </div>
-                }
-
-                <div class="review-summary-input">
-                    <RadzenTextArea @bind-Value="@reviewSummary"
-                                   Placeholder="@T("placeholders.enter-review-summary-optional")"
-                                   Rows="8"
-                                   Style="width: 100%;"
-                                   MaxLength="5000"
-                                   Class="mb-2" />
-                    <div class="character-count">
-                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
-                            @(reviewSummary?.Length ?? 0) / 5000 @T("forms.characters")
-                        </RadzenText>
-                    </div>
-                </div>
-            </div>
-
-
             <!-- Action Buttons -->
             <div class="form-actions">
                 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.75rem">
@@ -96,16 +53,6 @@
     margin-bottom: 1rem;
 }
 
-.character-count {
-    text-align: right;
-}
-
-.existing-summary-warning {
-    border-left: 4px solid #ffc107;
-    background-color: #fff3cd;
-    padding: 0;
-}
-
 .form-actions {
     border-top: 1px solid var(--border-color);
     padding-top: 1rem;
@@ -126,54 +73,20 @@
             TranslationCategories.Dialogs,
             TranslationCategories.Labels,
             TranslationCategories.Messages,
-            TranslationCategories.Placeholders,
-            TranslationCategories.Buttons,
-            TranslationCategories.Forms
+            TranslationCategories.Buttons
         };
     }
 
-    [Parameter] public string? ExistingReviewSummary { get; set; }
     [Parameter] public bool IsSubmitting { get; set; }
-    [Parameter] public EventCallback<string> OnSubmit { get; set; }
+    [Parameter] public EventCallback OnSubmit { get; set; }
     [Parameter] public EventCallback OnCancel { get; set; }
-
-    private string? reviewSummary;
-
-    protected override void OnInitialized()
-    {
-        // Initialize with existing summary if reopening review
-        reviewSummary = ExistingReviewSummary;
-        base.OnInitialized();
-    }
-
-    protected override void OnParametersSet()
-    {
-        // Update reviewSummary when parameters are set
-        reviewSummary = ExistingReviewSummary;
-        base.OnParametersSet();
-    }
 
     private async Task HandleSubmit()
     {
         if (OnSubmit.HasDelegate)
         {
-            // Combine review summary and notes
-            var combinedReview = BuildCombinedReview();
-            await OnSubmit.InvokeAsync(combinedReview);
+            await OnSubmit.InvokeAsync();
         }
-    }
-
-    private string BuildCombinedReview()
-    {
-        var parts = new System.Collections.Generic.List<string>();
-
-        if (!string.IsNullOrWhiteSpace(reviewSummary))
-        {
-            parts.Add(reviewSummary);
-        }
-
-
-        return string.Join("\n\n", parts);
     }
 
     private async Task HandleCancel()

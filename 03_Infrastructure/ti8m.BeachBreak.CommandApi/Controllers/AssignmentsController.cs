@@ -486,7 +486,6 @@ public class AssignmentsController : BaseController
         var command = new FinishReviewMeetingCommand(
             assignmentId,
             managerId,
-            finishDto.ReviewSummary,
             finishDto.ExpectedVersion);
 
         var result = await commandDispatcher.SendAsync(command);

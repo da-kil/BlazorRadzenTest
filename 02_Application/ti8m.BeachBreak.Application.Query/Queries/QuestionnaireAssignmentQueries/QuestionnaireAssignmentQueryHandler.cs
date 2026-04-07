@@ -156,7 +156,7 @@ public class QuestionnaireAssignmentQueryHandler :
                 rm.EmployeeSubmittedByEmployeeId,
                 rm.ManagerSubmittedByEmployeeId,
                 rm.ReviewInitiatedByEmployeeId,
-                rm.ManagerReviewFinishedByEmployeeId,
+                rm.ReviewMeetingFinishedByEmployeeId,
                 rm.EmployeeReviewConfirmedByEmployeeId,
                 rm.FinalizedByEmployeeId,
                 rm.LastReopenedByEmployeeId
@@ -235,10 +235,10 @@ public class QuestionnaireAssignmentQueryHandler :
                 assignment.ReviewInitiatedByEmployeeName = reviewInitiatedByName;
             }
 
-            if (readModel.ManagerReviewFinishedByEmployeeId.HasValue &&
-                employeeLookup.TryGetValue(readModel.ManagerReviewFinishedByEmployeeId.Value, out var managerReviewFinishedByName))
+            if (readModel.ReviewMeetingFinishedByEmployeeId.HasValue &&
+                employeeLookup.TryGetValue(readModel.ReviewMeetingFinishedByEmployeeId.Value, out var reviewMeetingFinishedByName))
             {
-                assignment.ManagerReviewFinishedByEmployeeName = managerReviewFinishedByName;
+                assignment.ReviewMeetingFinishedByEmployeeName = reviewMeetingFinishedByName;
             }
 
             if (readModel.EmployeeReviewConfirmedByEmployeeId.HasValue &&
@@ -357,9 +357,8 @@ public class QuestionnaireAssignmentQueryHandler :
             // Review phase
             ReviewInitiatedDate = readModel.ReviewInitiatedDate,
             ReviewInitiatedByEmployeeId = readModel.ReviewInitiatedByEmployeeId,
-            ManagerReviewFinishedDate = readModel.ManagerReviewFinishedDate,
-            ManagerReviewFinishedByEmployeeId = readModel.ManagerReviewFinishedByEmployeeId,
-            ManagerReviewSummary = readModel.ManagerReviewSummary,
+            ReviewMeetingFinishedDate = readModel.ReviewMeetingFinishedDate,
+            ReviewMeetingFinishedByEmployeeId = readModel.ReviewMeetingFinishedByEmployeeId,
             EmployeeReviewConfirmedDate = readModel.EmployeeReviewConfirmedDate,
             EmployeeReviewConfirmedByEmployeeId = readModel.EmployeeReviewConfirmedByEmployeeId,
             EmployeeReviewComments = readModel.EmployeeReviewComments,

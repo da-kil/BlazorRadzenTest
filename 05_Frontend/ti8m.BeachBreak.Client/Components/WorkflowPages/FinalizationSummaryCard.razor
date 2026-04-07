@@ -74,21 +74,6 @@
             </div>
         }
 
-        <!-- Manager's Review Summary (for context) -->
-        @if (!string.IsNullOrWhiteSpace(Assignment.ManagerReviewSummary))
-        {
-            <div class="manager-review-summary">
-                <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">
-                    @T("sections.managers-review-summary")
-                </RadzenText>
-                <div class="summary-content">
-                    <RadzenText TextStyle="TextStyle.Body2">
-                        @Assignment.ManagerReviewSummary
-                    </RadzenText>
-                </div>
-            </div>
-        }
-
         <!-- Review Status Information -->
         <div class="review-status">
             <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Shade="Shade.Lighter" ShowIcon="true">

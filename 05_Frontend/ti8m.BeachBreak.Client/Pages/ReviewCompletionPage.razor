@@ -87,7 +87,6 @@ else
             <!-- Review Completion Form -->
             <div class="review-completion-section mt-4">
                 <ReviewCompletionForm
-                    ExistingReviewSummary="@assignment.ManagerReviewSummary"
                     IsSubmitting="@isSubmitting"
                     OnSubmit="@HandleFinishReview"
                     OnCancel="@HandleCancel" />
@@ -204,7 +203,7 @@ else
                HasManagerPrivileges;
     }
 
-    private async Task HandleFinishReview(string reviewSummary)
+    private async Task HandleFinishReview()
     {
         if (assignment == null || isSubmitting)
             return;
@@ -216,8 +215,7 @@ else
 
             var success = await AssignmentService.FinishReviewMeetingAsync(
                 assignment.Id,
-                currentManagerName,
-                string.IsNullOrWhiteSpace(reviewSummary) ? null : reviewSummary);
+                currentManagerName);
 
             if (success)
             {

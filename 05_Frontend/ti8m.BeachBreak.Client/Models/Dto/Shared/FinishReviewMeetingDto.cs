@@ -6,6 +6,5 @@ namespace ti8m.BeachBreak.Client.Models.Dto;
 /// </summary>
 public class FinishReviewMeetingDto
 {
-    public string? ReviewSummary { get; set; }
     public int? ExpectedVersion { get; set; }
 }

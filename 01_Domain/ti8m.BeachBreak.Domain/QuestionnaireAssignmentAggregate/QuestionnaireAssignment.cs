@@ -39,9 +39,8 @@ public partial class QuestionnaireAssignment : AggregateRoot
     // Review phase
     public DateTime? ReviewInitiatedDate { get; private set; }
     public Guid? ReviewInitiatedByEmployeeId { get; private set; }
-    public DateTime? ManagerReviewFinishedDate { get; private set; }
-    public Guid? ManagerReviewFinishedByEmployeeId { get; private set; }
-    public string? ManagerReviewSummary { get; private set; }
+    public DateTime? ReviewMeetingFinishedDate { get; private set; }
+    public Guid? ReviewMeetingFinishedByEmployeeId { get; private set; }
     public DateTime? EmployeeReviewConfirmedDate { get; private set; }
     public Guid? EmployeeReviewConfirmedByEmployeeId { get; private set; }
     public string? EmployeeReviewComments { get; private set; }
@@ -466,7 +465,7 @@ public partial class QuestionnaireAssignment : AggregateRoot
     }
 
 
-    public void FinishReviewMeeting(Guid finishedByEmployeeId, string? reviewSummary)
+    public void FinishReviewMeeting(Guid finishedByEmployeeId)
     {
         if (IsLocked)
             throw new InvalidOperationException("Cannot finish review - questionnaire is finalized");
@@ -474,11 +473,10 @@ public partial class QuestionnaireAssignment : AggregateRoot
         if (WorkflowState != WorkflowState.InReview)
             throw new InvalidOperationException("No active review meeting to finish");
 
-        RaiseEvent(new ManagerReviewMeetingFinished(
+        RaiseEvent(new ReviewMeetingFinished(
             Id,
             DateTime.UtcNow,
-            finishedByEmployeeId,
-            reviewSummary
+            finishedByEmployeeId
         ));
     }
 
@@ -972,12 +970,11 @@ public partial class QuestionnaireAssignment : AggregateRoot
         // This event is for audit trail purposes only
     }
 
-    public void Apply(ManagerReviewMeetingFinished @event)
+    public void Apply(ReviewMeetingFinished @event)
     {
         WorkflowState = WorkflowState.ReviewFinished;
-        ManagerReviewFinishedDate = @event.FinishedDate;
-        ManagerReviewFinishedByEmployeeId = @event.FinishedByEmployeeId;
-        ManagerReviewSummary = @event.ReviewSummary;
+        ReviewMeetingFinishedDate = @event.FinishedDate;
+        ReviewMeetingFinishedByEmployeeId = @event.FinishedByEmployeeId;
     }
 
     public void Apply(EmployeeSignedOffReviewOutcome @event)
@@ -1125,10 +1122,9 @@ public partial class QuestionnaireAssignment : AggregateRoot
         }
         else if (@event.ToState == WorkflowState.InReview)
         {
-            // Reset review confirmation flags and dates, but preserve comments/summary for editing
-            ManagerReviewFinishedDate = null;
-            ManagerReviewFinishedByEmployeeId = null;
-            // NOTE: ManagerReviewSummary is NOT cleared - preserve it so manager can edit
+            // Reset review confirmation flags and dates
+            ReviewMeetingFinishedDate = null;
+            ReviewMeetingFinishedByEmployeeId = null;
             EmployeeReviewConfirmedDate = null;
             EmployeeReviewConfirmedByEmployeeId = null;
             // NOTE: EmployeeReviewComments is NOT cleared - preserve it so it remains visible after reopening

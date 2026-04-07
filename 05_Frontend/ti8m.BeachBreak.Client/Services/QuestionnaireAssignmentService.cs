@@ -304,11 +304,11 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
         }
     }
 
-    public async Task<bool> FinishReviewMeetingAsync(Guid assignmentId, string finishedBy, string? reviewSummary)
+    public async Task<bool> FinishReviewMeetingAsync(Guid assignmentId, string finishedBy)
     {
         try
         {
-            var dto = new FinishReviewMeetingDto { ReviewSummary = reviewSummary };
+            var dto = new FinishReviewMeetingDto();
             var response = await HttpCommandClient.PostAsJsonAsync($"{AssignmentCommandEndpoint}/{assignmentId}/review/finish", dto);
             return response.IsSuccessStatusCode;
         }

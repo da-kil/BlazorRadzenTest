@@ -40,9 +40,8 @@ public class QuestionnaireAssignmentReadModel
     // Review phase
     public DateTime? ReviewInitiatedDate { get; set; }
     public Guid? ReviewInitiatedByEmployeeId { get; set; }
-    public DateTime? ManagerReviewFinishedDate { get; set; }
-    public Guid? ManagerReviewFinishedByEmployeeId { get; set; }
-    public string? ManagerReviewSummary { get; set; }
+    public DateTime? ReviewMeetingFinishedDate { get; set; }
+    public Guid? ReviewMeetingFinishedByEmployeeId { get; set; }
     public DateTime? EmployeeReviewConfirmedDate { get; set; }
     public Guid? EmployeeReviewConfirmedByEmployeeId { get; set; }
     public string? EmployeeReviewComments { get; set; }
@@ -220,12 +219,11 @@ public class QuestionnaireAssignmentReadModel
         // This event is for audit trail purposes only
     }
 
-    public void Apply(ManagerReviewMeetingFinished @event)
+    public void Apply(ReviewMeetingFinished @event)
     {
         WorkflowState = WorkflowState.ReviewFinished;
-        ManagerReviewFinishedDate = @event.FinishedDate;
-        ManagerReviewFinishedByEmployeeId = @event.FinishedByEmployeeId;
-        ManagerReviewSummary = @event.ReviewSummary;
+        ReviewMeetingFinishedDate = @event.FinishedDate;
+        ReviewMeetingFinishedByEmployeeId = @event.FinishedByEmployeeId;
     }
 
     public void Apply(EmployeeConfirmedReviewOutcome @event)
@@ -284,10 +282,9 @@ public class QuestionnaireAssignmentReadModel
         }
         else if (@event.ToState == WorkflowState.InReview)
         {
-            // Reset review confirmation flags and dates, but preserve comments/summary for editing
-            ManagerReviewFinishedDate = null;
-            ManagerReviewFinishedByEmployeeId = null;
-            // NOTE: ManagerReviewSummary is NOT cleared - preserve it so manager can edit
+            // Reset review confirmation flags and dates
+            ReviewMeetingFinishedDate = null;
+            ReviewMeetingFinishedByEmployeeId = null;
             EmployeeReviewConfirmedDate = null;
             EmployeeReviewConfirmedByEmployeeId = null;
             // NOTE: EmployeeReviewComments is NOT cleared - preserve it so it remains visible after reopening

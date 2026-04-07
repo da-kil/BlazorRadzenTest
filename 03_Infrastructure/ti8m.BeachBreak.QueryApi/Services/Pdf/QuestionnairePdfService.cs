@@ -60,7 +60,6 @@ public class QuestionnairePdfService : IQuestionnairePdfService
             RatedBy: Get(lookup, "pdf.rated-by"),
             InReviewNotes: Get(lookup, "pdf.in-review-notes"),
             SectionPrefix: Get(lookup, "pdf.section-prefix"),
-            ReviewSummary: Get(lookup, "pdf.review-summary"),
             ManagerFinalNotes: Get(lookup, "pdf.manager-final-notes"),
             SignOff: Get(lookup, "pdf.sign-off"),
             Employee: Get(lookup, "pdf.employee"),

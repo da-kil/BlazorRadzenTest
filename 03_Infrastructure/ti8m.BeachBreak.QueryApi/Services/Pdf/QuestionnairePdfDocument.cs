@@ -170,9 +170,6 @@ public class QuestionnairePdfDocument
         if (globalNotes.Count > 0)
             BuildInReviewNotes(section, globalNotes);
 
-        if (!string.IsNullOrWhiteSpace(data.Assignment.ManagerReviewSummary))
-            BuildSummarySection(section, labels.ReviewSummary, data.Assignment.ManagerReviewSummary!);
-
         if (!string.IsNullOrWhiteSpace(data.Assignment.ManagerFinalNotes))
             BuildSummarySection(section, labels.ManagerFinalNotes, data.Assignment.ManagerFinalNotes!);
 
