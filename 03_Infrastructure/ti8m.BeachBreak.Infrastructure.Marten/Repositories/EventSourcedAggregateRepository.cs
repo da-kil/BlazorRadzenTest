@@ -23,9 +23,17 @@ public class EventSourcedAggregateRepository : IAggregateRepository
         AggregateRoot aggregateRootEntity,
         CancellationToken cancellationToken)
     {
-        using var session = store.LightweightSession();
+        IList<IDomainEvent> domainEvents = aggregateRootEntity.UncommittedEvents.ToList();
 
-        IEnumerable<IDomainEvent> domainEvents = aggregateRootEntity.UncommittedEvents.ToList();
+        if (domainEvents.Count == 0)
+        {
+            logger.LogDebug(
+                "No uncommitted events for {AggregateType} {AggregateId} — nothing to save",
+                typeof(AggregateRoot).Name, aggregateRootEntity.Id);
+            return;
+        }
+
+        using var session = store.LightweightSession();
 
         // For new aggregates (version == event count), don't specify expected version
         // For existing aggregates, specify the version before new events for optimistic concurrency
