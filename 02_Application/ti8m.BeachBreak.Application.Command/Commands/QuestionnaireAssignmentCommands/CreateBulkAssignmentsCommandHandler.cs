@@ -49,8 +49,6 @@ public class CreateBulkAssignmentsCommandHandler
                     command.TemplateId,
                     command.ProcessType,
                     employeeData.EmployeeId,
-                    employeeData.EmployeeName,
-                    employeeData.EmployeeEmail,
                     assignedDate,
                     command.DueDate,
                     command.AssignedByUserId,

@@ -1,12 +1,8 @@
 using JasperFx;
-using JasperFx.Events.Projections;
 using Marten;
-using Marten.Events.Projections;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using ti8m.BeachBreak.Application.Query.Models;
-using ti8m.BeachBreak.Application.Query.Projections;
 using ti8m.BeachBreak.Core.Infrastructure.Configuration;
 using ti8m.BeachBreak.Core.Infrastructure.Services;
 using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate.Services;
@@ -54,29 +50,14 @@ public static class Extensions
             options.DatabaseSchemaName = "readmodels";
             options.DisableNpgsqlLogging = !builder.Environment.IsDevelopment();
 
-            options.Projections.Snapshot<CategoryReadModel>(SnapshotLifecycle.Inline);
-            options.Projections.Snapshot<QuestionnaireTemplateReadModel>(SnapshotLifecycle.Inline);
-            options.Projections.Snapshot<EmployeeReadModel>(SnapshotLifecycle.Inline);
-            options.Projections.Snapshot<OrganizationReadModel>(SnapshotLifecycle.Inline);
-            options.Projections.Snapshot<QuestionnaireAssignmentReadModel>(SnapshotLifecycle.Inline);
-            options.Projections.Snapshot<QuestionnaireResponseReadModel>(SnapshotLifecycle.Inline);
-            options.Projections.Snapshot<ProjectionReplayReadModel>(SnapshotLifecycle.Inline);
-            options.Projections.Snapshot<FeedbackTemplateReadModel>(SnapshotLifecycle.Inline);
-            options.Projections.Snapshot<EmployeeFeedbackReadModel>(SnapshotLifecycle.Inline);
-
-            // Event-based projections for review change tracking
-            options.Projections.Add<ReviewChangeLogProjection>(ProjectionLifecycle.Inline);
-
-            // Configure UITranslation document storage for multilingual support
-            options.Schema.For<UITranslation>().Index(x => x.Key);  // Index on Key for fast lookup
-            options.Schema.For<UITranslation>().Index(x => x.Category);  // Index on Category for filtering
-
         }).UseLightweightSessions().UseNpgsqlDataSource();
 
         if (builder.Environment.IsDevelopment())
         {
             expr.ApplyAllDatabaseChangesOnStartup();
         }
+
+        builder.Services.AddSingleton<IConfigureMarten, ReviewChangeLogMartenConfiguration>();
 
         // Register domain services
         builder.Services.AddScoped<IQuestionnaireAssignmentService, QuestionnaireAssignmentService>();

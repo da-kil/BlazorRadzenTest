@@ -12,6 +12,4 @@ public class CreateBulkAssignmentsDto
 public class EmployeeAssignmentDto
 {
     public Guid EmployeeId { get; set; }
-    public string EmployeeName { get; set; } = string.Empty;
-    public string EmployeeEmail { get; set; } = string.Empty;
 }

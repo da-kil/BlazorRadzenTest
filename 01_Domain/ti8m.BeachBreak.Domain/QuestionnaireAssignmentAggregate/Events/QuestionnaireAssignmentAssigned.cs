@@ -8,8 +8,6 @@ public record QuestionnaireAssignmentAssigned(
     Guid TemplateId,
     QuestionnaireProcessType ProcessType,
     Guid EmployeeId,
-    string EmployeeName,
-    string EmployeeEmail,
     DateTime AssignedDate,
     DateTime? DueDate,
     Guid AssignedByUserId,

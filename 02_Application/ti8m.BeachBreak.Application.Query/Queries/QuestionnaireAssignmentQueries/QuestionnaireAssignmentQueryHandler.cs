@@ -173,6 +173,7 @@ public class QuestionnaireAssignmentQueryHandler :
 
         // Batch fetch employees if there are any to fetch
         var employeeLookup = new Dictionary<Guid, string>();
+        var employeeEmailLookup = new Dictionary<Guid, string>();
         var employeeInfoLookup = new Dictionary<Guid, (string Role, int OrgNumber)>();
         if (employeeIds.Any())
         {
@@ -180,6 +181,8 @@ public class QuestionnaireAssignmentQueryHandler :
             var relevantEmployees = employees.Where(e => employeeIds.Contains(e.Id)).ToList();
             employeeLookup = relevantEmployees
                 .ToDictionary(e => e.Id, e => $"{e.FirstName} {e.LastName}");
+            employeeEmailLookup = relevantEmployees
+                .ToDictionary(e => e.Id, e => e.EMail);
             employeeInfoLookup = relevantEmployees
                 .ToDictionary(e => e.Id, e => (e.Role, e.OrganizationNumber));
         }
@@ -264,6 +267,12 @@ public class QuestionnaireAssignmentQueryHandler :
                 assignment.AssignedBy = assignedByName;
             }
 
+            if (employeeLookup.TryGetValue(readModel.EmployeeId, out var employeeName))
+                assignment.EmployeeName = employeeName;
+
+            if (employeeEmailLookup.TryGetValue(readModel.EmployeeId, out var employeeEmail))
+                assignment.EmployeeEmail = employeeEmail;
+
             if (employeeInfoLookup.TryGetValue(readModel.EmployeeId, out var employeeInfo))
             {
                 assignment.EmployeeRole = employeeInfo.Role;
@@ -324,8 +333,6 @@ public class QuestionnaireAssignmentQueryHandler :
             TemplateId = readModel.TemplateId,
             ProcessType = readModel.ProcessType,
             EmployeeId = readModel.EmployeeId,
-            EmployeeName = readModel.EmployeeName,
-            EmployeeEmail = readModel.EmployeeEmail,
             AssignedDate = readModel.AssignedDate,
             DueDate = readModel.DueDate,
             StartedDate = readModel.StartedDate,

@@ -188,10 +188,20 @@ public class ReopenQuestionnaireCommandHandler
                 ? $"{reopenedByEmployee.FirstName} {reopenedByEmployee.LastName}"
                 : "System Administrator";
 
+            // Load current employee data for notification
+            var employee = await employeeRepository.LoadAsync<Domain.EmployeeAggregate.Employee>(
+                assignment.EmployeeId,
+                cancellationToken: cancellationToken);
+
+            var employeeEmail = employee?.EMail ?? string.Empty;
+            var employeeName = employee != null
+                ? $"{employee.FirstName} {employee.LastName}"
+                : string.Empty;
+
             // Always notify the employee
             var notificationSent = await notificationService.SendQuestionnaireReopenedNotificationAsync(
-                assignment.EmployeeEmail,
-                assignment.EmployeeName,
+                employeeEmail,
+                employeeName,
                 assignment.Id,
                 oldState.ToString(),
                 newState.ToString(),
@@ -204,16 +214,16 @@ public class ReopenQuestionnaireCommandHandler
             {
                 logger.LogInformation(
                     "Sent reopened notification email to employee {EmployeeName} ({EmployeeEmail}) for assignment {AssignmentId}",
-                    assignment.EmployeeName,
-                    assignment.EmployeeEmail,
+                    employeeName,
+                    employeeEmail,
                     assignment.Id);
             }
             else
             {
                 logger.LogWarning(
                     "Failed to send reopened notification email to employee {EmployeeName} ({EmployeeEmail}) for assignment {AssignmentId}",
-                    assignment.EmployeeName,
-                    assignment.EmployeeEmail,
+                    employeeName,
+                    employeeEmail,
                     assignment.Id);
             }
 

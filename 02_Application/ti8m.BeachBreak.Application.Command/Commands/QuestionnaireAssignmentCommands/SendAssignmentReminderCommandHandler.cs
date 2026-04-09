@@ -7,15 +7,18 @@ namespace ti8m.BeachBreak.Application.Command.Commands.QuestionnaireAssignmentCo
 public class SendAssignmentReminderCommandHandler : ICommandHandler<SendAssignmentReminderCommand, Result>
 {
     private readonly IQuestionnaireAssignmentAggregateRepository repository;
+    private readonly IEmployeeAggregateRepository employeeRepository;
     private readonly INotificationService notificationService;
     private readonly ILogger<SendAssignmentReminderCommandHandler> logger;
 
     public SendAssignmentReminderCommandHandler(
         IQuestionnaireAssignmentAggregateRepository repository,
+        IEmployeeAggregateRepository employeeRepository,
         INotificationService notificationService,
         ILogger<SendAssignmentReminderCommandHandler> logger)
     {
         this.repository = repository;
+        this.employeeRepository = employeeRepository;
         this.notificationService = notificationService;
         this.logger = logger;
     }
@@ -51,10 +54,20 @@ public class SendAssignmentReminderCommandHandler : ICommandHandler<SendAssignme
                 return Result.Fail("Cannot send reminder for completed assignment", 400);
             }
 
+            // Load current employee data for notification
+            var employee = await employeeRepository.LoadAsync<Domain.EmployeeAggregate.Employee>(
+                assignment.EmployeeId,
+                cancellationToken: cancellationToken);
+
+            var employeeEmail = employee?.EMail ?? string.Empty;
+            var employeeName = employee != null
+                ? $"{employee.FirstName} {employee.LastName}"
+                : string.Empty;
+
             // Send notification to employee
             var subject = "Reminder: Questionnaire Assignment";
             var notificationSent = await notificationService.SendNotificationAsync(
-                assignment.EmployeeEmail,
+                employeeEmail,
                 subject,
                 command.Message,
                 cancellationToken);
@@ -62,13 +75,13 @@ public class SendAssignmentReminderCommandHandler : ICommandHandler<SendAssignme
             if (!notificationSent)
             {
                 logger.LogError("Failed to send reminder notification for assignment {AssignmentId} to {Email}",
-                    command.AssignmentId, assignment.EmployeeEmail);
+                    command.AssignmentId, employeeEmail);
                 return Result.Fail("Failed to send reminder notification", 500);
             }
 
             logger.LogInformation(
                 "Reminder sent successfully for assignment {AssignmentId} to {EmployeeName} ({Email}). Message: {Message}",
-                command.AssignmentId, assignment.EmployeeName, assignment.EmployeeEmail, command.Message);
+                command.AssignmentId, employeeName, employeeEmail, command.Message);
 
             return Result.Success("Reminder sent successfully");
         }

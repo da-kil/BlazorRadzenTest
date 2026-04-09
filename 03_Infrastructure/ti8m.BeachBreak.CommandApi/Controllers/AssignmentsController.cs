@@ -67,10 +67,7 @@ public class AssignmentsController : BaseController
         }
 
         var employeeAssignments = bulkAssignmentDto.EmployeeAssignments
-            .Select(e => new EmployeeAssignmentData(
-                e.EmployeeId,
-                e.EmployeeName,
-                e.EmployeeEmail))
+            .Select(e => new EmployeeAssignmentData(e.EmployeeId))
             .ToList();
 
         var command = new CreateBulkAssignmentsCommand(
@@ -118,10 +115,7 @@ public class AssignmentsController : BaseController
         }
 
         var employeeAssignments = bulkAssignmentDto.EmployeeAssignments
-            .Select(e => new EmployeeAssignmentData(
-                e.EmployeeId,
-                e.EmployeeName,
-                e.EmployeeEmail))
+            .Select(e => new EmployeeAssignmentData(e.EmployeeId))
             .ToList();
 
         var command = new CreateBulkAssignmentsCommand(

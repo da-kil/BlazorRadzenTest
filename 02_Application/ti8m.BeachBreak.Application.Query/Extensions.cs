@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Marten;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using ti8m.BeachBreak.Application.Query.Queries;
 
@@ -8,6 +9,8 @@ public static class Extensions
 {
     public static IServiceCollection AddApplication(this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddSingleton<IConfigureMarten, MartenProjectionConfiguration>();
+
         // Use generated source code approach for 10-25x performance improvement
         services.AddGeneratedQueryHandlers();
         services.AddTransient<IQueryDispatcher, Generated.GeneratedQueryDispatcher>();

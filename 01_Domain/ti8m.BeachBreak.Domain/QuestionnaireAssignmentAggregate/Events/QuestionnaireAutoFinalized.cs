@@ -1,4 +1,5 @@
 using ti8m.BeachBreak.Core.Domain.BuildingBlocks;
+using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate.PhaseRecords;
 
 namespace ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate.Events;
 
@@ -9,7 +10,4 @@ namespace ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate.Events;
 /// </summary>
 public record QuestionnaireAutoFinalized(
     Guid AggregateId,
-    DateTime FinalizedDate,
-    Guid FinalizedByEmployeeId,
-    string Reason
-) : IDomainEvent;
+    FinalizationRecord Finalization) : IDomainEvent;
