@@ -1,9 +1,8 @@
 using Microsoft.Extensions.Logging;
-using ti8m.BeachBreak.Core.Infrastructure.Services;
+using ti8m.BeachBreak.Application.Query.Mappers;
 using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
 using ti8m.BeachBreak.Application.Query.Repositories;
-using ti8m.BeachBreak.Application.Query.Mappers;
-using ti8m.BeachBreak.Domain;
+using ti8m.BeachBreak.Core.Application.Services;
 
 namespace ti8m.BeachBreak.Application.Query.Queries.ManagerQueries;
 

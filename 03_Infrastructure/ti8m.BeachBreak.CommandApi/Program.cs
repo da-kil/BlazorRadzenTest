@@ -5,6 +5,7 @@ using Microsoft.Identity.Web;
 using Microsoft.OpenApi;
 using ti8m.BeachBreak.CommandApi.Authorization;
 using ti8m.BeachBreak.CommandApi.Middleware;
+using ti8m.BeachBreak.Core.Application.Contexts;
 using ti8m.BeachBreak.Core.Infrastructure.Authorization;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
 using ti8m.BeachBreak.Infrastructure.Marten;

@@ -1,4 +1,4 @@
-namespace ti8m.BeachBreak.Core.Infrastructure.Services;
+namespace ti8m.BeachBreak.Core.Application.Services;
 
 /// <summary>
 /// Service for managing language context and user language preferences.

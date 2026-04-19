@@ -1,4 +1,3 @@
-using JasperFx.Events.Projections;
 using Marten;
 using Marten.Events.Projections;
 using ti8m.BeachBreak.Application.Query.Models;

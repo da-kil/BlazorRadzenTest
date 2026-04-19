@@ -4,7 +4,7 @@ using ti8m.BeachBreak.Application.Command;
 using ti8m.BeachBreak.Application.Command.Commands;
 using ti8m.BeachBreak.Application.Command.Commands.ProjectionReplayCommands;
 using ti8m.BeachBreak.CommandApi.Dto;
-using ti8m.BeachBreak.Core.Infrastructure.Contexts;
+using ti8m.BeachBreak.Core.Application.Contexts;
 
 namespace ti8m.BeachBreak.CommandApi.Controllers;
 

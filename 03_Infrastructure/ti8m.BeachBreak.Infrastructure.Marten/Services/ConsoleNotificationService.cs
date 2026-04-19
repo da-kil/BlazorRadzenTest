@@ -1,5 +1,5 @@
 using Microsoft.Extensions.Logging;
-using ti8m.BeachBreak.Core.Infrastructure.Services;
+using ti8m.BeachBreak.Core.Application.Services;
 
 namespace ti8m.BeachBreak.Infrastructure.Marten.Services;
 

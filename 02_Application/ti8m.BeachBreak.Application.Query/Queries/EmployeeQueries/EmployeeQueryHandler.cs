@@ -1,9 +1,8 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using ti8m.BeachBreak.Application.Query.Mappers;
 using ti8m.BeachBreak.Application.Query.Repositories;
 using ti8m.BeachBreak.Application.Query.Services;
-using ti8m.BeachBreak.Core.Infrastructure.Contexts;
+using ti8m.BeachBreak.Core.Application.Contexts;
 
 namespace ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
 

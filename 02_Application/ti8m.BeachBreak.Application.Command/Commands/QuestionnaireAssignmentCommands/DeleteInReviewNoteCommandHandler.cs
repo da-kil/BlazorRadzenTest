@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
 using ti8m.BeachBreak.Application.Command.Repositories;
-using ti8m.BeachBreak.Core.Infrastructure.Contexts;
+using ti8m.BeachBreak.Core.Application.Contexts;
 
 namespace ti8m.BeachBreak.Application.Command.Commands.QuestionnaireAssignmentCommands;
 

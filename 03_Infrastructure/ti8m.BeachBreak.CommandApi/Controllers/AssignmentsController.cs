@@ -7,7 +7,7 @@ using ti8m.BeachBreak.Application.Command.Services;
 using ti8m.BeachBreak.CommandApi.Authorization;
 using ti8m.BeachBreak.CommandApi.Dto;
 using ti8m.BeachBreak.CommandApi.Mappers;
-using ti8m.BeachBreak.Core.Infrastructure.Contexts;
+using ti8m.BeachBreak.Core.Application.Contexts;
 
 namespace ti8m.BeachBreak.CommandApi.Controllers;
 

@@ -19,6 +19,7 @@
 	<ItemGroup>
 		<ProjectReference Include="..\..\02_Application\ti8m.BeachBreak.Application.Command\ti8m.BeachBreak.Application.Command.csproj" />
 		<ProjectReference Include="..\..\02_Application\ti8m.BeachBreak.Application.Query\ti8m.BeachBreak.Application.Query.csproj" />
+		<ProjectReference Include="..\..\04_Core\ti8m.BeachBreak.Core.Application\ti8m.BeachBreak.Core.Application.csproj" />
 		<ProjectReference Include="..\..\04_Core\ti8m.BeachBreak.Core.Infrastructure\ti8m.BeachBreak.Core.Infrastructure.csproj" />
 		<ProjectReference Include="..\..\04_Core\ti8m.BeachBreak.Core.SourceGenerators\ti8m.BeachBreak.Core.SourceGenerators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 	</ItemGroup>

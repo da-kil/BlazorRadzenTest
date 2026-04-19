@@ -1,11 +1,11 @@
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ti8m.BeachBreak.Core.Infrastructure.Services;
-using ti8m.BeachBreak.Application.Query.Models;
-using ti8m.BeachBreak.Application.Query.Services;
 using ti8m.BeachBreak.Application.Query.Mappers;
+using ti8m.BeachBreak.Application.Query.Models;
 using ti8m.BeachBreak.Application.Query.Queries;
+using ti8m.BeachBreak.Application.Query.Services;
+using ti8m.BeachBreak.Core.Application.Services;
 
 namespace ti8m.BeachBreak.QueryApi.Controllers;
 

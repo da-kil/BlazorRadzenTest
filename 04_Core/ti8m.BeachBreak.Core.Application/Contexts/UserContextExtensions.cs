@@ -1,4 +1,4 @@
-namespace ti8m.BeachBreak.Core.Infrastructure.Contexts;
+namespace ti8m.BeachBreak.Core.Application.Contexts;
 
 /// <summary>
 /// Extension methods for UserContext to simplify user ID extraction and validation.

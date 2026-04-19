@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using ti8m.BeachBreak.Core.Application.Contexts;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts.Middleware;
 
 namespace ti8m.BeachBreak.Core.Infrastructure.Contexts;

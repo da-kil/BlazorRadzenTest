@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ti8m.BeachBreak.Core.Application.Contexts;
 using ti8m.BeachBreak.Core.Domain.QuestionConfiguration;
-using ti8m.BeachBreak.Core.Infrastructure.Contexts;
 using ti8m.BeachBreak.QueryApi.Dto;
 using ti8m.BeachBreak.QueryApi.Services.Pdf;
 

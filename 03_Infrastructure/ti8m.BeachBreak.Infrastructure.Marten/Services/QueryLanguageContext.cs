@@ -1,9 +1,9 @@
 using Marten;
 using Microsoft.Extensions.Logging;
-using ti8m.BeachBreak.Application.Query.Projections;
 using ti8m.BeachBreak.Application.Query.Mappers;
-using ti8m.BeachBreak.Core.Infrastructure.Services;
-using ti8m.BeachBreak.Core.Infrastructure.Contexts;
+using ti8m.BeachBreak.Application.Query.Projections;
+using ti8m.BeachBreak.Core.Application.Contexts;
+using ti8m.BeachBreak.Core.Application.Services;
 
 namespace ti8m.BeachBreak.Infrastructure.Marten.Services;
 

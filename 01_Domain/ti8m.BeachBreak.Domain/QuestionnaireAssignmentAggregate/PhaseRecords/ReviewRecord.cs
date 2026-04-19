@@ -8,22 +8,20 @@ public class ReviewRecord : ValueObject
     public Guid InitiatedBy { get; private set; }
     public DateTime? FinishedDate { get; private set; }
     public Guid? FinishedBy { get; private set; }
-    public string? Summary { get; private set; }
 
-    public ReviewRecord(DateTime initiatedDate, Guid initiatedBy, DateTime? finishedDate, Guid? finishedBy, string? summary)
+    public ReviewRecord(DateTime initiatedDate, Guid initiatedBy, DateTime? finishedDate, Guid? finishedBy)
     {
         InitiatedDate = initiatedDate;
         InitiatedBy = initiatedBy;
         FinishedDate = finishedDate;
         FinishedBy = finishedBy;
-        Summary = summary;
     }
 
-    public ReviewRecord WithFinished(DateTime finishedDate, Guid finishedBy, string? summary) =>
-        new(InitiatedDate, InitiatedBy, finishedDate, finishedBy, summary);
+    public ReviewRecord WithFinished(DateTime finishedDate, Guid finishedBy) =>
+        new(InitiatedDate, InitiatedBy, finishedDate, finishedBy);
 
     public ReviewRecord ResetFinished() =>
-        new(InitiatedDate, InitiatedBy, null, null, Summary);
+        new(InitiatedDate, InitiatedBy, null, null);
 
     protected override IEnumerable<object?> GetEqualityComponents()
     {
@@ -31,6 +29,5 @@ public class ReviewRecord : ValueObject
         yield return InitiatedBy;
         yield return FinishedDate;
         yield return FinishedBy;
-        yield return Summary;
     }
 }

@@ -38,7 +38,7 @@
                                     @T("labels.manager")
                                 </RadzenText>
                                 <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold mb-0">
-                                    @(Assignment.ManagerReviewFinishedByEmployeeName ?? T("labels.unknown-manager"))
+                                    @(Assignment.ReviewMeetingFinishedByEmployeeName ?? T("labels.unknown-manager"))
                                 </RadzenText>
                             </div>
                         </div>
@@ -50,7 +50,7 @@
                                     @T("labels.review-completed-date")
                                 </RadzenText>
                                 <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold mb-0">
-                                    @(Assignment.ManagerReviewFinishedDate?.ToString("MMM dd, yyyy") ?? T("labels.not-available"))
+                                    @(Assignment.ReviewMeetingFinishedDate?.ToString("MMM dd, yyyy") ?? T("labels.not-available"))
                                 </RadzenText>
                             </div>
                         </div>

@@ -1,7 +1,7 @@
 using ti8m.BeachBreak.Application.Query.Repositories;
 using ti8m.BeachBreak.Application.Query.Services;
+using ti8m.BeachBreak.Core.Application.Contexts;
 using ti8m.BeachBreak.Core.Infrastructure.Authorization;
-using ti8m.BeachBreak.Core.Infrastructure.Contexts;
 
 namespace ti8m.BeachBreak.QueryApi.Authorization;
 

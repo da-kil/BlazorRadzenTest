@@ -9,8 +9,8 @@ using ti8m.BeachBreak.CommandApi.Dto;
 using ti8m.BeachBreak.CommandApi.DTOs;
 using ti8m.BeachBreak.CommandApi.Mappers;
 using ti8m.BeachBreak.CommandApi.Services;
+using ti8m.BeachBreak.Core.Application.Contexts;
 using ti8m.BeachBreak.Core.Domain;
-using ti8m.BeachBreak.Core.Infrastructure.Contexts;
 using CommandResult = ti8m.BeachBreak.Application.Command.Commands.Result;
 
 namespace ti8m.BeachBreak.CommandApi.Controllers;

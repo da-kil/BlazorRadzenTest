@@ -1,16 +1,17 @@
 using Asp.Versioning;
-using PdfSharp.Fonts;
-using ti8m.BeachBreak.QueryApi.Services.Pdf;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Identity.Web;
 using Microsoft.OpenApi;
+using PdfSharp.Fonts;
 using ti8m.BeachBreak.Application.Query;
+using ti8m.BeachBreak.Core.Application.Contexts;
 using ti8m.BeachBreak.Core.Infrastructure.Authorization;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
 using ti8m.BeachBreak.Infrastructure.Marten;
 using ti8m.BeachBreak.QueryApi.Authorization;
 using ti8m.BeachBreak.QueryApi.Middleware;
+using ti8m.BeachBreak.QueryApi.Services.Pdf;
 
 namespace ti8m.BeachBreak.QueryApi;
 

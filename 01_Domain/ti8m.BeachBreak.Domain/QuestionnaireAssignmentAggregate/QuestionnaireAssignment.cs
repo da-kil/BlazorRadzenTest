@@ -908,7 +908,7 @@ public partial class QuestionnaireAssignment : AggregateRoot
 
     public void Apply(ReviewInitiated @event)
     {
-        Review = new ReviewRecord(@event.InitiatedDate, @event.InitiatedByEmployeeId, null, null, null);
+        Review = new ReviewRecord(@event.InitiatedDate, @event.InitiatedByEmployeeId, null, null);
         WorkflowState = WorkflowState.InReview;
     }
 
@@ -928,8 +928,8 @@ public partial class QuestionnaireAssignment : AggregateRoot
     public void Apply(ReviewMeetingFinished @event)
     {
         WorkflowState = WorkflowState.ReviewFinished;
-        Review = (Review ?? new ReviewRecord(DateTime.MinValue, Guid.Empty, null, null, null))
-            .WithFinished(@event.FinishedDate, @event.FinishedByEmployeeId, @event.ReviewSummary);
+        Review = (Review ?? new ReviewRecord(DateTime.MinValue, Guid.Empty, null, null))
+            .WithFinished(@event.FinishedDate, @event.FinishedByEmployeeId);
     }
 
     public void Apply(EmployeeSignedOffReviewOutcome @event)

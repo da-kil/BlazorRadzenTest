@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System.IdentityModel.Tokens.Jwt;
+using ti8m.BeachBreak.Core.Application.Contexts;
 
 namespace ti8m.BeachBreak.Core.Infrastructure.Contexts.Middleware;
 
