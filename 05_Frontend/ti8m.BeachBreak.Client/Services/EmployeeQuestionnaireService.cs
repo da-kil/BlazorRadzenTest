@@ -70,7 +70,6 @@ public class EmployeeQuestionnaireService : BaseApiService, IEmployeeQuestionnai
                 AssignmentId = apiResponseDto.AssignmentId,
                 EmployeeId = apiResponseDto.EmployeeId,
                 StartedDate = apiResponseDto.StartedDate,
-                ProgressPercentage = apiResponseDto.ProgressPercentage,
                 SectionResponses = new Dictionary<Guid, SectionResponse>()
             };
 
@@ -206,24 +205,4 @@ public class EmployeeQuestionnaireService : BaseApiService, IEmployeeQuestionnai
         return await GetAllAsync<QuestionnaireAssignment>($"{EmployeeQueryEndpoint}/me/assignments", queryString);
     }
 
-    public async Task<AssignmentProgress> GetAssignmentProgressAsync(Guid assignmentId)
-    {
-        try
-        {
-            // Use "me" endpoint - backend resolves employee ID from UserContext
-            var response = await HttpQueryClient.GetFromJsonAsync<AssignmentProgress>($"{EmployeeQueryEndpoint}/me/assignments/{assignmentId}/progress");
-            return response ?? new AssignmentProgress { AssignmentId = assignmentId };
-        }
-        catch (Exception ex)
-        {
-            LogError($"Error fetching assignment progress {assignmentId}", ex);
-            return new AssignmentProgress { AssignmentId = assignmentId };
-        }
-    }
-
-    public async Task<List<AssignmentProgress>> GetAllAssignmentProgressAsync()
-    {
-        // Use "me" endpoint - backend resolves employee ID from UserContext
-        return await GetAllAsync<AssignmentProgress>($"{EmployeeQueryEndpoint}/me/assignments/progress");
-    }
 }

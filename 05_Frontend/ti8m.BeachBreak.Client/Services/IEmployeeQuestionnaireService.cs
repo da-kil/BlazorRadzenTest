@@ -80,25 +80,4 @@ public interface IEmployeeQuestionnaireService
     /// Gets assignments filtered by workflow state for the currently authenticated employee.
     /// </summary>
     Task<List<QuestionnaireAssignment>> GetAssignmentsByWorkflowStateAsync(WorkflowState workflowState);
-
-    /// <summary>
-    /// Gets progress information for a specific assignment for the currently authenticated employee.
-    /// </summary>
-    Task<AssignmentProgress> GetAssignmentProgressAsync(Guid assignmentId);
-
-    /// <summary>
-    /// Gets progress information for all assignments for the currently authenticated employee.
-    /// </summary>
-    Task<List<AssignmentProgress>> GetAllAssignmentProgressAsync();
-}
-
-public class AssignmentProgress
-{
-    public Guid AssignmentId { get; set; }
-    public int ProgressPercentage { get; set; }
-    public int TotalQuestions { get; set; }
-    public int AnsweredQuestions { get; set; }
-    public DateTime LastModified { get; set; }
-    public bool IsCompleted { get; set; }
-    public TimeSpan? TimeSpent { get; set; }
 }

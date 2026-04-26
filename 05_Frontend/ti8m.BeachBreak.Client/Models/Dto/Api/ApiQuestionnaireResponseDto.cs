@@ -12,5 +12,4 @@ public class ApiQuestionnaireResponseDto
     public string EmployeeId { get; set; } = string.Empty;
     public DateTime StartedDate { get; set; } = DateTime.Now;
     public Dictionary<Guid, ApiSectionResponseDto> SectionResponses { get; set; } = new();
-    public int ProgressPercentage { get; set; }
 }

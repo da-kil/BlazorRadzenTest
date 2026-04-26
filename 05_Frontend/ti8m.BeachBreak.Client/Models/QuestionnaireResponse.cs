@@ -8,5 +8,4 @@ public class QuestionnaireResponse
     public string EmployeeId { get; set; } = string.Empty;
     public DateTime StartedDate { get; set; } = DateTime.Now;
     public Dictionary<Guid, SectionResponse> SectionResponses { get; set; } = new();
-    public int ProgressPercentage { get; set; }
 }

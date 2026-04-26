@@ -464,7 +464,6 @@ else
         await InitializeResponseAsync();
         await LoadExistingResponse();
         await FilterVisibleSections();
-        UpdateProgress();
 
         // Activate notes overlay for post-review states so discussion notes remain visible
         if (assignment != null && assignment.InReviewNotes.Any() &&
@@ -480,7 +479,6 @@ else
     protected override bool HasStateChanged()
     {
         return StateService.HasParameterChanged(nameof(currentSectionIndex), currentSectionIndex) ||
-               StateService.HasParameterChanged(nameof(response.ProgressPercentage), response.ProgressPercentage) ||
                StateService.HasParameterChanged(nameof(template), template) ||
                StateService.HasParameterChanged(nameof(isSaving), isSaving) ||
                StateService.HasParameterChanged(nameof(isSubmitting), isSubmitting);
@@ -1085,9 +1083,6 @@ else
 
     private async Task HandleQuestionResponseChangedDynamic(QuestionResponse updatedResponse)
     {
-        // Response object is already updated by reference
-        // Trigger validation and progress update
-        UpdateProgress();
         await InvokeAsync(StateHasChanged);
     }
 
@@ -1152,51 +1147,6 @@ else
         return new QuestionResponse { QuestionId = sectionId };
     }
 
-    private ProgressBarStyle GetProgressStyle(int percentage)
-    {
-        return percentage switch
-        {
-            >= 90 => ProgressBarStyle.Success,
-            >= 70 => ProgressBarStyle.Info,
-            >= 50 => ProgressBarStyle.Warning,
-            _ => ProgressBarStyle.Danger
-        };
-    }
-
-    private string GetStatusStyle(int percentage)
-    {
-        var color = percentage switch
-        {
-            >= 90 => "background-color: var(--light-blue); border: 1px solid var(--success-color); color: var(--dark-blue);",
-            >= 70 => "background-color: rgba(0, 230, 200, 0.1); border: 1px solid var(--success-color); color: var(--dark-blue);",
-            >= 50 => "background-color: rgba(230, 191, 127, 0.2); border: 1px solid var(--golden-milk); color: var(--dark-blue);",
-            _ => "background-color: rgba(240, 128, 128, 0.2); border: 1px solid var(--peach-kiss); color: var(--dark-blue);"
-        };
-        return color;
-    }
-
-    private string GetStatusIcon(int percentage)
-    {
-        return percentage switch
-        {
-            >= 90 => "check_circle",
-            >= 70 => "task_alt",
-            >= 50 => "warning",
-            _ => "error"
-        };
-    }
-
-    private string GetStatusText(int percentage)
-    {
-        return percentage switch
-        {
-            >= 90 => "Excellent Achievement",
-            >= 70 => "Good Achievement", 
-            >= 50 => "Partial Achievement",
-            _ => "Below Expectations"
-        };
-    }
-
     // Navigation methods
     private void OnSectionChanged(int newIndex)
     {
@@ -1258,7 +1208,6 @@ else
         if (CanProceedFromCurrentSection() && currentSectionIndex < visibleSections.Count - 1)
         {
             currentSectionIndex++;
-            UpdateProgress();
             if (NotesOverlayService.Assignment != null)
                 NotesOverlayService.SetCurrentSection(currentSection);
             NotifyStateChanged();
@@ -1407,30 +1356,6 @@ else
 
         // Direct sectionData validation (no question iteration needed)
         return IsSectionAnswered(sectionData, sectionQuestionResponse);
-    }
-
-    private void UpdateProgress()
-    {
-        if (template == null) return;
-
-        // Each sectionData IS one question - count all sections (template + custom)
-        var allSections = GetAllSections();
-        var totalSections = allSections.Count;
-        var answeredSections = 0;
-
-        foreach (var sectionData in allSections)
-        {
-            if (response.SectionResponses.TryGetValue(sectionData.Id, out var sectionResponse) &&
-                sectionResponse.RoleResponses.TryGetValue(CurrentResponseRole, out var sectionQuestionResponse))
-            {
-                if (IsSectionAnswered(sectionData, sectionQuestionResponse))
-                {
-                    answeredSections++;
-                }
-            }
-        }
-
-        response.ProgressPercentage = totalSections > 0 ? (int)(answeredSections * 100.0 / totalSections) : 0;
     }
 
     private bool CanSubmit()

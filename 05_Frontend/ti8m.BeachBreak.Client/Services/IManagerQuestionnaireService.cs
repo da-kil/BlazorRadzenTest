@@ -8,7 +8,6 @@ public interface IManagerQuestionnaireService
     Task<List<EmployeeDto>> GetTeamMembersAsync();
     Task<List<QuestionnaireAssignment>> GetTeamAssignmentsAsync();
     Task<List<QuestionnaireAssignment>> GetTeamAssignmentsByWorkflowStateAsync(WorkflowState workflowState);
-    Task<List<AssignmentProgress>> GetTeamProgressAsync();
     Task<TeamAnalytics> GetTeamAnalyticsAsync();
     Task<List<QuestionnaireAssignment>> GetAssignmentsByEmployeeAsync(string employeeId);
     Task<bool> SendReminderAsync(Guid assignmentId, string message);

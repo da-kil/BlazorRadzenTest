@@ -1,4 +1,3 @@
-using Marten;
 using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Query.Projections;
 using ti8m.BeachBreak.Application.Query.Queries;
@@ -7,7 +6,6 @@ using ti8m.BeachBreak.Application.Query.Queries.ProgressQueries;
 using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
 using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireTemplateQueries;
 using ti8m.BeachBreak.Application.Query.Queries.ResponseQueries;
-using ti8m.BeachBreak.Application.Query.Services;
 using ti8m.BeachBreak.Core.Application.Contexts;
 using ti8m.BeachBreak.Core.Domain;
 // ARCHITECTURAL NOTE: QueryApi references Domain for shared enum types only (WorkflowState, CompletionRole, ResponseRole).
@@ -24,21 +22,15 @@ namespace ti8m.BeachBreak.QueryApi.Controllers;
 public class ResponsesController : BaseController
 {
     private readonly IQueryDispatcher _queryDispatcher;
-    private readonly IProgressCalculationService _progressCalculationService;
-    private readonly IDocumentStore _documentStore;
     private readonly ILogger<ResponsesController> _logger;
     private readonly UserContext _userContext;
 
     public ResponsesController(
         IQueryDispatcher queryDispatcher,
-        IProgressCalculationService progressCalculationService,
-        IDocumentStore documentStore,
         ILogger<ResponsesController> logger,
         UserContext userContext)
     {
         _queryDispatcher = queryDispatcher;
-        _progressCalculationService = progressCalculationService;
-        _documentStore = documentStore;
         _logger = logger;
         _userContext = userContext;
     }
@@ -200,34 +192,7 @@ public class ResponsesController : BaseController
             return CreateResponse(Result<QuestionnaireResponseDto>.Fail("You do not have permission to access this response", 403));
         }
 
-        // Calculate progress percentage using ReadModel (has full typed structure)
         var progressPercentage = 0;
-        try
-        {
-            // Load ReadModel to get typed SectionResponses for progress calculation
-            using var session = _documentStore.LightweightSession();
-            var readModel = await session.Query<QuestionnaireResponseReadModel>()
-                .Where(r => r.AssignmentId == assignmentId)
-                .FirstOrDefaultAsync();
-
-            if (readModel != null)
-            {
-                // Get template for progress calculation
-                var templateQuery = new QuestionnaireTemplateQuery(response.TemplateId);
-                var templateResult = await _queryDispatcher.QueryAsync(templateQuery);
-                var template = templateResult?.Payload;
-
-                if (template != null)
-                {
-                    var progress = _progressCalculationService.Calculate(template, readModel.SectionResponses);
-                    progressPercentage = (int)Math.Round(progress.EmployeeProgress);
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to calculate progress for assignment {AssignmentId}, defaulting to 0", assignmentId);
-        }
 
         // Map to DTO with employee-specific section responses
         var dto = new QuestionnaireResponseDto

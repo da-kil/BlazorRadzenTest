@@ -1,9 +1,6 @@
 using Microsoft.Extensions.Logging;
-using ti8m.BeachBreak.Application.Query.Projections;
 using ti8m.BeachBreak.Application.Query.Queries.ProgressQueries;
-using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireTemplateQueries;
 using ti8m.BeachBreak.Application.Query.Repositories;
-using ti8m.BeachBreak.Application.Query.Services;
 using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
 
 namespace ti8m.BeachBreak.Application.Query.Queries.ManagerQueries;
@@ -12,24 +9,15 @@ public class GetTeamProgressQueryHandler : IQueryHandler<GetTeamProgressQuery, R
 {
     private readonly IQuestionnaireAssignmentRepository assignmentRepository;
     private readonly IEmployeeRepository employeeRepository;
-    private readonly IQueryDispatcher queryDispatcher;
-    private readonly IProgressCalculationService progressCalculationService;
-    private readonly IQuestionnaireResponseRepository responseRepository;
     private readonly ILogger<GetTeamProgressQueryHandler> logger;
 
     public GetTeamProgressQueryHandler(
         IQuestionnaireAssignmentRepository assignmentRepository,
         IEmployeeRepository employeeRepository,
-        IQueryDispatcher queryDispatcher,
-        IProgressCalculationService progressCalculationService,
-        IQuestionnaireResponseRepository responseRepository,
         ILogger<GetTeamProgressQueryHandler> logger)
     {
         this.assignmentRepository = assignmentRepository;
         this.employeeRepository = employeeRepository;
-        this.queryDispatcher = queryDispatcher;
-        this.progressCalculationService = progressCalculationService;
-        this.responseRepository = responseRepository;
         this.logger = logger;
     }
 
@@ -39,7 +27,6 @@ public class GetTeamProgressQueryHandler : IQueryHandler<GetTeamProgressQuery, R
 
         try
         {
-            // Get all team members for this manager
             var managerIdStr = query.ManagerId.ToString();
             var teamMembers = await employeeRepository.GetEmployeesByManagerIdAsync(managerIdStr, cancellationToken);
             var teamMemberIds = teamMembers.Where(e => !e.IsDeleted).Select(e => e.Id).ToList();
@@ -50,7 +37,6 @@ public class GetTeamProgressQueryHandler : IQueryHandler<GetTeamProgressQuery, R
                 return Result<IEnumerable<AssignmentProgress>>.Success(Enumerable.Empty<AssignmentProgress>());
             }
 
-            // Get all assignments for team members
             var allProgress = new List<AssignmentProgress>();
             foreach (var employeeId in teamMemberIds)
             {
@@ -58,39 +44,6 @@ public class GetTeamProgressQueryHandler : IQueryHandler<GetTeamProgressQuery, R
 
                 foreach (var assignment in employeeAssignments.Where(a => !a.IsWithdrawn))
                 {
-                    // Calculate actual progress from responses using ReadModel
-                    var progressPercentage = 0;
-                    var totalQuestions = 0;
-                    var answeredQuestions = 0;
-
-                    try
-                    {
-                        // Load ReadModel to get typed SectionResponses for progress calculation
-                        var readModel = await responseRepository.GetByAssignmentIdAsync(assignment.Id, cancellationToken);
-
-                        if (readModel != null)
-                        {
-                            // Get template for progress calculation
-                            var templateQuery = new QuestionnaireTemplateQuery(assignment.TemplateId);
-                            var templateResult = await queryDispatcher.QueryAsync(templateQuery, cancellationToken);
-                            var template = templateResult?.Payload;
-
-                            if (template != null)
-                            {
-                                var progress = progressCalculationService.Calculate(template, readModel.SectionResponses);
-
-                                // Use overall progress for manager view (includes both employee and manager sections)
-                                progressPercentage = (int)Math.Round(progress.OverallProgress);
-                                totalQuestions = progress.EmployeeTotalQuestions + progress.ManagerTotalQuestions;
-                                answeredQuestions = progress.EmployeeAnsweredQuestions + progress.ManagerAnsweredQuestions;
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.LogWarning(ex, "Failed to calculate progress for assignment {AssignmentId}, defaulting to 0", assignment.Id);
-                    }
-
                     var isCompleted = assignment.WorkflowState == WorkflowState.Finalized;
 
                     var timeSpent = assignment.StartedDate.HasValue && assignment.CompletedDate.HasValue
@@ -103,9 +56,9 @@ public class GetTeamProgressQueryHandler : IQueryHandler<GetTeamProgressQuery, R
                     {
                         AssignmentId = assignment.Id,
                         TemplateId = assignment.TemplateId,
-                        ProgressPercentage = progressPercentage,
-                        TotalQuestions = totalQuestions,
-                        AnsweredQuestions = answeredQuestions,
+                        ProgressPercentage = 0,
+                        TotalQuestions = 0,
+                        AnsweredQuestions = 0,
                         LastModified = assignment.StartedDate ?? assignment.AssignedDate,
                         IsCompleted = isCompleted,
                         TimeSpent = timeSpent
