@@ -442,6 +442,8 @@ public class Program
         builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.QuestionHandlers.TextQuestionHandler>();
         builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.QuestionHandlers.GoalQuestionHandler>();
         builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.QuestionHandlers.EmployeeFeedbackQuestionHandler>();
+        builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.QuestionHandlers.MultipleChoiceQuestionHandler>();
+        builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.QuestionHandlers.BinaryQuestionHandler>();
         builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.QuestionHandlers.QuestionHandlerFactory>();
 
         builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.ILanguageContext, ti8m.BeachBreak.Client.Services.ClientLanguageContext>();

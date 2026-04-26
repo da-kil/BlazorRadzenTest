@@ -48,6 +48,14 @@ public class QuestionResponseMappingService
                         new List<PredecessorRating>(),
                         null), // Empty goal response
 
+                QuestionType.MultipleChoice => questionResponse.MultipleChoiceResponse != null
+                    ? new QuestionResponseValue.MultipleChoiceResponse(questionResponse.MultipleChoiceResponse.SelectedKeys)
+                    : new QuestionResponseValue.MultipleChoiceResponse(new List<string>()),
+
+                QuestionType.Binary => questionResponse.BinaryResponse != null
+                    ? new QuestionResponseValue.BinaryResponse(questionResponse.BinaryResponse.SelectedOption)
+                    : new QuestionResponseValue.BinaryResponse(null),
+
                 _ => throw new ArgumentException($"Invalid question type: {questionResponse.QuestionType}")
             };
 
@@ -111,6 +119,16 @@ public class QuestionResponseMappingService
                 )).ToList() ?? new List<PredecessorRating>();
 
                 return new QuestionResponseValue.GoalResponse(goals, predecessorRatings, dto?.PredecessorAssignmentId);
+            }
+            else if (root.TryGetProperty("SelectedKeys", out _))
+            {
+                var dto = JsonSerializer.Deserialize<MultipleChoiceResponseDto>(answerJson);
+                return new QuestionResponseValue.MultipleChoiceResponse(dto?.SelectedKeys ?? new List<string>());
+            }
+            else if (root.TryGetProperty("SelectedOption", out _))
+            {
+                var dto = JsonSerializer.Deserialize<BinaryResponseDto>(answerJson);
+                return new QuestionResponseValue.BinaryResponse(dto?.SelectedOption);
             }
             else
             {

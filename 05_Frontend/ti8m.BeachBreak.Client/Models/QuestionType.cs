@@ -5,5 +5,7 @@ public enum QuestionType
     Assessment = 0,      // 1-4 scale with comments - can be used by employee or manager
     TextQuestion = 1,    // Text area questions like CareerPlanningStep.razor
     Goal = 2,            // Goal definition and rating - requires manager review
-    EmployeeFeedback = 3 // Employee feedback from external sources with configurable evaluation criteria
+    EmployeeFeedback = 3, // Employee feedback from external sources with configurable evaluation criteria
+    MultipleChoice = 4,  // Checkbox list with configurable min/max selections
+    Binary = 5           // Two-option radio button (Yes/No or custom labels)
 }

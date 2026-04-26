@@ -78,6 +78,8 @@ public class QuestionConfigurationJsonConverter : JsonConverter<IQuestionConfigu
             QuestionType.TextQuestion => JsonSerializer.Deserialize<TextQuestionConfiguration>(rawJson, options),
             QuestionType.Goal => JsonSerializer.Deserialize<GoalConfiguration>(rawJson, options),
             QuestionType.EmployeeFeedback => JsonSerializer.Deserialize<EmployeeFeedbackConfiguration>(rawJson, options),
+            QuestionType.MultipleChoice => JsonSerializer.Deserialize<MultipleChoiceConfiguration>(rawJson, options),
+            QuestionType.Binary => JsonSerializer.Deserialize<BinaryConfiguration>(rawJson, options),
             _ => throw new JsonException($"Unknown question type: {questionType}")
         };
     }
@@ -129,6 +131,18 @@ public class QuestionConfigurationJsonConverter : JsonConverter<IQuestionConfigu
             return QuestionType.EmployeeFeedback;
         }
 
+        // MultipleChoiceConfiguration has "Choices" and "MinSelections"
+        if (root.TryGetProperty("Choices", out _) && root.TryGetProperty("MinSelections", out _))
+        {
+            return QuestionType.MultipleChoice;
+        }
+
+        // BinaryConfiguration has "OptionALabelEnglish"
+        if (root.TryGetProperty("OptionALabelEnglish", out _))
+        {
+            return QuestionType.Binary;
+        }
+
         // Last resort: Try to use the QuestionType property if it exists
         if (root.TryGetProperty("QuestionType", out var questionTypeElement) &&
             questionTypeElement.TryGetInt32(out var questionTypeValue))
@@ -161,6 +175,12 @@ public class QuestionConfigurationJsonConverter : JsonConverter<IQuestionConfigu
             case EmployeeFeedbackConfiguration feedback:
                 WriteEmployeeFeedbackConfiguration(writer, feedback);
                 break;
+            case MultipleChoiceConfiguration multipleChoice:
+                WriteMultipleChoiceConfiguration(writer, multipleChoice, options);
+                break;
+            case BinaryConfiguration binary:
+                WriteBinaryConfiguration(writer, binary);
+                break;
             default:
                 throw new JsonException($"Unknown configuration type: {value.GetType()}");
         }
@@ -192,5 +212,22 @@ public class QuestionConfigurationJsonConverter : JsonConverter<IQuestionConfigu
     private void WriteEmployeeFeedbackConfiguration(Utf8JsonWriter writer, EmployeeFeedbackConfiguration feedback)
     {
         writer.WriteBoolean("ShowFeedbackSection", feedback.ShowFeedbackSection);
+    }
+
+    private void WriteMultipleChoiceConfiguration(Utf8JsonWriter writer, MultipleChoiceConfiguration config, JsonSerializerOptions options)
+    {
+        writer.WritePropertyName("Choices");
+        JsonSerializer.Serialize(writer, config.Choices, options);
+        writer.WriteNumber("MinSelections", config.MinSelections);
+        writer.WriteNumber("MaxSelections", config.MaxSelections);
+    }
+
+    private void WriteBinaryConfiguration(Utf8JsonWriter writer, BinaryConfiguration config)
+    {
+        writer.WriteString("OptionALabelEnglish", config.OptionALabelEnglish);
+        writer.WriteString("OptionALabelGerman", config.OptionALabelGerman);
+        writer.WriteString("OptionBLabelEnglish", config.OptionBLabelEnglish);
+        writer.WriteString("OptionBLabelGerman", config.OptionBLabelGerman);
+        writer.WriteBoolean("IsRequired", config.IsRequired);
     }
 }

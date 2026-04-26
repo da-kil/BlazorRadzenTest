@@ -15,4 +15,6 @@ public class QuestionResponseCommandDto
     public TextResponseDto? TextResponse { get; set; }
     public AssessmentResponseDto? AssessmentResponse { get; set; }
     public GoalResponseDto? GoalResponse { get; set; }
+    public MultipleChoiceResponseDto? MultipleChoiceResponse { get; set; }
+    public BinaryResponseDto? BinaryResponse { get; set; }
 }

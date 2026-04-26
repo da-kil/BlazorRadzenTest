@@ -141,12 +141,4 @@ public class QuestionnaireTemplatesController : BaseController
             _ => QueryApi.Dto.TemplateStatus.Draft
         };
     }
-
-    private static IReadOnlyDictionary<Application.Query.Queries.QuestionnaireTemplateQueries.QuestionType, QueryApi.Dto.QuestionType> MapQuestionTypeToDto =>
-        new Dictionary<Application.Query.Queries.QuestionnaireTemplateQueries.QuestionType, QueryApi.Dto.QuestionType>
-        {
-            { Application.Query.Queries.QuestionnaireTemplateQueries.QuestionType.TextQuestion, QueryApi.Dto.QuestionType.TextQuestion },
-            { Application.Query.Queries.QuestionnaireTemplateQueries.QuestionType.Goal, QueryApi.Dto.QuestionType.Goal },
-            { Application.Query.Queries.QuestionnaireTemplateQueries.QuestionType.Assessment, QueryApi.Dto.QuestionType.Assessment }
-        };
 }

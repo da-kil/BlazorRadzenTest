@@ -158,8 +158,8 @@
 
     <!-- Items Area - No padding for consistent flat design -->
     <div class="items-area">
-        @* Only show Items header and Add Item button for Assessment and TextQuestion sections *@
-        @if (Section.Type != QuestionType.Goal && Section.Type != QuestionType.EmployeeFeedback)
+        @* Only show Items header and Add Item button for section types that support user-managed items *@
+        @if (Section.Type != QuestionType.Goal && Section.Type != QuestionType.EmployeeFeedback && Section.Type != QuestionType.Binary)
         {
             <div class="items-header mb-3">
                 <div class="d-flex justify-content-between align-items-center">
@@ -199,7 +199,19 @@
                     OnUpdateTextSectionTitleEnglish="@OnUpdateTextSectionTitleEnglish"
                     OnUpdateTextSectionTitleGerman="@OnUpdateTextSectionTitleGerman"
                     OnUpdateTextSectionDescriptionEnglish="@OnUpdateTextSectionDescriptionEnglish"
-                    OnUpdateTextSectionDescriptionGerman="@OnUpdateTextSectionDescriptionGerman" />
+                    OnUpdateTextSectionDescriptionGerman="@OnUpdateTextSectionDescriptionGerman"
+                    OnMoveChoiceUp="@OnMoveChoiceUp"
+                    OnMoveChoiceDown="@OnMoveChoiceDown"
+                    OnRemoveChoice="@OnRemoveChoice"
+                    OnUpdateChoiceLabelEnglish="@OnUpdateChoiceLabelEnglish"
+                    OnUpdateChoiceLabelGerman="@OnUpdateChoiceLabelGerman"
+                    OnUpdateMinSelections="@OnUpdateMinSelections"
+                    OnUpdateMaxSelections="@OnUpdateMaxSelections"
+                    OnUpdateOptionALabelEnglish="@OnUpdateOptionALabelEnglish"
+                    OnUpdateOptionALabelGerman="@OnUpdateOptionALabelGerman"
+                    OnUpdateOptionBLabelEnglish="@OnUpdateOptionBLabelEnglish"
+                    OnUpdateOptionBLabelGerman="@OnUpdateOptionBLabelGerman"
+                    OnUpdateBinaryIsRequired="@OnUpdateBinaryIsRequired" />
             </div>
         }
         else
@@ -540,6 +552,8 @@
             QuestionType.TextQuestion => Section.Configuration is TextQuestionConfiguration config && config.TextSections.Count > 0,
             QuestionType.Goal => Section.Configuration is GoalConfiguration,
             QuestionType.EmployeeFeedback => Section.Configuration is EmployeeFeedbackConfiguration,
+            QuestionType.MultipleChoice => Section.Configuration is MultipleChoiceConfiguration,
+            QuestionType.Binary => Section.Configuration is BinaryConfiguration,
             _ => false
         };
     }
@@ -654,6 +668,127 @@
     private EventCallback<(int, string)> OnUpdateTextSectionTitleGerman => EventCallback.Factory.Create<(int, string)>(this, args => UpdateTextSectionTitleGerman(args.Item1, args.Item2));
     private EventCallback<(int, string)> OnUpdateTextSectionDescriptionEnglish => EventCallback.Factory.Create<(int, string)>(this, args => UpdateTextSectionDescriptionEnglish(args.Item1, args.Item2));
     private EventCallback<(int, string)> OnUpdateTextSectionDescriptionGerman => EventCallback.Factory.Create<(int, string)>(this, args => UpdateTextSectionDescriptionGerman(args.Item1, args.Item2));
+
+    // Multiple choice item methods
+    private async void UpdateMultipleChoiceChoices(List<ChoiceOption> choices)
+    {
+        if (Section.Configuration is MultipleChoiceConfiguration config)
+        {
+            config.Choices = choices;
+        }
+        StateHasChanged();
+        await OnItemChanged.InvokeAsync();
+    }
+
+    private void MoveChoiceUp(int index)
+    {
+        if (Section.Configuration is not MultipleChoiceConfiguration config) return;
+        var choices = config.Choices.OrderBy(c => c.Order).ToList();
+        if (index > 0 && index < choices.Count)
+        {
+            (choices[index], choices[index - 1]) = (choices[index - 1], choices[index]);
+            for (int i = 0; i < choices.Count; i++) choices[i].Order = i;
+            UpdateMultipleChoiceChoices(choices);
+        }
+    }
+
+    private void MoveChoiceDown(int index)
+    {
+        if (Section.Configuration is not MultipleChoiceConfiguration config) return;
+        var choices = config.Choices.OrderBy(c => c.Order).ToList();
+        if (index >= 0 && index < choices.Count - 1)
+        {
+            (choices[index], choices[index + 1]) = (choices[index + 1], choices[index]);
+            for (int i = 0; i < choices.Count; i++) choices[i].Order = i;
+            UpdateMultipleChoiceChoices(choices);
+        }
+    }
+
+    private void RemoveChoice(int index)
+    {
+        if (Section.Configuration is not MultipleChoiceConfiguration config) return;
+        var choices = config.Choices.OrderBy(c => c.Order).ToList();
+        if (index >= 0 && index < choices.Count)
+        {
+            choices.RemoveAt(index);
+            for (int i = 0; i < choices.Count; i++) choices[i].Order = i;
+            if (config.MaxSelections > choices.Count) config.MaxSelections = choices.Count;
+            UpdateMultipleChoiceChoices(choices);
+        }
+    }
+
+    private void UpdateChoiceLabelEnglish(int index, string value)
+    {
+        if (Section.Configuration is not MultipleChoiceConfiguration config) return;
+        var choices = config.Choices.OrderBy(c => c.Order).ToList();
+        if (index >= 0 && index < choices.Count)
+        {
+            choices[index].LabelEnglish = value ?? "";
+            UpdateMultipleChoiceChoices(choices);
+        }
+    }
+
+    private void UpdateChoiceLabelGerman(int index, string value)
+    {
+        if (Section.Configuration is not MultipleChoiceConfiguration config) return;
+        var choices = config.Choices.OrderBy(c => c.Order).ToList();
+        if (index >= 0 && index < choices.Count)
+        {
+            choices[index].LabelGerman = value ?? "";
+            UpdateMultipleChoiceChoices(choices);
+        }
+    }
+
+    private async void UpdateMinSelections(int value)
+    {
+        if (Section.Configuration is MultipleChoiceConfiguration config)
+        {
+            config.MinSelections = value;
+            StateHasChanged();
+            await OnItemChanged.InvokeAsync();
+        }
+    }
+
+    private async void UpdateMaxSelections(int value)
+    {
+        if (Section.Configuration is MultipleChoiceConfiguration config)
+        {
+            config.MaxSelections = value;
+            StateHasChanged();
+            await OnItemChanged.InvokeAsync();
+        }
+    }
+
+    private EventCallback<int> OnMoveChoiceUp => EventCallback.Factory.Create<int>(this, index => MoveChoiceUp(index));
+    private EventCallback<int> OnMoveChoiceDown => EventCallback.Factory.Create<int>(this, index => MoveChoiceDown(index));
+    private EventCallback<int> OnRemoveChoice => EventCallback.Factory.Create<int>(this, index => RemoveChoice(index));
+    private EventCallback<(int, string)> OnUpdateChoiceLabelEnglish => EventCallback.Factory.Create<(int, string)>(this, args => UpdateChoiceLabelEnglish(args.Item1, args.Item2));
+    private EventCallback<(int, string)> OnUpdateChoiceLabelGerman => EventCallback.Factory.Create<(int, string)>(this, args => UpdateChoiceLabelGerman(args.Item1, args.Item2));
+    private EventCallback<int> OnUpdateMinSelections => EventCallback.Factory.Create<int>(this, value => UpdateMinSelections(value));
+    private EventCallback<int> OnUpdateMaxSelections => EventCallback.Factory.Create<int>(this, value => UpdateMaxSelections(value));
+
+    // Binary question methods
+    private async void UpdateBinaryProperty(Action<BinaryConfiguration> update)
+    {
+        if (Section.Configuration is BinaryConfiguration config)
+        {
+            update(config);
+            StateHasChanged();
+            await OnItemChanged.InvokeAsync();
+        }
+    }
+
+    private void UpdateOptionALabelEnglish(string value) => UpdateBinaryProperty(c => c.OptionALabelEnglish = value ?? "Yes");
+    private void UpdateOptionALabelGerman(string value) => UpdateBinaryProperty(c => c.OptionALabelGerman = value ?? "Ja");
+    private void UpdateOptionBLabelEnglish(string value) => UpdateBinaryProperty(c => c.OptionBLabelEnglish = value ?? "No");
+    private void UpdateOptionBLabelGerman(string value) => UpdateBinaryProperty(c => c.OptionBLabelGerman = value ?? "Nein");
+    private void UpdateBinaryIsRequired(bool value) => UpdateBinaryProperty(c => c.IsRequired = value);
+
+    private EventCallback<string> OnUpdateOptionALabelEnglish => EventCallback.Factory.Create<string>(this, value => UpdateOptionALabelEnglish(value));
+    private EventCallback<string> OnUpdateOptionALabelGerman => EventCallback.Factory.Create<string>(this, value => UpdateOptionALabelGerman(value));
+    private EventCallback<string> OnUpdateOptionBLabelEnglish => EventCallback.Factory.Create<string>(this, value => UpdateOptionBLabelEnglish(value));
+    private EventCallback<string> OnUpdateOptionBLabelGerman => EventCallback.Factory.Create<string>(this, value => UpdateOptionBLabelGerman(value));
+    private EventCallback<bool> OnUpdateBinaryIsRequired => EventCallback.Factory.Create<bool>(this, value => UpdateBinaryIsRequired(value));
 
     public class RoleOption
     {

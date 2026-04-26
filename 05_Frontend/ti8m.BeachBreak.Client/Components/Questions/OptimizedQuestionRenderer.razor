@@ -21,6 +21,12 @@
         case QuestionType.EmployeeFeedback:
             @RenderEmployeeFeedbackOptimized()
             break;
+        case QuestionType.MultipleChoice:
+            @RenderMultipleChoiceOptimized()
+            break;
+        case QuestionType.Binary:
+            @RenderBinaryOptimized()
+            break;
         default:
             @RenderUnsupportedQuestion()
             break;
@@ -113,6 +119,8 @@
             TextResponseDataDto textData => $"text|{string.Join(",", textData.TextSections)}",
             AssessmentResponseDataDto assessmentData => $"assessment|{string.Join(",", assessmentData.Evaluations.Select(kvp => $"{kvp.Key}:{kvp.Value.Rating}:{kvp.Value.Comment}"))}",
             GoalResponseDataDto goalData => $"goal|{goalData.Goals.Count}|{goalData.PredecessorRatings.Count}|{goalData.PredecessorAssignmentId}|{string.Join(",", goalData.Goals.Select(g => $"{g.GoalId}:{g.ObjectiveDescription}:{g.WeightingPercentage}"))}",
+            MultipleChoiceResponseDataDto mcData => $"multiplechoice|{string.Join(",", mcData.SelectedKeys)}",
+            BinaryResponseDataDto binaryData => $"binary|{binaryData.SelectedOption}",
             _ => Response.ResponseData.GetType().Name
         };
 
@@ -160,6 +168,24 @@
                                           HideHeader="@HideHeader"
                                           AssignmentId="@AssignmentId"
                                           AllowLinking="@AllowLinking" />
+    };
+
+    private RenderFragment RenderMultipleChoiceOptimized() => __builder =>
+    {
+        <OptimizedMultipleChoiceQuestion Section="@Section"
+                                        Response="@Response"
+                                        OnResponseChanged="@OnResponseChanged"
+                                        IsReadOnly="@IsReadOnly"
+                                        HideHeader="@HideHeader" />
+    };
+
+    private RenderFragment RenderBinaryOptimized() => __builder =>
+    {
+        <OptimizedBinaryQuestion Section="@Section"
+                                Response="@Response"
+                                OnResponseChanged="@OnResponseChanged"
+                                IsReadOnly="@IsReadOnly"
+                                HideHeader="@HideHeader" />
     };
 
     private RenderFragment RenderUnsupportedQuestion() => __builder =>

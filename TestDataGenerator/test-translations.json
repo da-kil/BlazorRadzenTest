@@ -644,6 +644,20 @@
         "createdDate":  "2025-12-09T12:00:00.0000000+00:00"
     },
     {
+        "key":  "buttons.multiple-choice",
+        "german":  "Mehrfachauswahl",
+        "english":  "Multiple Choice",
+        "category":  "buttons",
+        "createdDate":  "2026-04-26T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "buttons.binary",
+        "german":  "Ja/Nein",
+        "english":  "Binary",
+        "category":  "buttons",
+        "createdDate":  "2026-04-26T00:00:00.0000000+00:00"
+    },
+    {
         "key":  "buttons.undo",
         "german":  "Rückgängig",
         "english":  "Undo",
@@ -4837,6 +4851,20 @@
         "category":  "question-types"
     },
     {
+        "key":  "question-types.multiple-choice",
+        "german":  "Mehrfachauswahl",
+        "english":  "Multiple Choice",
+        "category":  "question-types",
+        "createdDate":  "2026-04-26T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "question-types.binary",
+        "german":  "Ja/Nein",
+        "english":  "Binary",
+        "category":  "question-types",
+        "createdDate":  "2026-04-26T00:00:00.0000000+00:00"
+    },
+    {
         "key":  "question-types.goal-achievement",
         "german":  "Zielerreichung",
         "english":  "Goal Achievement",
@@ -5689,6 +5717,20 @@
         "english":  "Add Text Question Section",
         "category":  "tooltips",
         "createdDate":  "2025-12-09T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "tooltips.add-multiple-choice-section",
+        "german":  "Mehrfachauswahl-Abschnitt hinzufügen",
+        "english":  "Add Multiple Choice Section",
+        "category":  "tooltips",
+        "createdDate":  "2026-04-26T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "tooltips.add-binary-section",
+        "german":  "Ja/Nein-Abschnitt hinzufügen",
+        "english":  "Add Binary Section",
+        "category":  "tooltips",
+        "createdDate":  "2026-04-26T00:00:00.0000000+00:00"
     },
     {
         "key":  "tooltips.cancel-assignment",

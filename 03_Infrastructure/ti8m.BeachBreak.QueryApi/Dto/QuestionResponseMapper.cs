@@ -55,6 +55,14 @@ public static class QuestionResponseMapper
                 }).ToList(),
                 PredecessorAssignmentId = goalResponse.PredecessorAssignmentId
             },
+            QuestionResponseValue.MultipleChoiceResponse mcResponse => new MultipleChoiceResponseDataDto
+            {
+                SelectedKeys = mcResponse.SelectedKeys?.ToList() ?? new List<string>()
+            },
+            QuestionResponseValue.BinaryResponse binaryResponse => new BinaryResponseDataDto
+            {
+                SelectedOption = binaryResponse.SelectedOption
+            },
             _ => new TextResponseDataDto { TextSections = [responseValue.ToString() ?? string.Empty] }
         };
     }
@@ -69,6 +77,8 @@ public static class QuestionResponseMapper
             QuestionResponseValue.TextResponse => QuestionType.TextQuestion,
             QuestionResponseValue.AssessmentResponse => QuestionType.Assessment,
             QuestionResponseValue.GoalResponse => QuestionType.Goal,
+            QuestionResponseValue.MultipleChoiceResponse => QuestionType.MultipleChoice,
+            QuestionResponseValue.BinaryResponse => QuestionType.Binary,
             _ => QuestionType.TextQuestion // Default fallback
         };
     }

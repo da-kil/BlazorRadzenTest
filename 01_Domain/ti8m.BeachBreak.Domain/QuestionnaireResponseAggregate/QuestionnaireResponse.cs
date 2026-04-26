@@ -6,6 +6,8 @@ using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.Events;
 using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.ValueObjects;
 using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 using AssessmentConfiguration = ti8m.BeachBreak.Core.Domain.QuestionConfiguration.AssessmentConfiguration;
+using BinaryConfiguration = ti8m.BeachBreak.Core.Domain.QuestionConfiguration.BinaryConfiguration;
+using MultipleChoiceConfiguration = ti8m.BeachBreak.Core.Domain.QuestionConfiguration.MultipleChoiceConfiguration;
 using TextQuestionConfiguration = ti8m.BeachBreak.Core.Domain.QuestionConfiguration.TextQuestionConfiguration;
 
 namespace ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate;
@@ -196,6 +198,8 @@ public partial class QuestionnaireResponse : AggregateRoot
             QuestionType.Assessment => IsAssessmentComplete(section, response),
             QuestionType.TextQuestion => IsTextQuestionComplete(section, response),
             QuestionType.Goal => true, // Goal sections never block completion (can be added during review)
+            QuestionType.MultipleChoice => IsMultipleChoiceComplete(section, response),
+            QuestionType.Binary => IsBinaryComplete(section, response),
             _ => true
         };
     }
@@ -285,6 +289,36 @@ public partial class QuestionnaireResponse : AggregateRoot
         return requiredEvaluations.All(e =>
             assessmentResponse.Evaluations.TryGetValue(e.Key, out var evaluationResponse) &&
             evaluationResponse.Rating > 0);
+    }
+
+    private bool IsMultipleChoiceComplete(QuestionnaireTemplateAggregate.QuestionSection section, QuestionResponseValue response)
+    {
+        if (response is not QuestionResponseValue.MultipleChoiceResponse mcResponse)
+            return false;
+
+        if (section.Configuration is not MultipleChoiceConfiguration config)
+            return true;
+
+        // MinSelections == 0 means optional — not required for completion
+        if (config.MinSelections == 0)
+            return true;
+
+        var count = mcResponse.SelectedKeys.Count;
+        return count >= config.MinSelections && count <= config.MaxSelections;
+    }
+
+    private bool IsBinaryComplete(QuestionnaireTemplateAggregate.QuestionSection section, QuestionResponseValue response)
+    {
+        if (response is not QuestionResponseValue.BinaryResponse binaryResponse)
+            return false;
+
+        if (section.Configuration is not BinaryConfiguration config)
+            return true;
+
+        if (!config.IsRequired)
+            return true;
+
+        return binaryResponse.SelectedOption != null;
     }
 
     private List<EvaluationItem> GetEvaluationsFromConfiguration(QuestionSection section)

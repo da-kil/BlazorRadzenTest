@@ -14,14 +14,18 @@ public class QuestionHandlerFactory
         AssessmentQuestionHandler assessmentHandler,
         TextQuestionHandler textQuestionHandler,
         GoalQuestionHandler goalQuestionHandler,
-        EmployeeFeedbackQuestionHandler employeeFeedbackHandler)
+        EmployeeFeedbackQuestionHandler employeeFeedbackHandler,
+        MultipleChoiceQuestionHandler multipleChoiceHandler,
+        BinaryQuestionHandler binaryHandler)
     {
         handlers = new Dictionary<QuestionType, IQuestionTypeHandler>
         {
             { QuestionType.Assessment, assessmentHandler },
             { QuestionType.TextQuestion, textQuestionHandler },
             { QuestionType.Goal, goalQuestionHandler },
-            { QuestionType.EmployeeFeedback, employeeFeedbackHandler }
+            { QuestionType.EmployeeFeedback, employeeFeedbackHandler },
+            { QuestionType.MultipleChoice, multipleChoiceHandler },
+            { QuestionType.Binary, binaryHandler }
         };
     }
 

@@ -1,0 +1,257 @@
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Models.DTOs
+@using ti8m.BeachBreak.Client.Components.Shared
+@inherits CategoryOptimizedTranslatableComponent
+
+@if (!HideHeader)
+{
+    <div class="multiple-choice-question">
+        <header class="question-header">
+            <h3 class="question-title">
+                @Section.GetLocalizedTitleWithFallback(CurrentLanguage)
+                <EditedDuringReviewBadge Response="@Response" />
+            </h3>
+
+            @{
+                var questionDescription = Section.GetLocalizedDescriptionWithFallback(CurrentLanguage);
+            }
+            @if (!string.IsNullOrWhiteSpace(questionDescription))
+            {
+                <p class="question-description">@questionDescription</p>
+            }
+        </header>
+
+        @RenderChoices()
+    </div>
+}
+else
+{
+    @RenderChoices()
+}
+
+@code {
+    [Parameter, EditorRequired] public QuestionSection Section { get; set; } = default!;
+    [Parameter, EditorRequired] public QuestionResponse Response { get; set; } = default!;
+    [Parameter] public EventCallback<QuestionResponse> OnResponseChanged { get; set; }
+    [Parameter] public bool IsReadOnly { get; set; } = false;
+    [Parameter] public bool HideHeader { get; set; } = false;
+
+    protected override string[] GetRequiredTranslationCategories() =>
+    [
+        TranslationCategories.Questions,
+        TranslationCategories.Labels,
+        TranslationCategories.Messages
+    ];
+
+    private List<ChoiceOption> choices = new();
+    private int minSelections = 1;
+    private int maxSelections = 1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        LoadConfiguration();
+        await base.OnInitializedAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (StateService.HasParameterChanged(nameof(Section), Section))
+        {
+            LoadConfiguration();
+        }
+        await base.OnParametersSetAsync();
+    }
+
+    private void LoadConfiguration()
+    {
+        if (Section.Configuration is MultipleChoiceConfiguration config)
+        {
+            choices = config.Choices.OrderBy(c => c.Order).ToList();
+            minSelections = config.MinSelections;
+            maxSelections = config.MaxSelections;
+        }
+        else
+        {
+            choices = new List<ChoiceOption>();
+            minSelections = 1;
+            maxSelections = 1;
+        }
+    }
+
+    protected override bool HasStateChanged()
+    {
+        var responseDataHash = Response.ResponseData?.GetHashCode() ?? 0;
+        return StateService.HasParameterChanged(nameof(Response.ResponseData), responseDataHash) ||
+               StateService.HasParameterChanged(nameof(choices), choices.Count);
+    }
+
+    private MultipleChoiceResponseDataDto GetOrCreateResponseData()
+    {
+        if (Response.ResponseData is not MultipleChoiceResponseDataDto data)
+        {
+            data = new MultipleChoiceResponseDataDto();
+            Response.ResponseData = data;
+        }
+        return data;
+    }
+
+    private bool IsKeySelected(string key) =>
+        GetOrCreateResponseData().SelectedKeys.Contains(key);
+
+    private bool IsCheckboxDisabled(string key)
+    {
+        if (IsReadOnly) return true;
+        var data = GetOrCreateResponseData();
+        // Disable unchecked checkboxes when max is reached
+        return !data.SelectedKeys.Contains(key) && data.SelectedKeys.Count >= maxSelections;
+    }
+
+    private async Task OnChoiceChanged(string key, bool isChecked)
+    {
+        if (IsReadOnly) return;
+
+        var data = GetOrCreateResponseData();
+        if (isChecked)
+        {
+            if (!data.SelectedKeys.Contains(key) && data.SelectedKeys.Count < maxSelections)
+                data.SelectedKeys.Add(key);
+        }
+        else
+        {
+            data.SelectedKeys.Remove(key);
+        }
+
+        Response.LastModified = DateTime.Now;
+
+        if (OnResponseChanged.HasDelegate)
+            await OnResponseChanged.InvokeAsync(Response);
+    }
+
+    private RenderFragment RenderChoices() => __builder =>
+    {
+        var data = GetOrCreateResponseData();
+        var selectionCount = data.SelectedKeys.Count;
+
+        <div class="choice-list">
+            @if (!choices.Any())
+            {
+                <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Class="mb-3">
+                    <RadzenText TextStyle="TextStyle.Body2">
+                        <strong>Configuration Error:</strong> No choices are defined for this question.
+                    </RadzenText>
+                </RadzenAlert>
+            }
+            else
+            {
+                @foreach (var choice in choices)
+                {
+                    var choiceKey = choice.Key;
+                    var choiceLabel = choice.GetLocalizedLabelWithFallback(CurrentLanguage == Language.German ? "de" : "en");
+                    var isSelected = data.SelectedKeys.Contains(choiceKey);
+                    var isDisabled = IsCheckboxDisabled(choiceKey);
+
+                    <div class="choice-item @(isSelected ? "choice-selected" : "") @(isDisabled ? "choice-disabled" : "")"
+                         @key="@choiceKey">
+                        <RadzenCheckBox TValue="bool"
+                                       Value="@isSelected"
+                                       ValueChanged="@((bool v) => OnChoiceChanged(choiceKey, v))"
+                                       Name="@($"choice_{Section.Id}_{choiceKey}")"
+                                       Disabled="@isDisabled" />
+                        <RadzenLabel Text="@choiceLabel"
+                                    Component="@($"choice_{Section.Id}_{choiceKey}")"
+                                    Class="choice-label ms-2" />
+                    </div>
+                }
+
+                @if (minSelections > 0)
+                {
+                    <div class="selection-hint @(selectionCount < minSelections ? "hint-error" : "hint-ok")">
+                        @if (selectionCount < minSelections)
+                        {
+                            <RadzenIcon Icon="info" Class="me-1" />
+                            <span>Please select at least @minSelections option@(minSelections > 1 ? "s" : "") (@selectionCount / @maxSelections selected)</span>
+                        }
+                        else
+                        {
+                            <RadzenIcon Icon="check_circle" Class="me-1" />
+                            <span>@selectionCount / @maxSelections selected</span>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="selection-hint hint-optional">
+                        <RadzenIcon Icon="info" Class="me-1" />
+                        <span>Optional — select up to @maxSelections option@(maxSelections > 1 ? "s" : "") (@selectionCount selected)</span>
+                    </div>
+                }
+            }
+        </div>
+    };
+}
+
+<style>
+    .multiple-choice-question {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .choice-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .choice-item {
+        display: flex;
+        align-items: center;
+        padding: 0.625rem 0.875rem;
+        border: 1px solid var(--rz-base-300);
+        border-radius: 0.375rem;
+        background: var(--rz-base-100);
+        cursor: pointer;
+        transition: border-color 0.15s, background 0.15s;
+    }
+
+    .choice-item:hover:not(.choice-disabled) {
+        border-color: var(--rz-primary);
+        background: var(--rz-primary-lighter);
+    }
+
+    .choice-selected {
+        border-color: var(--rz-primary);
+        background: var(--rz-primary-lighter);
+    }
+
+    .choice-disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .choice-label {
+        cursor: pointer;
+        font-size: 0.9375rem;
+        color: var(--rz-text-color);
+    }
+
+    .selection-hint {
+        display: flex;
+        align-items: center;
+        font-size: 0.8125rem;
+        padding: 0.375rem 0;
+    }
+
+    .hint-error {
+        color: var(--rz-danger);
+    }
+
+    .hint-ok {
+        color: var(--rz-success);
+    }
+
+    .hint-optional {
+        color: var(--rz-text-muted);
+    }
+</style>

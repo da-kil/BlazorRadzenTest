@@ -148,6 +148,42 @@ public class QuestionnaireValidationService
                     }
                 }
             }
+            else if (section.Type == QuestionType.MultipleChoice)
+            {
+                if (section.Configuration is not MultipleChoiceConfiguration mcConfig)
+                {
+                    validationErrors.Add($"'{sectionName}' has MultipleChoice type but invalid configuration");
+                    continue;
+                }
+
+                if (!mcConfig.Choices.Any())
+                {
+                    validationErrors.Add($"'{sectionName}' must have at least one choice option");
+                }
+                else
+                {
+                    for (int i = 0; i < mcConfig.Choices.Count; i++)
+                    {
+                        if (string.IsNullOrWhiteSpace(mcConfig.Choices[i].LabelEnglish) &&
+                            string.IsNullOrWhiteSpace(mcConfig.Choices[i].LabelGerman))
+                        {
+                            validationErrors.Add($"Choice {i + 1} in '{sectionName}' requires a label (in English or German)");
+                        }
+                    }
+
+                    if (mcConfig.MaxSelections < mcConfig.MinSelections)
+                        validationErrors.Add($"'{sectionName}': Max selections ({mcConfig.MaxSelections}) must be >= min selections ({mcConfig.MinSelections})");
+
+                    if (mcConfig.MaxSelections > mcConfig.Choices.Count)
+                        validationErrors.Add($"'{sectionName}': Max selections ({mcConfig.MaxSelections}) cannot exceed number of choices ({mcConfig.Choices.Count})");
+                }
+            }
+            else if (section.Type == QuestionType.Binary)
+            {
+                if (section.Configuration is not BinaryConfiguration)
+                    validationErrors.Add($"'{sectionName}' has Binary type but invalid configuration");
+                // Binary configuration is structurally always valid — labels have defaults
+            }
         }
 
         return validationErrors;

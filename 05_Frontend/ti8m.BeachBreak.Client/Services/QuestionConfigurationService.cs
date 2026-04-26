@@ -173,6 +173,22 @@ public class QuestionConfigurationService
     }
 
     /// <summary>
+    /// Gets choices from a multiple choice question configuration.
+    /// </summary>
+    public List<ChoiceOption> GetChoices(QuestionSection question)
+    {
+        return question.Configuration is MultipleChoiceConfiguration config ? config.Choices : new List<ChoiceOption>();
+    }
+
+    /// <summary>
+    /// Gets the binary configuration from a binary question.
+    /// </summary>
+    public BinaryConfiguration? GetBinaryConfiguration(QuestionSection question)
+    {
+        return question.Configuration as BinaryConfiguration;
+    }
+
+    /// <summary>
     /// Validates if a question has valid configuration based on its type
     /// </summary>
     public bool HasValidConfiguration(QuestionSection question)
@@ -182,6 +198,8 @@ public class QuestionConfigurationService
             QuestionType.Assessment => GetEvaluations(question).Any(),
             QuestionType.Goal => true, // Goal questions don't require template items - items added dynamically during in-progress
             QuestionType.TextQuestion => GetTextSections(question).Any(),
+            QuestionType.MultipleChoice => GetChoices(question).Any(),
+            QuestionType.Binary => true, // Binary always has valid configuration (labels have defaults)
             _ => false
         };
     }
@@ -196,6 +214,8 @@ public class QuestionConfigurationService
             QuestionType.Assessment => GetEvaluations(question).Count,
             QuestionType.Goal => 0, // Goal questions don't have template items - items added dynamically during in-progress
             QuestionType.TextQuestion => GetTextSections(question).Count,
+            QuestionType.MultipleChoice => GetChoices(question).Count,
+            QuestionType.Binary => 0, // Always exactly 2 options, no user-defined items
             _ => 0
         };
     }

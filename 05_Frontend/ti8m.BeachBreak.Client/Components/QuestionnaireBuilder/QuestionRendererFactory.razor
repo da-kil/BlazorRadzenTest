@@ -44,6 +44,30 @@
             Section="@Section" />
         break;
 
+    case QuestionType.MultipleChoice:
+        <MultipleChoiceQuestionRenderer
+            Section="@Section"
+            Template="@Template"
+            OnMoveChoiceUp="@OnMoveChoiceUp"
+            OnMoveChoiceDown="@OnMoveChoiceDown"
+            OnRemoveChoice="@OnRemoveChoice"
+            OnUpdateChoiceLabelEnglish="@OnUpdateChoiceLabelEnglish"
+            OnUpdateChoiceLabelGerman="@OnUpdateChoiceLabelGerman"
+            OnUpdateMinSelections="@OnUpdateMinSelections"
+            OnUpdateMaxSelections="@OnUpdateMaxSelections" />
+        break;
+
+    case QuestionType.Binary:
+        <BinaryQuestionRenderer
+            Section="@Section"
+            Template="@Template"
+            OnUpdateOptionALabelEnglish="@OnUpdateOptionALabelEnglish"
+            OnUpdateOptionALabelGerman="@OnUpdateOptionALabelGerman"
+            OnUpdateOptionBLabelEnglish="@OnUpdateOptionBLabelEnglish"
+            OnUpdateOptionBLabelGerman="@OnUpdateOptionBLabelGerman"
+            OnUpdateIsRequired="@OnUpdateBinaryIsRequired" />
+        break;
+
     default:
         <div class="unknown-question-type">
             <RadzenIcon Icon="error_outline" Class="error-icon" />
@@ -77,6 +101,22 @@
     [Parameter] public EventCallback<(int, string)> OnUpdateTextSectionDescriptionGerman { get; set; }
 
     // Note: Goal questions don't require item management callbacks as they use dynamic workflow
+
+    // Multiple choice event callbacks
+    [Parameter] public EventCallback<int> OnMoveChoiceUp { get; set; }
+    [Parameter] public EventCallback<int> OnMoveChoiceDown { get; set; }
+    [Parameter] public EventCallback<int> OnRemoveChoice { get; set; }
+    [Parameter] public EventCallback<(int, string)> OnUpdateChoiceLabelEnglish { get; set; }
+    [Parameter] public EventCallback<(int, string)> OnUpdateChoiceLabelGerman { get; set; }
+    [Parameter] public EventCallback<int> OnUpdateMinSelections { get; set; }
+    [Parameter] public EventCallback<int> OnUpdateMaxSelections { get; set; }
+
+    // Binary event callbacks
+    [Parameter] public EventCallback<string> OnUpdateOptionALabelEnglish { get; set; }
+    [Parameter] public EventCallback<string> OnUpdateOptionALabelGerman { get; set; }
+    [Parameter] public EventCallback<string> OnUpdateOptionBLabelEnglish { get; set; }
+    [Parameter] public EventCallback<string> OnUpdateOptionBLabelGerman { get; set; }
+    [Parameter] public EventCallback<bool> OnUpdateBinaryIsRequired { get; set; }
 }
 
 <style>

@@ -18,6 +18,8 @@ public class QuestionResponseValueJsonConverter : JsonConverter<QuestionResponse
     private const string TextResponseTypeValue = "text";
     private const string AssessmentResponseTypeValue = "assessment";
     private const string GoalResponseTypeValue = "goal";
+    private const string MultipleChoiceResponseTypeValue = "multiplechoice";
+    private const string BinaryResponseTypeValue = "binary";
 
     public override QuestionResponseValue Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
@@ -36,6 +38,8 @@ public class QuestionResponseValueJsonConverter : JsonConverter<QuestionResponse
             TextResponseTypeValue => DeserializeTextResponse(root),
             AssessmentResponseTypeValue => DeserializeAssessmentResponse(root),
             GoalResponseTypeValue => DeserializeGoalResponse(root),
+            MultipleChoiceResponseTypeValue => DeserializeMultipleChoiceResponse(root),
+            BinaryResponseTypeValue => DeserializeBinaryResponse(root),
             _ => throw new JsonException($"Unknown QuestionResponseValue type discriminator: '{typeValue}'")
         };
     }
@@ -130,6 +134,30 @@ public class QuestionResponseValueJsonConverter : JsonConverter<QuestionResponse
     }
 
 
+    private static QuestionResponseValue.MultipleChoiceResponse DeserializeMultipleChoiceResponse(JsonElement root)
+    {
+        var dto = JsonSerializer.Deserialize<MultipleChoiceResponseDto>(root.GetRawText())
+            ?? throw new JsonException("Failed to deserialize MultipleChoiceResponse");
+        return new QuestionResponseValue.MultipleChoiceResponse(dto.SelectedKeys);
+    }
+
+    private class MultipleChoiceResponseDto
+    {
+        public List<string> SelectedKeys { get; set; } = new();
+    }
+
+    private static QuestionResponseValue.BinaryResponse DeserializeBinaryResponse(JsonElement root)
+    {
+        var dto = JsonSerializer.Deserialize<BinaryResponseDto>(root.GetRawText())
+            ?? throw new JsonException("Failed to deserialize BinaryResponse");
+        return new QuestionResponseValue.BinaryResponse(dto.SelectedOption);
+    }
+
+    private class BinaryResponseDto
+    {
+        public string? SelectedOption { get; set; }
+    }
+
     public override void Write(Utf8JsonWriter writer, QuestionResponseValue value, JsonSerializerOptions options)
     {
         writer.WriteStartObject();
@@ -140,6 +168,8 @@ public class QuestionResponseValueJsonConverter : JsonConverter<QuestionResponse
             QuestionResponseValue.TextResponse => TextResponseTypeValue,
             QuestionResponseValue.AssessmentResponse => AssessmentResponseTypeValue,
             QuestionResponseValue.GoalResponse => GoalResponseTypeValue,
+            QuestionResponseValue.MultipleChoiceResponse => MultipleChoiceResponseTypeValue,
+            QuestionResponseValue.BinaryResponse => BinaryResponseTypeValue,
             _ => throw new JsonException($"Unknown QuestionResponseValue type: {value.GetType()}")
         };
 

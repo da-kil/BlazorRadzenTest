@@ -1,0 +1,132 @@
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Components.Shared
+@inherits CategoryOptimizedTranslatableComponent
+
+<div class="item-card">
+    <header class="item-header">
+        <div class="item-info">
+            <span class="item-title">Binary Options</span>
+            <div class="required-control">
+                <RadzenCheckBox Value="@isRequired"
+                               ValueChanged="@((bool v) => OnUpdateIsRequired.InvokeAsync(v))"
+                               Name="@($"binary_req_{Section.Id}")"
+                               Disabled="@(!Template.IsAvailableForEditing)" />
+                <RadzenLabel Text="Required" Component="@($"binary_req_{Section.Id}")" Class="required-label" />
+            </div>
+        </div>
+    </header>
+
+    <main class="item-content">
+        <div class="binary-options">
+            <div class="option-group">
+                <div class="option-label">Option A</div>
+                <MultilingualInputComponent
+                    EnglishLabel="English Label"
+                    GermanLabel="German Label"
+                    EnglishValue="@optionALabelEnglish"
+                    GermanValue="@optionALabelGerman"
+                    EnglishValueChanged="@((string v) => OnUpdateOptionALabelEnglish.InvokeAsync(v))"
+                    GermanValueChanged="@((string v) => OnUpdateOptionALabelGerman.InvokeAsync(v))"
+                    EnglishPlaceholder="e.g. Yes"
+                    GermanPlaceholder="e.g. Ja"
+                    InputType="InputType.TextBox"
+                    Disabled="@(!Template.IsAvailableForEditing)" />
+            </div>
+
+            <div class="option-group">
+                <div class="option-label">Option B</div>
+                <MultilingualInputComponent
+                    EnglishLabel="English Label"
+                    GermanLabel="German Label"
+                    EnglishValue="@optionBLabelEnglish"
+                    GermanValue="@optionBLabelGerman"
+                    EnglishValueChanged="@((string v) => OnUpdateOptionBLabelEnglish.InvokeAsync(v))"
+                    GermanValueChanged="@((string v) => OnUpdateOptionBLabelGerman.InvokeAsync(v))"
+                    EnglishPlaceholder="e.g. No"
+                    GermanPlaceholder="e.g. Nein"
+                    InputType="InputType.TextBox"
+                    Disabled="@(!Template.IsAvailableForEditing)" />
+            </div>
+        </div>
+
+        <div class="binary-preview">
+            <div class="preview-label">Preview:</div>
+            @{
+                var previewLabelA = string.IsNullOrWhiteSpace(optionALabelEnglish) ? "Yes" : optionALabelEnglish;
+                var previewLabelB = string.IsNullOrWhiteSpace(optionBLabelEnglish) ? "No" : optionBLabelEnglish;
+            }
+            <RadzenRadioButtonList TValue="string" Disabled="true">
+                <Items>
+                    <RadzenRadioButtonListItem Value="@("A")" Text="@previewLabelA" />
+                    <RadzenRadioButtonListItem Value="@("B")" Text="@previewLabelB" />
+                </Items>
+            </RadzenRadioButtonList>
+        </div>
+    </main>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public QuestionSection Section { get; set; } = default!;
+    [Parameter] public QuestionnaireTemplate Template { get; set; } = new();
+
+    [Parameter] public EventCallback<string> OnUpdateOptionALabelEnglish { get; set; }
+    [Parameter] public EventCallback<string> OnUpdateOptionALabelGerman { get; set; }
+    [Parameter] public EventCallback<string> OnUpdateOptionBLabelEnglish { get; set; }
+    [Parameter] public EventCallback<string> OnUpdateOptionBLabelGerman { get; set; }
+    [Parameter] public EventCallback<bool> OnUpdateIsRequired { get; set; }
+
+    private string optionALabelEnglish = "Yes";
+    private string optionALabelGerman = "Ja";
+    private string optionBLabelEnglish = "No";
+    private string optionBLabelGerman = "Nein";
+    private bool isRequired = false;
+
+    protected override void OnParametersSet()
+    {
+        if (Section.Configuration is BinaryConfiguration config)
+        {
+            optionALabelEnglish = config.OptionALabelEnglish;
+            optionALabelGerman = config.OptionALabelGerman;
+            optionBLabelEnglish = config.OptionBLabelEnglish;
+            optionBLabelGerman = config.OptionBLabelGerman;
+            isRequired = config.IsRequired;
+        }
+    }
+
+    protected override string[] GetRequiredTranslationCategories() => Array.Empty<string>();
+}
+
+<style>
+    .binary-options {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .option-group {
+        padding: 1rem;
+        border: 1px solid var(--rz-base-300);
+        border-radius: 0.375rem;
+        background: var(--rz-base-200);
+    }
+
+    .option-label {
+        font-size: 0.875rem;
+        font-weight: var(--font-weight-emphasis);
+        color: var(--rz-text-color);
+        margin-bottom: 0.75rem;
+    }
+
+    .binary-preview {
+        padding: 0.75rem 0 0;
+    }
+
+    .preview-label {
+        font-size: 0.8125rem;
+        font-weight: var(--font-weight-emphasis);
+        color: var(--rz-text-muted);
+        margin-bottom: 0.375rem;
+    }
+</style>

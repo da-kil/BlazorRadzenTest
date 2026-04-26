@@ -46,6 +46,8 @@ public class QuestionResponseDataDtoJsonConverter : JsonConverter<QuestionRespon
                 0 => JsonSerializer.Deserialize<AssessmentResponseDataDto>(root.GetRawText(), options),
                 1 => JsonSerializer.Deserialize<TextResponseDataDto>(root.GetRawText(), options),
                 2 => JsonSerializer.Deserialize<GoalResponseDataDto>(root.GetRawText(), options),
+                3 => JsonSerializer.Deserialize<MultipleChoiceResponseDataDto>(root.GetRawText(), options),
+                4 => JsonSerializer.Deserialize<BinaryResponseDataDto>(root.GetRawText(), options),
                 _ => null
             };
         }
@@ -56,6 +58,8 @@ public class QuestionResponseDataDtoJsonConverter : JsonConverter<QuestionRespon
                 "assessment" => JsonSerializer.Deserialize<AssessmentResponseDataDto>(root.GetRawText(), options),
                 "text" => JsonSerializer.Deserialize<TextResponseDataDto>(root.GetRawText(), options),
                 "goal" => JsonSerializer.Deserialize<GoalResponseDataDto>(root.GetRawText(), options),
+                "multiplechoice" => JsonSerializer.Deserialize<MultipleChoiceResponseDataDto>(root.GetRawText(), options),
+                "binary" => JsonSerializer.Deserialize<BinaryResponseDataDto>(root.GetRawText(), options),
                 _ => null
             };
         }
@@ -73,6 +77,14 @@ public class QuestionResponseDataDtoJsonConverter : JsonConverter<QuestionRespon
             else if (root.TryGetProperty("Goals", out _))
             {
                 result = JsonSerializer.Deserialize<GoalResponseDataDto>(root.GetRawText(), options);
+            }
+            else if (root.TryGetProperty("SelectedKeys", out _))
+            {
+                result = JsonSerializer.Deserialize<MultipleChoiceResponseDataDto>(root.GetRawText(), options);
+            }
+            else if (root.TryGetProperty("SelectedOption", out _))
+            {
+                result = JsonSerializer.Deserialize<BinaryResponseDataDto>(root.GetRawText(), options);
             }
         }
 

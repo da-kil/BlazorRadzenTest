@@ -28,5 +28,17 @@ public enum QuestionType
     /// Employee feedback from external sources (Customer, Peer, Project Colleague).
     /// Supports configurable evaluation criteria and multiple feedback source types.
     /// </summary>
-    EmployeeFeedback = 3
+    EmployeeFeedback = 3,
+
+    /// <summary>
+    /// Multiple choice question with configurable options and min/max selection constraints.
+    /// Users select between MinSelections and MaxSelections from a list of choices.
+    /// </summary>
+    MultipleChoice = 4,
+
+    /// <summary>
+    /// Binary question with exactly two options (Yes/No or custom labels), rendered as radio buttons.
+    /// At most one option can be selected.
+    /// </summary>
+    Binary = 5
 }

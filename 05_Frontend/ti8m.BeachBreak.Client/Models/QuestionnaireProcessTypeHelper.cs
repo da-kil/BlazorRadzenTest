@@ -31,6 +31,8 @@ public static class QuestionnaireProcessTypeHelper
             {
                 QuestionType.Assessment => true,
                 QuestionType.TextQuestion => true,
+                QuestionType.MultipleChoice => true,
+                QuestionType.Binary => true,
                 QuestionType.Goal => false, // Goals not allowed in surveys
                 QuestionType.EmployeeFeedback => false, // Employee feedback not allowed in surveys
                 _ => throw new ArgumentOutOfRangeException(nameof(questionType), questionType, "Unknown question type")

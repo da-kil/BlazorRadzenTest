@@ -40,6 +40,8 @@ public static class EnumConverter
             "goal" => Dto.QuestionType.Goal,
             "assessment" => Dto.QuestionType.Assessment,
             "employeefeedback" => Dto.QuestionType.EmployeeFeedback,
+            "multiplechoice" => Dto.QuestionType.MultipleChoice,
+            "binary" => Dto.QuestionType.Binary,
             _ => Dto.QuestionType.Assessment
         };
     }

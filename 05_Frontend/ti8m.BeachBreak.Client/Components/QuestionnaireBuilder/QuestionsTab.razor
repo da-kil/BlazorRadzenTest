@@ -53,6 +53,26 @@
                                  Title="@($"{T("buttons.add")} {T("question-types.employee-feedback")}")"
                                  Disabled="@(!Template.IsAvailableForEditing)" />
                 }
+                @if (IsQuestionTypeAllowed(QuestionType.MultipleChoice))
+                {
+                    <AsyncButton Text="@T("buttons.multiple-choice")"
+                                 ButtonStyle="ButtonStyle.Primary"
+                                 Icon="check_box"
+                                 Size="ButtonSize.Small"
+                                 Click="@(() => OnAddSectionWithTypeInternal(QuestionType.MultipleChoice))"
+                                 Title="@T("tooltips.add-multiple-choice-section")"
+                                 Disabled="@(!Template.IsAvailableForEditing)" />
+                }
+                @if (IsQuestionTypeAllowed(QuestionType.Binary))
+                {
+                    <AsyncButton Text="@T("buttons.binary")"
+                                 ButtonStyle="ButtonStyle.Primary"
+                                 Icon="radio_button_checked"
+                                 Size="ButtonSize.Small"
+                                 Click="@(() => OnAddSectionWithTypeInternal(QuestionType.Binary))"
+                                 Title="@T("tooltips.add-binary-section")"
+                                 Disabled="@(!Template.IsAvailableForEditing)" />
+                }
             </div>
         </div>
 

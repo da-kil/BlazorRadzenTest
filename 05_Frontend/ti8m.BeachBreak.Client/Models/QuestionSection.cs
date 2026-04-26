@@ -37,6 +37,10 @@ public class QuestionSection
                 => textConfig.TextSections.Count,
             QuestionType.EmployeeFeedback
                 => 0, // Feedback records are linked during workflow, not configured in template
+            QuestionType.MultipleChoice when Configuration is MultipleChoiceConfiguration mcConfig
+                => mcConfig.Choices.Count,
+            QuestionType.Binary
+                => 0, // Always exactly 2 options, no user-defined items
             _ => 0
         };
     }
@@ -53,6 +57,10 @@ public class QuestionSection
                 => textConfig.TextSections.Count(t => t.IsRequired),
             QuestionType.EmployeeFeedback
                 => 0, // Feedback records are linked during workflow, not configured in template
+            QuestionType.MultipleChoice when Configuration is MultipleChoiceConfiguration mcConfig
+                => mcConfig.MinSelections,
+            QuestionType.Binary when Configuration is BinaryConfiguration binaryConfig
+                => binaryConfig.IsRequired ? 1 : 0,
             _ => 0
         };
     }
@@ -65,6 +73,8 @@ public class QuestionSection
             QuestionType.Goal => "track_changes",
             QuestionType.TextQuestion => "psychology",
             QuestionType.EmployeeFeedback => "feedback",
+            QuestionType.MultipleChoice => "check_box",
+            QuestionType.Binary => "radio_button_checked",
             _ => "help"
         };
     }
@@ -77,6 +87,8 @@ public class QuestionSection
             QuestionType.Goal => "Goal Achievement",
             QuestionType.TextQuestion => "Text Question",
             QuestionType.EmployeeFeedback => "Employee Feedback",
+            QuestionType.MultipleChoice => "Multiple Choice",
+            QuestionType.Binary => "Binary",
             _ => "Unknown"
         };
     }
@@ -89,6 +101,8 @@ public class QuestionSection
             QuestionType.Goal => "var(--rz-success)", // success-color
             QuestionType.TextQuestion => "var(--rz-secondary)", // secondary-color
             QuestionType.EmployeeFeedback => "var(--rz-info)", // info-color (light blue)
+            QuestionType.MultipleChoice => "var(--rz-warning)", // warning-color (orange)
+            QuestionType.Binary => "var(--rz-danger)", // danger-color (red)
             _ => "var(--rz-base-500)"
         };
     }

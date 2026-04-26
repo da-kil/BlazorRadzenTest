@@ -194,6 +194,14 @@ public class ProgressCalculationService : IProgressCalculationService
                     return answer is QuestionResponseValue.GoalResponse goalResponse &&
                            goalResponse.Goals.Any(g => g.IsValid);
 
+                case QuestionType.MultipleChoice:
+                    return answer is QuestionResponseValue.MultipleChoiceResponse mcResponse &&
+                           mcResponse.SelectedKeys.Any();
+
+                case QuestionType.Binary:
+                    return answer is QuestionResponseValue.BinaryResponse binaryResponse &&
+                           binaryResponse.SelectedOption != null;
+
                 default:
                     logger.LogWarning("Unknown question type: {Type}", type);
                     return false;

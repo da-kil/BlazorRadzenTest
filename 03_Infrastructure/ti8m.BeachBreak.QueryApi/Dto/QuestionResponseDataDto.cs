@@ -10,6 +10,8 @@ namespace ti8m.BeachBreak.QueryApi.Dto;
 [JsonDerivedType(typeof(AssessmentResponseDataDto), typeDiscriminator: 0)]
 [JsonDerivedType(typeof(TextResponseDataDto), typeDiscriminator: 1)]
 [JsonDerivedType(typeof(GoalResponseDataDto), typeDiscriminator: 2)]
+[JsonDerivedType(typeof(MultipleChoiceResponseDataDto), typeDiscriminator: 3)]
+[JsonDerivedType(typeof(BinaryResponseDataDto), typeDiscriminator: 4)]
 public abstract class QuestionResponseDataDto
 {
 }
