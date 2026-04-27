@@ -2,5 +2,5 @@ namespace ti8m.BeachBreak.CommandApi.DTOs;
 
 public class BinaryResponseDto
 {
-    public string? SelectedOption { get; set; }
+    public Dictionary<string, string?> Selections { get; set; } = new();
 }

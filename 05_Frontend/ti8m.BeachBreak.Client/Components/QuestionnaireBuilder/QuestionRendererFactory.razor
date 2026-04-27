@@ -48,24 +48,25 @@
         <MultipleChoiceQuestionRenderer
             Section="@Section"
             Template="@Template"
-            OnMoveChoiceUp="@OnMoveChoiceUp"
-            OnMoveChoiceDown="@OnMoveChoiceDown"
-            OnRemoveChoice="@OnRemoveChoice"
-            OnUpdateChoiceLabelEnglish="@OnUpdateChoiceLabelEnglish"
-            OnUpdateChoiceLabelGerman="@OnUpdateChoiceLabelGerman"
-            OnUpdateMinSelections="@OnUpdateMinSelections"
-            OnUpdateMaxSelections="@OnUpdateMaxSelections" />
+            OnChanged="@OnMultipleChoiceChanged" />
         break;
 
     case QuestionType.Binary:
         <BinaryQuestionRenderer
             Section="@Section"
             Template="@Template"
-            OnUpdateOptionALabelEnglish="@OnUpdateOptionALabelEnglish"
-            OnUpdateOptionALabelGerman="@OnUpdateOptionALabelGerman"
-            OnUpdateOptionBLabelEnglish="@OnUpdateOptionBLabelEnglish"
-            OnUpdateOptionBLabelGerman="@OnUpdateOptionBLabelGerman"
-            OnUpdateIsRequired="@OnUpdateBinaryIsRequired" />
+            OnMoveItemUp="@OnMoveBinaryItemUp"
+            OnMoveItemDown="@OnMoveBinaryItemDown"
+            OnRemoveItem="@OnRemoveBinaryItem"
+            OnUpdateItemRequired="@OnUpdateBinaryItemRequired"
+            OnUpdateItemTitleEnglish="@OnUpdateBinaryItemTitleEnglish"
+            OnUpdateItemTitleGerman="@OnUpdateBinaryItemTitleGerman"
+            OnUpdateItemDescriptionEnglish="@OnUpdateBinaryItemDescriptionEnglish"
+            OnUpdateItemDescriptionGerman="@OnUpdateBinaryItemDescriptionGerman"
+            OnUpdateItemOptionAEnglish="@OnUpdateBinaryItemOptionAEnglish"
+            OnUpdateItemOptionAGerman="@OnUpdateBinaryItemOptionAGerman"
+            OnUpdateItemOptionBEnglish="@OnUpdateBinaryItemOptionBEnglish"
+            OnUpdateItemOptionBGerman="@OnUpdateBinaryItemOptionBGerman" />
         break;
 
     default:
@@ -100,23 +101,22 @@
     [Parameter] public EventCallback<(int, string)> OnUpdateTextSectionDescriptionEnglish { get; set; }
     [Parameter] public EventCallback<(int, string)> OnUpdateTextSectionDescriptionGerman { get; set; }
 
-    // Note: Goal questions don't require item management callbacks as they use dynamic workflow
-
-    // Multiple choice event callbacks
-    [Parameter] public EventCallback<int> OnMoveChoiceUp { get; set; }
-    [Parameter] public EventCallback<int> OnMoveChoiceDown { get; set; }
-    [Parameter] public EventCallback<int> OnRemoveChoice { get; set; }
-    [Parameter] public EventCallback<(int, string)> OnUpdateChoiceLabelEnglish { get; set; }
-    [Parameter] public EventCallback<(int, string)> OnUpdateChoiceLabelGerman { get; set; }
-    [Parameter] public EventCallback<int> OnUpdateMinSelections { get; set; }
-    [Parameter] public EventCallback<int> OnUpdateMaxSelections { get; set; }
+    // Multiple choice: single OnChanged callback (renderer manages state directly)
+    [Parameter] public EventCallback OnMultipleChoiceChanged { get; set; }
 
     // Binary event callbacks
-    [Parameter] public EventCallback<string> OnUpdateOptionALabelEnglish { get; set; }
-    [Parameter] public EventCallback<string> OnUpdateOptionALabelGerman { get; set; }
-    [Parameter] public EventCallback<string> OnUpdateOptionBLabelEnglish { get; set; }
-    [Parameter] public EventCallback<string> OnUpdateOptionBLabelGerman { get; set; }
-    [Parameter] public EventCallback<bool> OnUpdateBinaryIsRequired { get; set; }
+    [Parameter] public EventCallback<int> OnMoveBinaryItemUp { get; set; }
+    [Parameter] public EventCallback<int> OnMoveBinaryItemDown { get; set; }
+    [Parameter] public EventCallback<int> OnRemoveBinaryItem { get; set; }
+    [Parameter] public EventCallback<(int, bool)> OnUpdateBinaryItemRequired { get; set; }
+    [Parameter] public EventCallback<(int, string)> OnUpdateBinaryItemTitleEnglish { get; set; }
+    [Parameter] public EventCallback<(int, string)> OnUpdateBinaryItemTitleGerman { get; set; }
+    [Parameter] public EventCallback<(int, string)> OnUpdateBinaryItemDescriptionEnglish { get; set; }
+    [Parameter] public EventCallback<(int, string)> OnUpdateBinaryItemDescriptionGerman { get; set; }
+    [Parameter] public EventCallback<(int, string)> OnUpdateBinaryItemOptionAEnglish { get; set; }
+    [Parameter] public EventCallback<(int, string)> OnUpdateBinaryItemOptionAGerman { get; set; }
+    [Parameter] public EventCallback<(int, string)> OnUpdateBinaryItemOptionBEnglish { get; set; }
+    [Parameter] public EventCallback<(int, string)> OnUpdateBinaryItemOptionBGerman { get; set; }
 }
 
 <style>

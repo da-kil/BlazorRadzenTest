@@ -49,12 +49,16 @@ public class QuestionResponseMappingService
                         null), // Empty goal response
 
                 QuestionType.MultipleChoice => questionResponse.MultipleChoiceResponse != null
-                    ? new QuestionResponseValue.MultipleChoiceResponse(questionResponse.MultipleChoiceResponse.SelectedKeys)
-                    : new QuestionResponseValue.MultipleChoiceResponse(new List<string>()),
+                    ? new QuestionResponseValue.MultipleChoiceResponse(
+                        questionResponse.MultipleChoiceResponse.SelectionsByQuestion
+                            .ToDictionary(kvp => kvp.Key, kvp => (IReadOnlyList<string>)kvp.Value))
+                    : new QuestionResponseValue.MultipleChoiceResponse(new Dictionary<string, IReadOnlyList<string>>()),
 
                 QuestionType.Binary => questionResponse.BinaryResponse != null
-                    ? new QuestionResponseValue.BinaryResponse(questionResponse.BinaryResponse.SelectedOption)
-                    : new QuestionResponseValue.BinaryResponse(null),
+                    ? new QuestionResponseValue.BinaryResponse(
+                        questionResponse.BinaryResponse.Selections
+                            .ToDictionary(kvp => kvp.Key, kvp => (string?)kvp.Value))
+                    : new QuestionResponseValue.BinaryResponse(new Dictionary<string, string?>()),
 
                 _ => throw new ArgumentException($"Invalid question type: {questionResponse.QuestionType}")
             };
@@ -120,15 +124,36 @@ public class QuestionResponseMappingService
 
                 return new QuestionResponseValue.GoalResponse(goals, predecessorRatings, dto?.PredecessorAssignmentId);
             }
-            else if (root.TryGetProperty("SelectedKeys", out _))
+            else if (root.TryGetProperty("SelectionsByQuestion", out _))
             {
                 var dto = JsonSerializer.Deserialize<MultipleChoiceResponseDto>(answerJson);
-                return new QuestionResponseValue.MultipleChoiceResponse(dto?.SelectedKeys ?? new List<string>());
+                var dict = (dto?.SelectionsByQuestion ?? new Dictionary<string, List<string>>())
+                    .ToDictionary(kvp => kvp.Key, kvp => (IReadOnlyList<string>)kvp.Value);
+                return new QuestionResponseValue.MultipleChoiceResponse(dict);
+            }
+            else if (root.TryGetProperty("SelectedKeys", out _))
+            {
+                // Legacy flat format — wrap into first-question dict
+                var legacyDto = JsonSerializer.Deserialize<LegacyMultipleChoiceDto>(answerJson);
+                var dict = new Dictionary<string, IReadOnlyList<string>>
+                {
+                    ["question_1"] = legacyDto?.SelectedKeys ?? new List<string>()
+                };
+                return new QuestionResponseValue.MultipleChoiceResponse(dict);
+            }
+            else if (root.TryGetProperty("Selections", out _))
+            {
+                var dto = JsonSerializer.Deserialize<BinaryResponseDto>(answerJson);
+                var dict = (dto?.Selections ?? new Dictionary<string, string?>())
+                    .ToDictionary(kvp => kvp.Key, kvp => (string?)kvp.Value);
+                return new QuestionResponseValue.BinaryResponse(dict);
             }
             else if (root.TryGetProperty("SelectedOption", out _))
             {
-                var dto = JsonSerializer.Deserialize<BinaryResponseDto>(answerJson);
-                return new QuestionResponseValue.BinaryResponse(dto?.SelectedOption);
+                // Legacy format — wrap into first-item dict
+                var legacyDto = JsonSerializer.Deserialize<LegacyBinaryDto>(answerJson);
+                var dict = new Dictionary<string, string?> { ["item_1"] = legacyDto?.SelectedOption };
+                return new QuestionResponseValue.BinaryResponse(dict);
             }
             else
             {
@@ -166,5 +191,15 @@ public class QuestionResponseMappingService
             dto.OriginalObjective,
             (DomainApplicationRole)(int)dto.OriginalAddedByRole
         )).ToList();
+    }
+
+    private class LegacyMultipleChoiceDto
+    {
+        public List<string> SelectedKeys { get; set; } = new();
+    }
+
+    private class LegacyBinaryDto
+    {
+        public string? SelectedOption { get; set; }
     }
 }

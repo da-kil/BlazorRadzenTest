@@ -177,7 +177,9 @@ public class QuestionConfigurationService
     /// </summary>
     public List<ChoiceOption> GetChoices(QuestionSection question)
     {
-        return question.Configuration is MultipleChoiceConfiguration config ? config.Choices : new List<ChoiceOption>();
+        return question.Configuration is MultipleChoiceConfiguration config
+            ? config.Questions.SelectMany(q => q.Choices).ToList()
+            : new List<ChoiceOption>();
     }
 
     /// <summary>
@@ -198,7 +200,7 @@ public class QuestionConfigurationService
             QuestionType.Assessment => GetEvaluations(question).Any(),
             QuestionType.Goal => true, // Goal questions don't require template items - items added dynamically during in-progress
             QuestionType.TextQuestion => GetTextSections(question).Any(),
-            QuestionType.MultipleChoice => GetChoices(question).Any(),
+            QuestionType.MultipleChoice => question.Configuration is MultipleChoiceConfiguration mc && mc.Questions.Any(),
             QuestionType.Binary => true, // Binary always has valid configuration (labels have defaults)
             _ => false
         };

@@ -22,12 +22,12 @@
             }
         </header>
 
-        @RenderBinaryOptions()
+        @RenderItems()
     </div>
 }
 else
 {
-    @RenderBinaryOptions()
+    @RenderItems()
 }
 
 @code {
@@ -44,9 +44,7 @@ else
         TranslationCategories.Messages
     ];
 
-    private string optionALabel = "Yes";
-    private string optionBLabel = "No";
-    private bool isRequired = false;
+    private List<BinaryItem> items = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -65,25 +63,10 @@ else
 
     private void LoadConfiguration()
     {
-        if (Section.Configuration is BinaryConfiguration config)
-        {
-            optionALabel = GetLocalizedLabel(config.OptionALabelEnglish, config.OptionALabelGerman, "Yes");
-            optionBLabel = GetLocalizedLabel(config.OptionBLabelEnglish, config.OptionBLabelGerman, "No");
-            isRequired = config.IsRequired;
-        }
+        if (Section.Configuration is BinaryConfiguration config && config.Items.Count > 0)
+            items = config.Items.OrderBy(i => i.Order).ToList();
         else
-        {
-            optionALabel = "Yes";
-            optionBLabel = "No";
-            isRequired = false;
-        }
-    }
-
-    private string GetLocalizedLabel(string english, string german, string fallback)
-    {
-        if (CurrentLanguage == Language.German && !string.IsNullOrWhiteSpace(german)) return german;
-        if (!string.IsNullOrWhiteSpace(english)) return english;
-        return fallback;
+            items = new List<BinaryItem>();
     }
 
     protected override bool HasStateChanged()
@@ -102,51 +85,83 @@ else
         return data;
     }
 
-    private string? GetSelectedOption() => GetOrCreateResponseData().SelectedOption;
+    private string? GetSelectedOption(string itemKey) =>
+        GetOrCreateResponseData().Selections.TryGetValue(itemKey, out var sel) ? sel : null;
 
-    private async Task OnOptionSelected(string? option)
+    private async Task OnOptionSelected(string itemKey, string? option)
     {
         if (IsReadOnly) return;
 
         var data = GetOrCreateResponseData();
-        data.SelectedOption = option;
+        data.Selections[itemKey] = option;
         Response.LastModified = DateTime.Now;
 
         if (OnResponseChanged.HasDelegate)
             await OnResponseChanged.InvokeAsync(Response);
     }
 
-    private async Task ClearSelection() => await OnOptionSelected(null);
-
-    private RenderFragment RenderBinaryOptions() => __builder =>
+    private string GetLocalizedLabel(string english, string german, string fallback)
     {
-        var selectedOption = GetSelectedOption();
+        if (CurrentLanguage == Language.German && !string.IsNullOrWhiteSpace(german)) return german;
+        if (!string.IsNullOrWhiteSpace(english)) return english;
+        return fallback;
+    }
 
-        <div class="binary-options">
-            <RadzenRadioButtonList TValue="string"
-                                  Value="@selectedOption"
-                                  ValueChanged="@((string v) => OnOptionSelected(v))"
-                                  Disabled="@IsReadOnly"
-                                  Orientation="Radzen.Orientation.Vertical"
-                                  Class="binary-radio-list">
-                <Items>
-                    <RadzenRadioButtonListItem Value="@("A")" Text="@optionALabel" />
-                    <RadzenRadioButtonListItem Value="@("B")" Text="@optionBLabel" />
-                </Items>
-            </RadzenRadioButtonList>
+    private RenderFragment RenderItems() => __builder =>
+    {
+        if (!items.Any())
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Class="mb-3">
+                <RadzenText TextStyle="TextStyle.Body2">
+                    <strong>Configuration Error:</strong> No items are defined for this question.
+                </RadzenText>
+            </RadzenAlert>
+            return;
+        }
 
-            @if (!IsReadOnly && !isRequired && selectedOption != null)
+        <div class="binary-items">
+            @foreach (var item in items)
             {
-                <a class="clear-selection-link" @onclick="ClearSelection" href="javascript:void(0)">
-                    <RadzenIcon Icon="close" Class="me-1" />Clear selection
-                </a>
-            }
+                var itemKey = item.Key;
+                var selectedOption = GetSelectedOption(itemKey);
+                var optionALabel = GetLocalizedLabel(item.OptionALabelEnglish, item.OptionALabelGerman, "Yes");
+                var optionBLabel = GetLocalizedLabel(item.OptionBLabelEnglish, item.OptionBLabelGerman, "No");
+                var itemTitle = GetLocalizedLabel(item.TitleEnglish, item.TitleGerman, string.Empty);
 
-            @if (isRequired && selectedOption == null && !IsReadOnly)
-            {
-                <div class="binary-validation-hint">
-                    <RadzenIcon Icon="info" Class="me-1" />
-                    <span>Please select an option</span>
+                <div class="binary-item-block" @key="@itemKey">
+                    @if (!string.IsNullOrWhiteSpace(itemTitle))
+                    {
+                        <div class="item-title">@itemTitle</div>
+                    }
+
+                    <div class="binary-options">
+                        <RadzenRadioButtonList TValue="string"
+                                              Value="@selectedOption"
+                                              ValueChanged="@((string v) => OnOptionSelected(itemKey, v))"
+                                              Disabled="@IsReadOnly"
+                                              Orientation="Radzen.Orientation.Vertical"
+                                              Class="binary-radio-list">
+                            <Items>
+                                <RadzenRadioButtonListItem Value="@("A")" Text="@optionALabel" />
+                                <RadzenRadioButtonListItem Value="@("B")" Text="@optionBLabel" />
+                            </Items>
+                        </RadzenRadioButtonList>
+
+                        @if (!IsReadOnly && !item.IsRequired && selectedOption != null)
+                        {
+                            <a class="clear-selection-link" @onclick="@(() => OnOptionSelected(itemKey, null))" href="javascript:void(0)">
+                                <RadzenIcon Icon="close" Class="me-1" />Clear selection
+                            </a>
+                        }
+
+                        @if (item.IsRequired && selectedOption == null && !IsReadOnly)
+                        {
+                            <div class="binary-validation-hint">
+                                <RadzenIcon Icon="info" Class="me-1" />
+                                <span>Please select an option</span>
+                            </div>
+                        }
+                    </div>
                 </div>
             }
         </div>
@@ -158,6 +173,24 @@ else
         display: flex;
         flex-direction: column;
         gap: 1rem;
+    }
+
+    .binary-items {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+
+    .binary-item-block {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .item-title {
+        font-weight: var(--font-weight-heading, 600);
+        font-size: 0.9375rem;
+        color: var(--rz-text-color);
     }
 
     .binary-options {

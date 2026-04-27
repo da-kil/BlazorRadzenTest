@@ -38,9 +38,9 @@ public class QuestionSection
             QuestionType.EmployeeFeedback
                 => 0, // Feedback records are linked during workflow, not configured in template
             QuestionType.MultipleChoice when Configuration is MultipleChoiceConfiguration mcConfig
-                => mcConfig.Choices.Count,
-            QuestionType.Binary
-                => 0, // Always exactly 2 options, no user-defined items
+                => mcConfig.Questions.Count,
+            QuestionType.Binary when Configuration is BinaryConfiguration binaryConfig
+                => binaryConfig.Items.Count,
             _ => 0
         };
     }
@@ -58,9 +58,9 @@ public class QuestionSection
             QuestionType.EmployeeFeedback
                 => 0, // Feedback records are linked during workflow, not configured in template
             QuestionType.MultipleChoice when Configuration is MultipleChoiceConfiguration mcConfig
-                => mcConfig.MinSelections,
+                => mcConfig.Questions.Count(q => q.IsRequired),
             QuestionType.Binary when Configuration is BinaryConfiguration binaryConfig
-                => binaryConfig.IsRequired ? 1 : 0,
+                => binaryConfig.Items.Count(i => i.IsRequired),
             _ => 0
         };
     }

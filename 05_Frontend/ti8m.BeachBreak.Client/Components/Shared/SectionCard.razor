@@ -159,7 +159,7 @@
     <!-- Items Area - No padding for consistent flat design -->
     <div class="items-area">
         @* Only show Items header and Add Item button for section types that support user-managed items *@
-        @if (Section.Type != QuestionType.Goal && Section.Type != QuestionType.EmployeeFeedback && Section.Type != QuestionType.Binary)
+        @if (Section.Type != QuestionType.Goal && Section.Type != QuestionType.EmployeeFeedback)
         {
             <div class="items-header mb-3">
                 <div class="d-flex justify-content-between align-items-center">
@@ -200,18 +200,19 @@
                     OnUpdateTextSectionTitleGerman="@OnUpdateTextSectionTitleGerman"
                     OnUpdateTextSectionDescriptionEnglish="@OnUpdateTextSectionDescriptionEnglish"
                     OnUpdateTextSectionDescriptionGerman="@OnUpdateTextSectionDescriptionGerman"
-                    OnMoveChoiceUp="@OnMoveChoiceUp"
-                    OnMoveChoiceDown="@OnMoveChoiceDown"
-                    OnRemoveChoice="@OnRemoveChoice"
-                    OnUpdateChoiceLabelEnglish="@OnUpdateChoiceLabelEnglish"
-                    OnUpdateChoiceLabelGerman="@OnUpdateChoiceLabelGerman"
-                    OnUpdateMinSelections="@OnUpdateMinSelections"
-                    OnUpdateMaxSelections="@OnUpdateMaxSelections"
-                    OnUpdateOptionALabelEnglish="@OnUpdateOptionALabelEnglish"
-                    OnUpdateOptionALabelGerman="@OnUpdateOptionALabelGerman"
-                    OnUpdateOptionBLabelEnglish="@OnUpdateOptionBLabelEnglish"
-                    OnUpdateOptionBLabelGerman="@OnUpdateOptionBLabelGerman"
-                    OnUpdateBinaryIsRequired="@OnUpdateBinaryIsRequired" />
+                    OnMultipleChoiceChanged="@OnMultipleChoiceChanged"
+                    OnMoveBinaryItemUp="@OnMoveBinaryItemUp"
+                    OnMoveBinaryItemDown="@OnMoveBinaryItemDown"
+                    OnRemoveBinaryItem="@OnRemoveBinaryItem"
+                    OnUpdateBinaryItemRequired="@OnUpdateBinaryItemRequired"
+                    OnUpdateBinaryItemTitleEnglish="@OnUpdateBinaryItemTitleEnglish"
+                    OnUpdateBinaryItemTitleGerman="@OnUpdateBinaryItemTitleGerman"
+                    OnUpdateBinaryItemDescriptionEnglish="@OnUpdateBinaryItemDescriptionEnglish"
+                    OnUpdateBinaryItemDescriptionGerman="@OnUpdateBinaryItemDescriptionGerman"
+                    OnUpdateBinaryItemOptionAEnglish="@OnUpdateBinaryItemOptionAEnglish"
+                    OnUpdateBinaryItemOptionAGerman="@OnUpdateBinaryItemOptionAGerman"
+                    OnUpdateBinaryItemOptionBEnglish="@OnUpdateBinaryItemOptionBEnglish"
+                    OnUpdateBinaryItemOptionBGerman="@OnUpdateBinaryItemOptionBGerman" />
             </div>
         }
         else
@@ -669,126 +670,171 @@
     private EventCallback<(int, string)> OnUpdateTextSectionDescriptionEnglish => EventCallback.Factory.Create<(int, string)>(this, args => UpdateTextSectionDescriptionEnglish(args.Item1, args.Item2));
     private EventCallback<(int, string)> OnUpdateTextSectionDescriptionGerman => EventCallback.Factory.Create<(int, string)>(this, args => UpdateTextSectionDescriptionGerman(args.Item1, args.Item2));
 
-    // Multiple choice item methods
-    private async void UpdateMultipleChoiceChoices(List<ChoiceOption> choices)
+    // Multiple choice: renderer manages state directly, we just notify parent on change
+    private EventCallback OnMultipleChoiceChanged => EventCallback.Factory.Create(this, async () =>
     {
-        if (Section.Configuration is MultipleChoiceConfiguration config)
-        {
-            config.Choices = choices;
-        }
         StateHasChanged();
         await OnItemChanged.InvokeAsync();
-    }
+    });
 
-    private void MoveChoiceUp(int index)
-    {
-        if (Section.Configuration is not MultipleChoiceConfiguration config) return;
-        var choices = config.Choices.OrderBy(c => c.Order).ToList();
-        if (index > 0 && index < choices.Count)
-        {
-            (choices[index], choices[index - 1]) = (choices[index - 1], choices[index]);
-            for (int i = 0; i < choices.Count; i++) choices[i].Order = i;
-            UpdateMultipleChoiceChoices(choices);
-        }
-    }
-
-    private void MoveChoiceDown(int index)
-    {
-        if (Section.Configuration is not MultipleChoiceConfiguration config) return;
-        var choices = config.Choices.OrderBy(c => c.Order).ToList();
-        if (index >= 0 && index < choices.Count - 1)
-        {
-            (choices[index], choices[index + 1]) = (choices[index + 1], choices[index]);
-            for (int i = 0; i < choices.Count; i++) choices[i].Order = i;
-            UpdateMultipleChoiceChoices(choices);
-        }
-    }
-
-    private void RemoveChoice(int index)
-    {
-        if (Section.Configuration is not MultipleChoiceConfiguration config) return;
-        var choices = config.Choices.OrderBy(c => c.Order).ToList();
-        if (index >= 0 && index < choices.Count)
-        {
-            choices.RemoveAt(index);
-            for (int i = 0; i < choices.Count; i++) choices[i].Order = i;
-            if (config.MaxSelections > choices.Count) config.MaxSelections = choices.Count;
-            UpdateMultipleChoiceChoices(choices);
-        }
-    }
-
-    private void UpdateChoiceLabelEnglish(int index, string value)
-    {
-        if (Section.Configuration is not MultipleChoiceConfiguration config) return;
-        var choices = config.Choices.OrderBy(c => c.Order).ToList();
-        if (index >= 0 && index < choices.Count)
-        {
-            choices[index].LabelEnglish = value ?? "";
-            UpdateMultipleChoiceChoices(choices);
-        }
-    }
-
-    private void UpdateChoiceLabelGerman(int index, string value)
-    {
-        if (Section.Configuration is not MultipleChoiceConfiguration config) return;
-        var choices = config.Choices.OrderBy(c => c.Order).ToList();
-        if (index >= 0 && index < choices.Count)
-        {
-            choices[index].LabelGerman = value ?? "";
-            UpdateMultipleChoiceChoices(choices);
-        }
-    }
-
-    private async void UpdateMinSelections(int value)
-    {
-        if (Section.Configuration is MultipleChoiceConfiguration config)
-        {
-            config.MinSelections = value;
-            StateHasChanged();
-            await OnItemChanged.InvokeAsync();
-        }
-    }
-
-    private async void UpdateMaxSelections(int value)
-    {
-        if (Section.Configuration is MultipleChoiceConfiguration config)
-        {
-            config.MaxSelections = value;
-            StateHasChanged();
-            await OnItemChanged.InvokeAsync();
-        }
-    }
-
-    private EventCallback<int> OnMoveChoiceUp => EventCallback.Factory.Create<int>(this, index => MoveChoiceUp(index));
-    private EventCallback<int> OnMoveChoiceDown => EventCallback.Factory.Create<int>(this, index => MoveChoiceDown(index));
-    private EventCallback<int> OnRemoveChoice => EventCallback.Factory.Create<int>(this, index => RemoveChoice(index));
-    private EventCallback<(int, string)> OnUpdateChoiceLabelEnglish => EventCallback.Factory.Create<(int, string)>(this, args => UpdateChoiceLabelEnglish(args.Item1, args.Item2));
-    private EventCallback<(int, string)> OnUpdateChoiceLabelGerman => EventCallback.Factory.Create<(int, string)>(this, args => UpdateChoiceLabelGerman(args.Item1, args.Item2));
-    private EventCallback<int> OnUpdateMinSelections => EventCallback.Factory.Create<int>(this, value => UpdateMinSelections(value));
-    private EventCallback<int> OnUpdateMaxSelections => EventCallback.Factory.Create<int>(this, value => UpdateMaxSelections(value));
-
-    // Binary question methods
-    private async void UpdateBinaryProperty(Action<BinaryConfiguration> update)
+    // Binary item methods
+    private async void UpdateBinaryItems(List<BinaryItem> updatedItems)
     {
         if (Section.Configuration is BinaryConfiguration config)
         {
-            update(config);
+            config.Items = updatedItems;
             StateHasChanged();
             await OnItemChanged.InvokeAsync();
         }
     }
 
-    private void UpdateOptionALabelEnglish(string value) => UpdateBinaryProperty(c => c.OptionALabelEnglish = value ?? "Yes");
-    private void UpdateOptionALabelGerman(string value) => UpdateBinaryProperty(c => c.OptionALabelGerman = value ?? "Ja");
-    private void UpdateOptionBLabelEnglish(string value) => UpdateBinaryProperty(c => c.OptionBLabelEnglish = value ?? "No");
-    private void UpdateOptionBLabelGerman(string value) => UpdateBinaryProperty(c => c.OptionBLabelGerman = value ?? "Nein");
-    private void UpdateBinaryIsRequired(bool value) => UpdateBinaryProperty(c => c.IsRequired = value);
+    private void MoveBinaryItemUp(int index)
+    {
+        if (Section.Configuration is not BinaryConfiguration config) return;
+        var items = config.Items.OrderBy(i => i.Order).ToList();
+        if (index > 0 && index < items.Count)
+        {
+            (items[index], items[index - 1]) = (items[index - 1], items[index]);
+            for (var i = 0; i < items.Count; i++) items[i].Order = i;
+            UpdateBinaryItems(items);
+        }
+    }
 
-    private EventCallback<string> OnUpdateOptionALabelEnglish => EventCallback.Factory.Create<string>(this, value => UpdateOptionALabelEnglish(value));
-    private EventCallback<string> OnUpdateOptionALabelGerman => EventCallback.Factory.Create<string>(this, value => UpdateOptionALabelGerman(value));
-    private EventCallback<string> OnUpdateOptionBLabelEnglish => EventCallback.Factory.Create<string>(this, value => UpdateOptionBLabelEnglish(value));
-    private EventCallback<string> OnUpdateOptionBLabelGerman => EventCallback.Factory.Create<string>(this, value => UpdateOptionBLabelGerman(value));
-    private EventCallback<bool> OnUpdateBinaryIsRequired => EventCallback.Factory.Create<bool>(this, value => UpdateBinaryIsRequired(value));
+    private void MoveBinaryItemDown(int index)
+    {
+        if (Section.Configuration is not BinaryConfiguration config) return;
+        var items = config.Items.OrderBy(i => i.Order).ToList();
+        if (index >= 0 && index < items.Count - 1)
+        {
+            (items[index], items[index + 1]) = (items[index + 1], items[index]);
+            for (var i = 0; i < items.Count; i++) items[i].Order = i;
+            UpdateBinaryItems(items);
+        }
+    }
+
+    private void RemoveBinaryItem(int index)
+    {
+        if (Section.Configuration is not BinaryConfiguration config) return;
+        var items = config.Items.OrderBy(i => i.Order).ToList();
+        if (index >= 0 && index < items.Count)
+        {
+            items.RemoveAt(index);
+            for (var i = 0; i < items.Count; i++) items[i].Order = i;
+            UpdateBinaryItems(items);
+        }
+    }
+
+    private void UpdateBinaryItemRequired(int index, bool value)
+    {
+        if (Section.Configuration is not BinaryConfiguration config) return;
+        var items = config.Items.OrderBy(i => i.Order).ToList();
+        if (index >= 0 && index < items.Count)
+        {
+            items[index].IsRequired = value;
+            UpdateBinaryItems(items);
+        }
+    }
+
+    private void UpdateBinaryItemTitleEnglish(int index, string value)
+    {
+        if (Section.Configuration is not BinaryConfiguration config) return;
+        var items = config.Items.OrderBy(i => i.Order).ToList();
+        if (index >= 0 && index < items.Count)
+        {
+            items[index].TitleEnglish = value ?? "";
+            UpdateBinaryItems(items);
+        }
+    }
+
+    private void UpdateBinaryItemTitleGerman(int index, string value)
+    {
+        if (Section.Configuration is not BinaryConfiguration config) return;
+        var items = config.Items.OrderBy(i => i.Order).ToList();
+        if (index >= 0 && index < items.Count)
+        {
+            items[index].TitleGerman = value ?? "";
+            UpdateBinaryItems(items);
+        }
+    }
+
+    private void UpdateBinaryItemDescriptionEnglish(int index, string value)
+    {
+        if (Section.Configuration is not BinaryConfiguration config) return;
+        var items = config.Items.OrderBy(i => i.Order).ToList();
+        if (index >= 0 && index < items.Count)
+        {
+            items[index].DescriptionEnglish = string.IsNullOrEmpty(value) ? null : value;
+            UpdateBinaryItems(items);
+        }
+    }
+
+    private void UpdateBinaryItemDescriptionGerman(int index, string value)
+    {
+        if (Section.Configuration is not BinaryConfiguration config) return;
+        var items = config.Items.OrderBy(i => i.Order).ToList();
+        if (index >= 0 && index < items.Count)
+        {
+            items[index].DescriptionGerman = string.IsNullOrEmpty(value) ? null : value;
+            UpdateBinaryItems(items);
+        }
+    }
+
+    private void UpdateBinaryItemOptionAEnglish(int index, string value)
+    {
+        if (Section.Configuration is not BinaryConfiguration config) return;
+        var items = config.Items.OrderBy(i => i.Order).ToList();
+        if (index >= 0 && index < items.Count)
+        {
+            items[index].OptionALabelEnglish = value ?? "Yes";
+            UpdateBinaryItems(items);
+        }
+    }
+
+    private void UpdateBinaryItemOptionAGerman(int index, string value)
+    {
+        if (Section.Configuration is not BinaryConfiguration config) return;
+        var items = config.Items.OrderBy(i => i.Order).ToList();
+        if (index >= 0 && index < items.Count)
+        {
+            items[index].OptionALabelGerman = value ?? "Ja";
+            UpdateBinaryItems(items);
+        }
+    }
+
+    private void UpdateBinaryItemOptionBEnglish(int index, string value)
+    {
+        if (Section.Configuration is not BinaryConfiguration config) return;
+        var items = config.Items.OrderBy(i => i.Order).ToList();
+        if (index >= 0 && index < items.Count)
+        {
+            items[index].OptionBLabelEnglish = value ?? "No";
+            UpdateBinaryItems(items);
+        }
+    }
+
+    private void UpdateBinaryItemOptionBGerman(int index, string value)
+    {
+        if (Section.Configuration is not BinaryConfiguration config) return;
+        var items = config.Items.OrderBy(i => i.Order).ToList();
+        if (index >= 0 && index < items.Count)
+        {
+            items[index].OptionBLabelGerman = value ?? "Nein";
+            UpdateBinaryItems(items);
+        }
+    }
+
+    private EventCallback<int> OnMoveBinaryItemUp => EventCallback.Factory.Create<int>(this, index => MoveBinaryItemUp(index));
+    private EventCallback<int> OnMoveBinaryItemDown => EventCallback.Factory.Create<int>(this, index => MoveBinaryItemDown(index));
+    private EventCallback<int> OnRemoveBinaryItem => EventCallback.Factory.Create<int>(this, index => RemoveBinaryItem(index));
+    private EventCallback<(int, bool)> OnUpdateBinaryItemRequired => EventCallback.Factory.Create<(int, bool)>(this, args => UpdateBinaryItemRequired(args.Item1, args.Item2));
+    private EventCallback<(int, string)> OnUpdateBinaryItemTitleEnglish => EventCallback.Factory.Create<(int, string)>(this, args => UpdateBinaryItemTitleEnglish(args.Item1, args.Item2));
+    private EventCallback<(int, string)> OnUpdateBinaryItemTitleGerman => EventCallback.Factory.Create<(int, string)>(this, args => UpdateBinaryItemTitleGerman(args.Item1, args.Item2));
+    private EventCallback<(int, string)> OnUpdateBinaryItemDescriptionEnglish => EventCallback.Factory.Create<(int, string)>(this, args => UpdateBinaryItemDescriptionEnglish(args.Item1, args.Item2));
+    private EventCallback<(int, string)> OnUpdateBinaryItemDescriptionGerman => EventCallback.Factory.Create<(int, string)>(this, args => UpdateBinaryItemDescriptionGerman(args.Item1, args.Item2));
+    private EventCallback<(int, string)> OnUpdateBinaryItemOptionAEnglish => EventCallback.Factory.Create<(int, string)>(this, args => UpdateBinaryItemOptionAEnglish(args.Item1, args.Item2));
+    private EventCallback<(int, string)> OnUpdateBinaryItemOptionAGerman => EventCallback.Factory.Create<(int, string)>(this, args => UpdateBinaryItemOptionAGerman(args.Item1, args.Item2));
+    private EventCallback<(int, string)> OnUpdateBinaryItemOptionBEnglish => EventCallback.Factory.Create<(int, string)>(this, args => UpdateBinaryItemOptionBEnglish(args.Item1, args.Item2));
+    private EventCallback<(int, string)> OnUpdateBinaryItemOptionBGerman => EventCallback.Factory.Create<(int, string)>(this, args => UpdateBinaryItemOptionBGerman(args.Item1, args.Item2));
 
     public class RoleOption
     {

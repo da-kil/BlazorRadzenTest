@@ -78,11 +78,11 @@ public class QuestionResponseDataDtoJsonConverter : JsonConverter<QuestionRespon
             {
                 result = JsonSerializer.Deserialize<GoalResponseDataDto>(root.GetRawText(), options);
             }
-            else if (root.TryGetProperty("SelectedKeys", out _))
+            else if (root.TryGetProperty("SelectionsByQuestion", out _) || root.TryGetProperty("SelectedKeys", out _))
             {
                 result = JsonSerializer.Deserialize<MultipleChoiceResponseDataDto>(root.GetRawText(), options);
             }
-            else if (root.TryGetProperty("SelectedOption", out _))
+            else if (root.TryGetProperty("Selections", out _) || root.TryGetProperty("SelectedOption", out _))
             {
                 result = JsonSerializer.Deserialize<BinaryResponseDataDto>(root.GetRawText(), options);
             }

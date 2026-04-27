@@ -156,26 +156,37 @@ public class QuestionnaireValidationService
                     continue;
                 }
 
-                if (!mcConfig.Choices.Any())
+                if (!mcConfig.Questions.Any())
                 {
-                    validationErrors.Add($"'{sectionName}' must have at least one choice option");
+                    validationErrors.Add($"'{sectionName}' must have at least one question");
                 }
                 else
                 {
-                    for (int i = 0; i < mcConfig.Choices.Count; i++)
+                    for (int qi = 0; qi < mcConfig.Questions.Count; qi++)
                     {
-                        if (string.IsNullOrWhiteSpace(mcConfig.Choices[i].LabelEnglish) &&
-                            string.IsNullOrWhiteSpace(mcConfig.Choices[i].LabelGerman))
+                        var q = mcConfig.Questions[qi];
+                        var qLabel = $"Question {qi + 1} in '{sectionName}'";
+
+                        if (!q.Choices.Any())
                         {
-                            validationErrors.Add($"Choice {i + 1} in '{sectionName}' requires a label (in English or German)");
+                            validationErrors.Add($"{qLabel} must have at least one choice");
+                        }
+                        else
+                        {
+                            for (int ci = 0; ci < q.Choices.Count; ci++)
+                            {
+                                if (string.IsNullOrWhiteSpace(q.Choices[ci].LabelEnglish) &&
+                                    string.IsNullOrWhiteSpace(q.Choices[ci].LabelGerman))
+                                    validationErrors.Add($"Choice {ci + 1} in {qLabel} requires a label");
+                            }
+
+                            if (q.MaxSelections < q.MinSelections)
+                                validationErrors.Add($"{qLabel}: Max selections ({q.MaxSelections}) must be >= min selections ({q.MinSelections})");
+
+                            if (q.MaxSelections > q.Choices.Count)
+                                validationErrors.Add($"{qLabel}: Max selections ({q.MaxSelections}) cannot exceed number of choices ({q.Choices.Count})");
                         }
                     }
-
-                    if (mcConfig.MaxSelections < mcConfig.MinSelections)
-                        validationErrors.Add($"'{sectionName}': Max selections ({mcConfig.MaxSelections}) must be >= min selections ({mcConfig.MinSelections})");
-
-                    if (mcConfig.MaxSelections > mcConfig.Choices.Count)
-                        validationErrors.Add($"'{sectionName}': Max selections ({mcConfig.MaxSelections}) cannot exceed number of choices ({mcConfig.Choices.Count})");
                 }
             }
             else if (section.Type == QuestionType.Binary)

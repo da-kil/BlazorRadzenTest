@@ -78,8 +78,8 @@ public class QuestionConfigurationJsonConverter : JsonConverter<IQuestionConfigu
             QuestionType.TextQuestion => JsonSerializer.Deserialize<TextQuestionConfiguration>(rawJson, options),
             QuestionType.Goal => JsonSerializer.Deserialize<GoalConfiguration>(rawJson, options),
             QuestionType.EmployeeFeedback => JsonSerializer.Deserialize<EmployeeFeedbackConfiguration>(rawJson, options),
-            QuestionType.MultipleChoice => JsonSerializer.Deserialize<MultipleChoiceConfiguration>(rawJson, options),
-            QuestionType.Binary => JsonSerializer.Deserialize<BinaryConfiguration>(rawJson, options),
+            QuestionType.MultipleChoice => DeserializeMultipleChoiceConfiguration(root, rawJson, options),
+            QuestionType.Binary => DeserializeBinaryConfiguration(root, rawJson, options),
             _ => throw new JsonException($"Unknown question type: {questionType}")
         };
     }
@@ -131,14 +131,15 @@ public class QuestionConfigurationJsonConverter : JsonConverter<IQuestionConfigu
             return QuestionType.EmployeeFeedback;
         }
 
-        // MultipleChoiceConfiguration has "Choices" and "MinSelections"
-        if (root.TryGetProperty("Choices", out _) && root.TryGetProperty("MinSelections", out _))
+        // MultipleChoiceConfiguration: new format has "Questions", legacy has "Choices" + "MinSelections"
+        if (root.TryGetProperty("Questions", out _) ||
+            (root.TryGetProperty("Choices", out _) && root.TryGetProperty("MinSelections", out _)))
         {
             return QuestionType.MultipleChoice;
         }
 
-        // BinaryConfiguration has "OptionALabelEnglish"
-        if (root.TryGetProperty("OptionALabelEnglish", out _))
+        // BinaryConfiguration has "Items" (new format) or legacy "OptionALabelEnglish"
+        if (root.TryGetProperty("Items", out _) || root.TryGetProperty("OptionALabelEnglish", out _))
         {
             return QuestionType.Binary;
         }
@@ -179,7 +180,7 @@ public class QuestionConfigurationJsonConverter : JsonConverter<IQuestionConfigu
                 WriteMultipleChoiceConfiguration(writer, multipleChoice, options);
                 break;
             case BinaryConfiguration binary:
-                WriteBinaryConfiguration(writer, binary);
+                WriteBinaryConfiguration(writer, binary, options);
                 break;
             default:
                 throw new JsonException($"Unknown configuration type: {value.GetType()}");
@@ -216,18 +217,72 @@ public class QuestionConfigurationJsonConverter : JsonConverter<IQuestionConfigu
 
     private void WriteMultipleChoiceConfiguration(Utf8JsonWriter writer, MultipleChoiceConfiguration config, JsonSerializerOptions options)
     {
-        writer.WritePropertyName("Choices");
-        JsonSerializer.Serialize(writer, config.Choices, options);
-        writer.WriteNumber("MinSelections", config.MinSelections);
-        writer.WriteNumber("MaxSelections", config.MaxSelections);
+        writer.WritePropertyName("Questions");
+        JsonSerializer.Serialize(writer, config.Questions, options);
     }
 
-    private void WriteBinaryConfiguration(Utf8JsonWriter writer, BinaryConfiguration config)
+    private void WriteBinaryConfiguration(Utf8JsonWriter writer, BinaryConfiguration config, JsonSerializerOptions options)
     {
-        writer.WriteString("OptionALabelEnglish", config.OptionALabelEnglish);
-        writer.WriteString("OptionALabelGerman", config.OptionALabelGerman);
-        writer.WriteString("OptionBLabelEnglish", config.OptionBLabelEnglish);
-        writer.WriteString("OptionBLabelGerman", config.OptionBLabelGerman);
-        writer.WriteBoolean("IsRequired", config.IsRequired);
+        writer.WritePropertyName("Items");
+        JsonSerializer.Serialize(writer, config.Items, options);
+    }
+
+    private static MultipleChoiceConfiguration DeserializeMultipleChoiceConfiguration(JsonElement root, string rawJson, JsonSerializerOptions options)
+    {
+        // Migrate legacy flat format (Choices + MinSelections) to new Questions list format
+        if (root.TryGetProperty("Choices", out var choicesElement) && root.TryGetProperty("MinSelections", out var minEl))
+        {
+            var legacyChoices = JsonSerializer.Deserialize<List<ChoiceOption>>(choicesElement.GetRawText(), options) ?? new List<ChoiceOption>();
+            var minSelections = minEl.TryGetInt32(out var minVal) ? minVal : 1;
+            var maxSelections = root.TryGetProperty("MaxSelections", out var maxEl) && maxEl.TryGetInt32(out var maxVal) ? maxVal : 1;
+
+            return new MultipleChoiceConfiguration
+            {
+                Questions =
+                [
+                    new MultipleChoiceQuestion
+                    {
+                        Key = "question_1",
+                        Order = 0,
+                        MinSelections = minSelections,
+                        MaxSelections = maxSelections,
+                        Choices = legacyChoices
+                    }
+                ]
+            };
+        }
+
+        return JsonSerializer.Deserialize<MultipleChoiceConfiguration>(rawJson, options) ?? new MultipleChoiceConfiguration();
+    }
+
+    private static BinaryConfiguration DeserializeBinaryConfiguration(JsonElement root, string rawJson, JsonSerializerOptions options)
+    {
+        // Migrate legacy flat format (OptionALabelEnglish) to new Items list format
+        if (root.TryGetProperty("OptionALabelEnglish", out var optAEn))
+        {
+            var optADe = root.TryGetProperty("OptionALabelGerman", out var v1) ? v1.GetString() ?? "Ja" : "Ja";
+            var optBEn = root.TryGetProperty("OptionBLabelEnglish", out var v2) ? v2.GetString() ?? "No" : "No";
+            var optBDe = root.TryGetProperty("OptionBLabelGerman", out var v3) ? v3.GetString() ?? "Nein" : "Nein";
+            var isRequired = root.TryGetProperty("IsRequired", out var v4) && v4.GetBoolean();
+
+            return new BinaryConfiguration
+            {
+                Items =
+                [
+                    new BinaryItem
+                    {
+                        Key = "item_0",
+                        OptionALabelEnglish = optAEn.GetString() ?? "Yes",
+                        OptionALabelGerman = optADe,
+                        OptionBLabelEnglish = optBEn,
+                        OptionBLabelGerman = optBDe,
+                        IsRequired = isRequired,
+                        Order = 0
+                    }
+                ]
+            };
+        }
+
+        return JsonSerializer.Deserialize<BinaryConfiguration>(rawJson, options) ?? new BinaryConfiguration();
     }
 }

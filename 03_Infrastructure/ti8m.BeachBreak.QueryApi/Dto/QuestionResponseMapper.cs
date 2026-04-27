@@ -57,11 +57,13 @@ public static class QuestionResponseMapper
             },
             QuestionResponseValue.MultipleChoiceResponse mcResponse => new MultipleChoiceResponseDataDto
             {
-                SelectedKeys = mcResponse.SelectedKeys?.ToList() ?? new List<string>()
+                SelectionsByQuestion = (mcResponse.SelectionsByQuestion ?? new Dictionary<string, IReadOnlyList<string>>())
+                    .ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ToList())
             },
             QuestionResponseValue.BinaryResponse binaryResponse => new BinaryResponseDataDto
             {
-                SelectedOption = binaryResponse.SelectedOption
+                Selections = (binaryResponse.Selections ?? new Dictionary<string, string?>())
+                    .ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
             },
             _ => new TextResponseDataDto { TextSections = [responseValue.ToString() ?? string.Empty] }
         };

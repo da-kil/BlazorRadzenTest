@@ -9,6 +9,7 @@ public class ChoiceOption
     public string LabelEnglish { get; set; }
     public string LabelGerman { get; set; }
     public int Order { get; set; }
+    public bool IsRequired { get; set; }
 
     public ChoiceOption()
     {

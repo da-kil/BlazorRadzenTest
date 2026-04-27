@@ -136,26 +136,52 @@ public class QuestionResponseValueJsonConverter : JsonConverter<QuestionResponse
 
     private static QuestionResponseValue.MultipleChoiceResponse DeserializeMultipleChoiceResponse(JsonElement root)
     {
-        var dto = JsonSerializer.Deserialize<MultipleChoiceResponseDto>(root.GetRawText())
-            ?? throw new JsonException("Failed to deserialize MultipleChoiceResponse");
-        return new QuestionResponseValue.MultipleChoiceResponse(dto.SelectedKeys);
-    }
+        // New format: SelectionsByQuestion: { "question_1": ["key_a", "key_b"] }
+        if (root.TryGetProperty("SelectionsByQuestion", out var byQuestion))
+        {
+            var dict = new Dictionary<string, IReadOnlyList<string>>();
+            foreach (var prop in byQuestion.EnumerateObject())
+            {
+                var keys = prop.Value.EnumerateArray().Select(e => e.GetString() ?? "").ToList();
+                dict[prop.Name] = keys;
+            }
+            return new QuestionResponseValue.MultipleChoiceResponse(dict);
+        }
 
-    private class MultipleChoiceResponseDto
-    {
-        public List<string> SelectedKeys { get; set; } = new();
+        // Legacy format: SelectedKeys: ["key_a"] — migrate to first-question dict
+        if (root.TryGetProperty("SelectedKeys", out var selectedKeys))
+        {
+            var keys = selectedKeys.EnumerateArray().Select(e => e.GetString() ?? "").ToList();
+            var dict = new Dictionary<string, IReadOnlyList<string>>
+            {
+                ["question_1"] = keys
+            };
+            return new QuestionResponseValue.MultipleChoiceResponse(dict);
+        }
+
+        return new QuestionResponseValue.MultipleChoiceResponse(new Dictionary<string, IReadOnlyList<string>>());
     }
 
     private static QuestionResponseValue.BinaryResponse DeserializeBinaryResponse(JsonElement root)
     {
-        var dto = JsonSerializer.Deserialize<BinaryResponseDto>(root.GetRawText())
-            ?? throw new JsonException("Failed to deserialize BinaryResponse");
-        return new QuestionResponseValue.BinaryResponse(dto.SelectedOption);
-    }
+        // New format: Selections: { "item_1": "A" }
+        if (root.TryGetProperty("Selections", out var selections))
+        {
+            var dict = new Dictionary<string, string?>();
+            foreach (var prop in selections.EnumerateObject())
+                dict[prop.Name] = prop.Value.ValueKind == JsonValueKind.Null ? null : prop.Value.GetString();
+            return new QuestionResponseValue.BinaryResponse(dict);
+        }
 
-    private class BinaryResponseDto
-    {
-        public string? SelectedOption { get; set; }
+        // Legacy format: SelectedOption: "A" — migrate to first-item dict
+        if (root.TryGetProperty("SelectedOption", out var selectedOption))
+        {
+            string? value = selectedOption.ValueKind == JsonValueKind.Null ? null : selectedOption.GetString();
+            var dict = new Dictionary<string, string?> { ["item_1"] = value };
+            return new QuestionResponseValue.BinaryResponse(dict);
+        }
+
+        return new QuestionResponseValue.BinaryResponse(new Dictionary<string, string?>());
     }
 
     public override void Write(Utf8JsonWriter writer, QuestionResponseValue value, JsonSerializerOptions options)

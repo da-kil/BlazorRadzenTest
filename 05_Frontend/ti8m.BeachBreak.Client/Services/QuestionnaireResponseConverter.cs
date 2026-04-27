@@ -64,6 +64,14 @@ public static class QuestionnaireResponseConverter
                         commandDto.GoalResponse = ConvertGoalResponse(response);
                         break;
 
+                    case QuestionType.Binary:
+                        commandDto.BinaryResponse = ConvertBinaryResponse(response);
+                        break;
+
+                    case QuestionType.MultipleChoice:
+                        commandDto.MultipleChoiceResponse = ConvertMultipleChoiceResponse(response);
+                        break;
+
                     default:
                         throw new ArgumentException($"Unsupported question type: {response.QuestionType}");
                 }
@@ -157,6 +165,22 @@ public static class QuestionnaireResponseConverter
         };
     }
 
+    private static BinaryResponseCommandDto? ConvertBinaryResponse(QuestionResponse response)
+    {
+        if (response.ResponseData is not BinaryResponseDataDto binaryData) return null;
+        return binaryData.Selections.Any()
+            ? new BinaryResponseCommandDto { Selections = new Dictionary<string, string?>(binaryData.Selections) }
+            : null;
+    }
+
+    private static MultipleChoiceResponseCommandDto? ConvertMultipleChoiceResponse(QuestionResponse response)
+    {
+        if (response.ResponseData is not MultipleChoiceResponseDataDto mcData) return null;
+        return mcData.SelectionsByQuestion.Any()
+            ? new MultipleChoiceResponseCommandDto { SelectionsByQuestion = mcData.SelectionsByQuestion.ToDictionary(kvp => kvp.Key, kvp => new List<string>(kvp.Value)) }
+            : null;
+    }
+
     /// <summary>
     /// Detects the actual question type based on the response data present.
     /// More reliable than trusting the QuestionType field which may be inconsistent.
@@ -175,6 +199,8 @@ public static class QuestionnaireResponseConverter
             TextResponseDataDto => QuestionType.TextQuestion,
             AssessmentResponseDataDto => QuestionType.Assessment,
             GoalResponseDataDto => QuestionType.Goal,
+            BinaryResponseDataDto => QuestionType.Binary,
+            MultipleChoiceResponseDataDto => QuestionType.MultipleChoice,
             _ => response.QuestionType
         };
     }

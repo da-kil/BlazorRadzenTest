@@ -119,8 +119,8 @@
             TextResponseDataDto textData => $"text|{string.Join(",", textData.TextSections)}",
             AssessmentResponseDataDto assessmentData => $"assessment|{string.Join(",", assessmentData.Evaluations.Select(kvp => $"{kvp.Key}:{kvp.Value.Rating}:{kvp.Value.Comment}"))}",
             GoalResponseDataDto goalData => $"goal|{goalData.Goals.Count}|{goalData.PredecessorRatings.Count}|{goalData.PredecessorAssignmentId}|{string.Join(",", goalData.Goals.Select(g => $"{g.GoalId}:{g.ObjectiveDescription}:{g.WeightingPercentage}"))}",
-            MultipleChoiceResponseDataDto mcData => $"multiplechoice|{string.Join(",", mcData.SelectedKeys)}",
-            BinaryResponseDataDto binaryData => $"binary|{binaryData.SelectedOption}",
+            MultipleChoiceResponseDataDto mcData => $"multiplechoice|{string.Join(";", mcData.SelectionsByQuestion.OrderBy(kvp => kvp.Key).Select(kvp => $"{kvp.Key}:{string.Join(",", kvp.Value)}"))}",
+            BinaryResponseDataDto binaryData => $"binary|{string.Join(";", binaryData.Selections.OrderBy(kvp => kvp.Key).Select(kvp => $"{kvp.Key}:{kvp.Value}"))}",
             _ => Response.ResponseData.GetType().Name
         };
 

@@ -296,15 +296,19 @@ public partial class QuestionnaireResponse : AggregateRoot
         if (response is not QuestionResponseValue.MultipleChoiceResponse mcResponse)
             return false;
 
-        if (section.Configuration is not MultipleChoiceConfiguration config)
+        if (section.Configuration is not MultipleChoiceConfiguration config || !config.Questions.Any())
             return true;
 
-        // MinSelections == 0 means optional — not required for completion
-        if (config.MinSelections == 0)
-            return true;
+        // Every required question must have a valid number of selections
+        return config.Questions.All(q =>
+        {
+            if (q.MinSelections == 0) return true; // optional question
 
-        var count = mcResponse.SelectedKeys.Count;
-        return count >= config.MinSelections && count <= config.MaxSelections;
+            var selectedCount = mcResponse.SelectionsByQuestion.TryGetValue(q.Key, out var selected)
+                ? selected.Count : 0;
+
+            return selectedCount >= q.MinSelections && selectedCount <= q.MaxSelections;
+        });
     }
 
     private bool IsBinaryComplete(QuestionnaireTemplateAggregate.QuestionSection section, QuestionResponseValue response)
@@ -315,10 +319,10 @@ public partial class QuestionnaireResponse : AggregateRoot
         if (section.Configuration is not BinaryConfiguration config)
             return true;
 
-        if (!config.IsRequired)
-            return true;
-
-        return binaryResponse.SelectedOption != null;
+        // Every required item must have a selection
+        return config.Items
+            .Where(i => i.IsRequired)
+            .All(i => binaryResponse.Selections.TryGetValue(i.Key, out var sel) && sel != null);
     }
 
     private List<EvaluationItem> GetEvaluationsFromConfiguration(QuestionSection section)
