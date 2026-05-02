@@ -20,6 +20,8 @@ public class ChoiceOption
     public string Key { get; set; }
     public string LabelEnglish { get; set; }
     public string LabelGerman { get; set; }
+    public string? DescriptionEnglish { get; set; }
+    public string? DescriptionGerman { get; set; }
     public int Order { get; set; }
     public bool IsRequired { get; set; }
 
@@ -32,5 +34,11 @@ public class ChoiceOption
     {
         var label = GetLocalizedLabel(language);
         return !string.IsNullOrWhiteSpace(label) ? label : LabelEnglish;
+    }
+
+    public string? GetLocalizedDescription(string language)
+    {
+        var desc = language == "de" ? DescriptionGerman : DescriptionEnglish;
+        return !string.IsNullOrWhiteSpace(desc) ? desc : DescriptionEnglish;
     }
 }

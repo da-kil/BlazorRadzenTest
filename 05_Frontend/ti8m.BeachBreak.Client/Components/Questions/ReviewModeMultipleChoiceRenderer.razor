@@ -34,6 +34,13 @@ else
             {
                 <div class="question-item-title mb-2">@qTitle</div>
             }
+            @{
+                var qDesc = question.GetLocalizedDescription(lang);
+            }
+            @if (!string.IsNullOrWhiteSpace(qDesc))
+            {
+                <div class="question-item-description mb-2">@qDesc</div>
+            }
 
             <div class="side-by-side-view">
                 <div class="answer-column employee @(hasDifference ? "has-difference" : "")">
@@ -50,10 +57,18 @@ else
                                 var isSelected = employeeSelections.Contains(choice.Key);
                                 var isOnlyManagerSide = !employeeSelections.Contains(choice.Key) && managerSelections.Contains(choice.Key);
                                 var choiceLabel = choice.GetLocalizedLabelWithFallback(lang);
-                                <div class="choice-item @(isSelected ? "choice-selected" : "") @(hasDifference && isOnlyManagerSide ? "choice-answer-differs" : "") choice-disabled"
+                                var choiceDesc = choice.GetLocalizedDescription(lang);
+                                var hasDesc = !string.IsNullOrWhiteSpace(choiceDesc);
+                                <div class="choice-item @(isSelected ? "choice-selected" : "") @(hasDifference && isOnlyManagerSide ? "choice-answer-differs" : "") choice-disabled @(hasDesc ? "choice-item-with-desc" : "")"
                                      @key="@choice.Key">
                                     <RadzenCheckBox TValue="bool" Value="@isSelected" Disabled="true" Name="@($"emp_{question.Key}_{choice.Key}")" />
-                                    <RadzenLabel Text="@choiceLabel" Component="@($"emp_{question.Key}_{choice.Key}")" Class="choice-label ms-2" />
+                                    <div class="choice-content">
+                                        <RadzenLabel Text="@choiceLabel" Component="@($"emp_{question.Key}_{choice.Key}")" Class="choice-label" />
+                                        @if (hasDesc)
+                                        {
+                                            <div class="choice-description">@choiceDesc</div>
+                                        }
+                                    </div>
                                 </div>
                             }
                         </div>
@@ -74,10 +89,18 @@ else
                                 var isSelected = managerSelections.Contains(choice.Key);
                                 var isOnlyEmployeeSide = employeeSelections.Contains(choice.Key) && !managerSelections.Contains(choice.Key);
                                 var choiceLabel = choice.GetLocalizedLabelWithFallback(lang);
-                                <div class="choice-item @(isSelected ? "choice-selected" : "") @(hasDifference && isOnlyEmployeeSide ? "choice-answer-differs" : "") choice-disabled"
+                                var choiceDesc = choice.GetLocalizedDescription(lang);
+                                var hasDesc = !string.IsNullOrWhiteSpace(choiceDesc);
+                                <div class="choice-item @(isSelected ? "choice-selected" : "") @(hasDifference && isOnlyEmployeeSide ? "choice-answer-differs" : "") choice-disabled @(hasDesc ? "choice-item-with-desc" : "")"
                                      @key="@choice.Key">
                                     <RadzenCheckBox TValue="bool" Value="@isSelected" Disabled="true" Name="@($"mgr_{question.Key}_{choice.Key}")" />
-                                    <RadzenLabel Text="@choiceLabel" Component="@($"mgr_{question.Key}_{choice.Key}")" Class="choice-label ms-2" />
+                                    <div class="choice-content">
+                                        <RadzenLabel Text="@choiceLabel" Component="@($"mgr_{question.Key}_{choice.Key}")" Class="choice-label" />
+                                        @if (hasDesc)
+                                        {
+                                            <div class="choice-description">@choiceDesc</div>
+                                        }
+                                    </div>
                                 </div>
                             }
                         </div>

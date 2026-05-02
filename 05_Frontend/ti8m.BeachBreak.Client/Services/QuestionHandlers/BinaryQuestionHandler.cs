@@ -12,7 +12,7 @@ public class BinaryQuestionHandler : IQuestionTypeHandler
         {
             Items =
             [
-                new BinaryItem { Key = Guid.NewGuid().ToString("N")[..8], Order = 0 }
+                new BinaryItem { Key = "item_1", Order = 0 }
             ]
         };
     }
@@ -22,7 +22,7 @@ public class BinaryQuestionHandler : IQuestionTypeHandler
         if (question.Configuration is not BinaryConfiguration config) return;
         config.Items.Add(new BinaryItem
         {
-            Key = Guid.NewGuid().ToString("N")[..8],
+            Key = $"item_{config.Items.Count + 1}",
             Order = config.Items.Count
         });
     }

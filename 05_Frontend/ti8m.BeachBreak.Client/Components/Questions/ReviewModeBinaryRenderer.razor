@@ -37,6 +37,13 @@ else
             {
                 <div class="item-title mb-2">@itemTitle</div>
             }
+            @{
+                var itemDesc = item.GetLocalizedDescription(lang);
+            }
+            @if (!string.IsNullOrWhiteSpace(itemDesc))
+            {
+                <div class="item-description mb-2">@itemDesc</div>
+            }
 
             <div class="side-by-side-view">
                 <div class="answer-column employee @(hasDifference ? "has-difference" : "")">

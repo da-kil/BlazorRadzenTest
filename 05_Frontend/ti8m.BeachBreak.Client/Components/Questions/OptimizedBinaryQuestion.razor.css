@@ -1,0 +1,63 @@
+.binary-question {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.binary-items {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.binary-item-block {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.item-title {
+    font-weight: var(--font-weight-heading, 600);
+    font-size: 0.9375rem;
+    color: var(--rz-text-color);
+}
+
+.item-description {
+    font-size: 0.875rem;
+    color: var(--rz-text-muted);
+    margin-top: -0.25rem;
+}
+
+.binary-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.binary-radio-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.clear-selection-link {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.8125rem;
+    color: var(--rz-text-muted);
+    text-decoration: none;
+    cursor: pointer;
+    width: fit-content;
+}
+
+.clear-selection-link:hover {
+    color: var(--rz-danger);
+    text-decoration: underline;
+}
+
+.binary-validation-hint {
+    display: flex;
+    align-items: center;
+    font-size: 0.8125rem;
+    color: var(--rz-danger);
+}

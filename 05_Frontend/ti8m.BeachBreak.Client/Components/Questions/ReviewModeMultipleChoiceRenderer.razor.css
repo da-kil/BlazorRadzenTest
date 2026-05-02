@@ -1,0 +1,13 @@
+.choice-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    margin-left: 0.625rem;
+}
+
+.choice-description {
+    font-size: 0.8125rem;
+    color: var(--rz-text-muted);
+    font-weight: var(--font-weight-body, 400);
+    line-height: 1.4;
+}

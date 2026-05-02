@@ -1,0 +1,18 @@
+.predecessor-goal-group {
+    border-bottom: 2px solid var(--border-light, #e2e8f0);
+    padding-bottom: 1.5rem;
+}
+
+.predecessor-goal-group:last-child {
+    border-bottom: none;
+}
+
+.achievement-display, .justification-display {
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+}
+
+.rating-content .rz-numeric, .rating-content .rz-textarea {
+    border-radius: 6px;
+}

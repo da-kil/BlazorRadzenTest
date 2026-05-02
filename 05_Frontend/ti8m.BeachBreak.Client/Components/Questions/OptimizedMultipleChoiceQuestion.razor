@@ -136,6 +136,13 @@
                     {
                         <div class="question-item-title">@qTitle</div>
                     }
+                    @{
+                        var qDesc = question.GetLocalizedDescription(CurrentLanguage == Language.German ? "de" : "en");
+                    }
+                    @if (!string.IsNullOrWhiteSpace(qDesc))
+                    {
+                        <div class="question-item-description">@qDesc</div>
+                    }
 
                     <div class="choice-list">
                         @if (!choices.Any())
@@ -149,20 +156,34 @@
                             @foreach (var choice in choices)
                             {
                                 var choiceKey = choice.Key;
-                                var choiceLabel = choice.GetLocalizedLabelWithFallback(CurrentLanguage == Language.German ? "de" : "en");
+                                var lang = CurrentLanguage == Language.German ? "de" : "en";
+                                var choiceLabel = choice.GetLocalizedLabelWithFallback(lang);
+                                var choiceDesc = choice.GetLocalizedDescription(lang);
                                 var isSelected = selections.Contains(choiceKey);
                                 var isDisabled = IsCheckboxDisabled(qKey, choiceKey, question.MaxSelections);
+                                var hasDesc = !string.IsNullOrWhiteSpace(choiceDesc);
 
-                                <div class="choice-item @(isSelected ? "choice-selected" : "") @(isDisabled ? "choice-disabled" : "")"
-                                     @key="@choiceKey">
-                                    <RadzenCheckBox TValue="bool"
-                                                   Value="@isSelected"
-                                                   ValueChanged="@((bool v) => OnChoiceChanged(qKey, choiceKey, v, question.MaxSelections))"
-                                                   Name="@($"choice_{Section.Id}_{qKey}_{choiceKey}")"
-                                                   Disabled="@isDisabled" />
-                                    <RadzenLabel Text="@choiceLabel"
-                                                Component="@($"choice_{Section.Id}_{qKey}_{choiceKey}")"
-                                                Class="choice-label ms-2" />
+                                <div class="choice-item @(isSelected ? "choice-selected" : "") @(isDisabled ? "choice-disabled" : "") @(hasDesc ? "choice-item-with-desc" : "")"
+                                     @key="@choiceKey"
+                                     @onclick="@(async () => { if (!IsReadOnly && !isDisabled) await OnChoiceChanged(qKey, choiceKey, !isSelected, question.MaxSelections); })">
+                                    <span @onclick:stopPropagation="true">
+                                        <RadzenCheckBox TValue="bool"
+                                                       Value="@isSelected"
+                                                       ValueChanged="@((bool v) => OnChoiceChanged(qKey, choiceKey, v, question.MaxSelections))"
+                                                       Name="@($"choice_{Section.Id}_{qKey}_{choiceKey}")"
+                                                       Disabled="@isDisabled" />
+                                    </span>
+                                    <div class="choice-content">
+                                        <span @onclick:stopPropagation="true">
+                                            <RadzenLabel Text="@choiceLabel"
+                                                        Component="@($"choice_{Section.Id}_{qKey}_{choiceKey}")"
+                                                        Class="choice-label" />
+                                        </span>
+                                        @if (hasDesc)
+                                        {
+                                            <div class="choice-description">@choiceDesc</div>
+                                        }
+                                    </div>
                                 </div>
                             }
 
@@ -195,86 +216,3 @@
         </div>
     };
 }
-
-<style>
-    .multiple-choice-question {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-    }
-
-    .mc-questions {
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
-    }
-
-    .mc-question-block {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-
-    .question-item-title {
-        font-weight: var(--font-weight-heading, 600);
-        font-size: 0.9375rem;
-        color: var(--rz-text-color);
-    }
-
-    .choice-list {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-
-    .choice-item {
-        display: flex;
-        align-items: center;
-        padding: 0.625rem 0.875rem;
-        border: 1px solid var(--rz-base-300);
-        border-radius: 0.375rem;
-        background: var(--rz-base-100);
-        cursor: pointer;
-        transition: border-color 0.15s, background 0.15s;
-    }
-
-    .choice-item:hover:not(.choice-disabled) {
-        border-color: var(--rz-primary);
-        background: var(--rz-primary-lighter);
-    }
-
-    .choice-selected {
-        border-color: var(--rz-primary);
-        background: var(--rz-primary-lighter);
-    }
-
-    .choice-disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-
-    .choice-label {
-        cursor: pointer;
-        font-size: 0.9375rem;
-        color: var(--rz-text-color);
-    }
-
-    .selection-hint {
-        display: flex;
-        align-items: center;
-        font-size: 0.8125rem;
-        padding: 0.375rem 0;
-    }
-
-    .hint-error {
-        color: var(--rz-danger);
-    }
-
-    .hint-ok {
-        color: var(--rz-success);
-    }
-
-    .hint-optional {
-        color: var(--rz-text-muted);
-    }
-</style>

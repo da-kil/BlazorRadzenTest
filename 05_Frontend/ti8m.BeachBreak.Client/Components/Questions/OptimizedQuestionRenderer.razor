@@ -204,25 +204,3 @@
         }
     }
 }
-
-<style>
-.question-container {
-    margin-bottom: 3rem;
-}
-
-.question-container:last-child {
-    border-bottom: none;
-    margin-bottom: 0;
-}
-
-/* Performance optimization: reduce reflows */
-.question-container * {
-    box-sizing: border-box;
-}
-
-/* Hide content during re-render to prevent flash */
-.question-container[data-rendering="true"] {
-    opacity: 0.7;
-    pointer-events: none;
-}
-</style>

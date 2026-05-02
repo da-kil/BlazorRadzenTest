@@ -78,10 +78,12 @@ else
                                 TitleGermanPlaceholder="German label..."
                                 OnTitleEnglishChanged="@((string v) => { choice.LabelEnglish = v ?? ""; NotifyChanged(); })"
                                 OnTitleGermanChanged="@((string v) => { choice.LabelGerman = v ?? ""; NotifyChanged(); })"
-                                DescriptionEnglish=""
-                                DescriptionGerman=""
-                                DescriptionEnglishPlaceholder=""
-                                DescriptionGermanPlaceholder=""
+                                DescriptionEnglish="@(choice.DescriptionEnglish ?? "")"
+                                DescriptionGerman="@(choice.DescriptionGerman ?? "")"
+                                DescriptionEnglishPlaceholder="Optional description..."
+                                DescriptionGermanPlaceholder="Optional German description..."
+                                OnDescriptionEnglishChanged="@((string v) => { choice.DescriptionEnglish = v; NotifyChanged(); })"
+                                OnDescriptionGermanChanged="@((string v) => { choice.DescriptionGerman = v; NotifyChanged(); })"
                                 Disabled="@(!Template.IsAvailableForEditing)" />
                         }
                     }

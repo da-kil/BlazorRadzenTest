@@ -8,6 +8,8 @@ public class ChoiceOption
     public string Key { get; set; }
     public string LabelEnglish { get; set; }
     public string LabelGerman { get; set; }
+    public string? DescriptionEnglish { get; set; }
+    public string? DescriptionGerman { get; set; }
     public int Order { get; set; }
     public bool IsRequired { get; set; }
 
