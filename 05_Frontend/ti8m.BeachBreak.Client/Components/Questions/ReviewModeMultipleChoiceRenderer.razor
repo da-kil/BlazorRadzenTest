@@ -1,0 +1,113 @@
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Models.DTOs
+
+@if (!questions.Any())
+{
+    <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Class="mb-3">
+        <RadzenText TextStyle="TextStyle.Body2">
+            <strong>Configuration Error:</strong> No questions defined for this section.
+        </RadzenText>
+    </RadzenAlert>
+}
+else
+{
+    @foreach (var question in questions)
+    {
+        var employeeSelections = GetSelections(EmployeeResponse, question.Key);
+        var managerSelections = GetSelections(ManagerResponse, question.Key);
+        var hasDifference = !new HashSet<string>(employeeSelections).SetEquals(managerSelections);
+        var lang = CurrentLanguage == Language.German ? "de" : "en";
+        var qTitle = question.GetLocalizedTitleWithFallback(lang);
+        var choices = question.Choices.OrderBy(c => c.Order).ToList();
+
+        <div class="evaluation-comparison-card @(hasDifference ? "has-answer-difference" : "")" @key="@question.Key">
+            @if (hasDifference)
+            {
+                <div class="difference-indicator">
+                    <RadzenIcon Icon="compare_arrows" Class="me-1" />
+                    <span class="difference-text">Selections differ</span>
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(qTitle))
+            {
+                <div class="question-item-title mb-2">@qTitle</div>
+            }
+
+            <div class="side-by-side-view">
+                <div class="answer-column employee @(hasDifference ? "has-difference" : "")">
+                    <div class="answer-header">
+                        <span class="answer-label">
+                            <RadzenIcon Icon="person" Style="font-size: 1rem;" />
+                            Employee's Answer
+                        </span>
+                    </div>
+                    <div class="answer-content">
+                        <div class="choice-list">
+                            @foreach (var choice in choices)
+                            {
+                                var isSelected = employeeSelections.Contains(choice.Key);
+                                var isOnlyManagerSide = !employeeSelections.Contains(choice.Key) && managerSelections.Contains(choice.Key);
+                                var choiceLabel = choice.GetLocalizedLabelWithFallback(lang);
+                                <div class="choice-item @(isSelected ? "choice-selected" : "") @(hasDifference && isOnlyManagerSide ? "choice-answer-differs" : "") choice-disabled"
+                                     @key="@choice.Key">
+                                    <RadzenCheckBox TValue="bool" Value="@isSelected" Disabled="true" Name="@($"emp_{question.Key}_{choice.Key}")" />
+                                    <RadzenLabel Text="@choiceLabel" Component="@($"emp_{question.Key}_{choice.Key}")" Class="choice-label ms-2" />
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="answer-column manager @(hasDifference ? "has-difference" : "")">
+                    <div class="answer-header">
+                        <span class="answer-label">
+                            <RadzenIcon Icon="supervisor_account" Style="font-size: 1rem;" />
+                            Manager's Answer
+                        </span>
+                    </div>
+                    <div class="answer-content">
+                        <div class="choice-list">
+                            @foreach (var choice in choices)
+                            {
+                                var isSelected = managerSelections.Contains(choice.Key);
+                                var isOnlyEmployeeSide = employeeSelections.Contains(choice.Key) && !managerSelections.Contains(choice.Key);
+                                var choiceLabel = choice.GetLocalizedLabelWithFallback(lang);
+                                <div class="choice-item @(isSelected ? "choice-selected" : "") @(hasDifference && isOnlyEmployeeSide ? "choice-answer-differs" : "") choice-disabled"
+                                     @key="@choice.Key">
+                                    <RadzenCheckBox TValue="bool" Value="@isSelected" Disabled="true" Name="@($"mgr_{question.Key}_{choice.Key}")" />
+                                    <RadzenLabel Text="@choiceLabel" Component="@($"mgr_{question.Key}_{choice.Key}")" Class="choice-label ms-2" />
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+}
+
+@code {
+    [Parameter, EditorRequired] public QuestionSection Question { get; set; } = default!;
+    [Parameter, EditorRequired] public QuestionResponse EmployeeResponse { get; set; } = default!;
+    [Parameter, EditorRequired] public QuestionResponse ManagerResponse { get; set; } = default!;
+    [Parameter] public Language CurrentLanguage { get; set; } = Language.English;
+
+    private List<MultipleChoiceQuestion> questions = new();
+
+    protected override void OnParametersSet()
+    {
+        questions = Question.Configuration is MultipleChoiceConfiguration config
+            ? config.Questions.OrderBy(q => q.Order).ToList()
+            : new List<MultipleChoiceQuestion>();
+    }
+
+    private List<string> GetSelections(QuestionResponse response, string questionKey)
+    {
+        if (response.ResponseData is MultipleChoiceResponseDataDto data &&
+            data.SelectionsByQuestion.TryGetValue(questionKey, out var sel))
+            return sel;
+        return new List<string>();
+    }
+}

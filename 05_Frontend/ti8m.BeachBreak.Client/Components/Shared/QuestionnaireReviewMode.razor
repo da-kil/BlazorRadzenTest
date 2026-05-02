@@ -101,15 +101,6 @@ else
                     <!-- Questions Container -->
                     <div class="questions-container">
                         <div class="question-wrapper mb-4">
-                            <div class="question-title">
-                                @currentSection.GetLocalizedTitleWithFallback(CurrentLanguage)
-                            </div>
-
-                            @if (!string.IsNullOrWhiteSpace(currentSection.GetLocalizedDescriptionWithFallback(CurrentLanguage)))
-                            {
-                                <div class="question-description">@currentSection.GetLocalizedDescriptionWithFallback(CurrentLanguage)</div>
-                            }
-
                             <div class="review-question-container">
                                 @if (currentSection.CompletionRole == CompletionRole.Both && currentSection.Type == QuestionType.Assessment)
                                 {
@@ -122,6 +113,24 @@ else
                                                                   ManagerResponse="@managerResponse"
                                                                   Assignment="@Assignment"
                                                                   CurrentLanguage="@CurrentLanguage" />
+                                }
+                                else if (currentSection.CompletionRole == CompletionRole.Both && currentSection.Type == QuestionType.Binary)
+                                {
+                                    var employeeResponse = GetSectionResponse(currentSection.Id, CompletionRole.Employee);
+                                    var managerResponse = GetSectionResponse(currentSection.Id, CompletionRole.Manager);
+                                    <ReviewModeBinaryRenderer Question="@currentSection"
+                                                              EmployeeResponse="@employeeResponse"
+                                                              ManagerResponse="@managerResponse"
+                                                              CurrentLanguage="@CurrentLanguage" />
+                                }
+                                else if (currentSection.CompletionRole == CompletionRole.Both && currentSection.Type == QuestionType.MultipleChoice)
+                                {
+                                    var employeeResponse = GetSectionResponse(currentSection.Id, CompletionRole.Employee);
+                                    var managerResponse = GetSectionResponse(currentSection.Id, CompletionRole.Manager);
+                                    <ReviewModeMultipleChoiceRenderer Question="@currentSection"
+                                                                      EmployeeResponse="@employeeResponse"
+                                                                      ManagerResponse="@managerResponse"
+                                                                      CurrentLanguage="@CurrentLanguage" />
                                 }
                                 else if (currentSection.CompletionRole == CompletionRole.Both && currentSection.Type != QuestionType.Goal)
                                 {
@@ -145,7 +154,7 @@ else
                                                         <OptimizedQuestionRenderer Section="@currentSection"
                                                                                    Response="@employeeResponse"
                                                                                    IsReadOnly="true"
-                                                                                   HideHeader="true"
+
                                                                                    AssignmentId="@Assignment.Id"
                                                                                    CurrentUserRole="ApplicationRole.Employee"
                                                                                    AssignmentWorkflowState="@Assignment.WorkflowState"
@@ -170,7 +179,7 @@ else
                                                         <OptimizedQuestionRenderer Section="@currentSection"
                                                                                    Response="@managerResponse"
                                                                                    IsReadOnly="true"
-                                                                                   HideHeader="true"
+
                                                                                    AssignmentId="@Assignment.Id"
                                                                                    CurrentUserRole="@currentUserRole"
                                                                                    AssignmentWorkflowState="@Assignment.WorkflowState"
@@ -204,7 +213,7 @@ else
                                         <OptimizedQuestionRenderer Section="@currentSection"
                                                                    Response="@goalResponse"
                                                                    IsReadOnly="false"
-                                                                   HideHeader="true"
+
                                                                    AssignmentId="@Assignment.Id"
                                                                    CurrentUserRole="@currentUserRole"
                                                                    AssignmentWorkflowState="@Assignment.WorkflowState"
@@ -233,7 +242,7 @@ else
                                                 <OptimizedQuestionRenderer Section="@currentSection"
                                                                            Response="@singleResponse"
                                                                            IsReadOnly="true"
-                                                                           HideHeader="true"
+        
                                                                            AssignmentId="@Assignment.Id"
                                                                            CurrentUserRole="@ConvertCompletionRoleToApplicationRole(currentSection.CompletionRole)"
                                                                            AssignmentWorkflowState="@Assignment.WorkflowState"
@@ -288,6 +297,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        await base.OnInitializedAsync();
         // Initialize the current user role cache before loading review data
         await InitializeCurrentUserRoleAsync();
         await LoadReviewData();

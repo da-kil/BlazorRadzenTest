@@ -26,16 +26,14 @@
             <OptimizedTextQuestion Section="@Question"
                                   Response="@editResponse"
                                   OnResponseChanged="@HandleResponseChanged"
-                                  IsReadOnly="false"
-                                  HideHeader="true" />
+                                  IsReadOnly="false" />
         }
         else if (Question.Type == QuestionType.Assessment)
         {
             <OptimizedAssessmentQuestion Section="@displayQuestion"
                                         Response="@editResponse"
                                         OnResponseChanged="@HandleResponseChanged"
-                                        IsReadOnly="false"
-                                        HideHeader="true" />
+                                        IsReadOnly="false" />
         }
         else if (Question.Type == QuestionType.Goal)
         {
@@ -44,7 +42,6 @@
                                   Response="@editResponse"
                                   OnResponseChanged="@HandleResponseChanged"
                                   IsReadOnly="false"
-                                  HideHeader="true"
                                   AssignmentId="@AssignmentId"
                                   CurrentUserRole="@CurrentUserRole"
                                   AssignmentWorkflowState="@AssignmentWorkflowState" />

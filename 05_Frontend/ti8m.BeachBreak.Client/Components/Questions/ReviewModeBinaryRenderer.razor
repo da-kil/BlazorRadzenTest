@@ -1,0 +1,110 @@
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Models.DTOs
+
+@if (!items.Any())
+{
+    <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Class="mb-3">
+        <RadzenText TextStyle="TextStyle.Body2">
+            <strong>Configuration Error:</strong> No items defined for this question.
+        </RadzenText>
+    </RadzenAlert>
+}
+else
+{
+    @foreach (var item in items)
+    {
+        var employeeSelection = GetSelection(EmployeeResponse, item.Key);
+        var managerSelection = GetSelection(ManagerResponse, item.Key);
+        var hasDifference = employeeSelection != managerSelection;
+        var lang = CurrentLanguage == Language.German ? "de" : "en";
+        var optionALabel = (lang == "de" && !string.IsNullOrWhiteSpace(item.OptionALabelGerman)) ? item.OptionALabelGerman : item.OptionALabelEnglish;
+        var optionBLabel = (lang == "de" && !string.IsNullOrWhiteSpace(item.OptionBLabelGerman)) ? item.OptionBLabelGerman : item.OptionBLabelEnglish;
+        var itemTitle = item.GetLocalizedTitleWithFallback(lang);
+
+        <div class="evaluation-comparison-card @(hasDifference ? "has-answer-difference" : "")" @key="@item.Key">
+            @if (hasDifference)
+            {
+                var empLabel = employeeSelection == "A" ? optionALabel : (employeeSelection == "B" ? optionBLabel : "—");
+                var mgrLabel = managerSelection == "A" ? optionALabel : (managerSelection == "B" ? optionBLabel : "—");
+                <div class="difference-indicator">
+                    <RadzenIcon Icon="compare_arrows" Class="me-1" />
+                    <span class="difference-text">@empLabel · @mgrLabel</span>
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(itemTitle))
+            {
+                <div class="item-title mb-2">@itemTitle</div>
+            }
+
+            <div class="side-by-side-view">
+                <div class="answer-column employee @(hasDifference ? "has-difference" : "")">
+                    <div class="answer-header">
+                        <span class="answer-label">
+                            <RadzenIcon Icon="person" Style="font-size: 1rem;" />
+                            Employee's Answer
+                        </span>
+                    </div>
+                    <div class="answer-content">
+                        <RadzenRadioButtonList TValue="string"
+                                              Value="@employeeSelection"
+                                              Disabled="true"
+                                              Orientation="Radzen.Orientation.Vertical"
+                                              Class="binary-radio-list">
+                            <Items>
+                                <RadzenRadioButtonListItem Value="@("A")" Text="@optionALabel" />
+                                <RadzenRadioButtonListItem Value="@("B")" Text="@optionBLabel" />
+                            </Items>
+                        </RadzenRadioButtonList>
+                    </div>
+                </div>
+
+                <div class="answer-column manager @(hasDifference ? "has-difference" : "")">
+                    <div class="answer-header">
+                        <span class="answer-label">
+                            <RadzenIcon Icon="supervisor_account" Style="font-size: 1rem;" />
+                            Manager's Answer
+                        </span>
+                    </div>
+                    <div class="answer-content">
+                        <RadzenRadioButtonList TValue="string"
+                                              Value="@managerSelection"
+                                              Disabled="true"
+                                              Orientation="Radzen.Orientation.Vertical"
+                                              Class="binary-radio-list">
+                            <Items>
+                                <RadzenRadioButtonListItem Value="@("A")" Text="@optionALabel" />
+                                <RadzenRadioButtonListItem Value="@("B")" Text="@optionBLabel" />
+                            </Items>
+                        </RadzenRadioButtonList>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+}
+
+@code {
+    [Parameter, EditorRequired] public QuestionSection Question { get; set; } = default!;
+    [Parameter, EditorRequired] public QuestionResponse EmployeeResponse { get; set; } = default!;
+    [Parameter, EditorRequired] public QuestionResponse ManagerResponse { get; set; } = default!;
+    [Parameter] public Language CurrentLanguage { get; set; } = Language.English;
+
+    private List<BinaryItem> items = new();
+
+    protected override void OnParametersSet()
+    {
+        items = Question.Configuration is BinaryConfiguration config
+            ? config.Items.OrderBy(i => i.Order).ToList()
+            : new List<BinaryItem>();
+    }
+
+    private string? GetSelection(QuestionResponse response, string itemKey)
+    {
+        if (response.ResponseData is BinaryResponseDataDto data &&
+            data.Selections.TryGetValue(itemKey, out var sel))
+            return sel;
+        return null;
+    }
+}

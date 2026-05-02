@@ -6651,7 +6651,7 @@
     },
     {
         "key": "pages.finalize-questionnaire-description",
-        "german": "Schließen Sie den Überprüfungsprozess für '{0}' ab",
+        "german": "Schliessen Sie den Überprüfungsprozess für '{0}' ab",
         "english": "Complete the review process for '{0}'",
         "category": "pages",
         "createdDate": "2026-02-05T12:00:00.0000000+01:00"
@@ -6728,7 +6728,7 @@
     },
     {
         "key": "messages.finalize-questionnaire-process",
-        "german": "Schließen Sie den Fragebogen-Überprüfungsprozess ab",
+        "german": "Schliessen Sie den Fragebogen-Überprüfungsprozess ab",
         "english": "Complete the questionnaire review process",
         "category": "messages",
         "createdDate": "2026-02-05T12:00:00.0000000+01:00"
@@ -8342,5 +8342,54 @@
         "english": "No final notes provided",
         "category": "messages",
         "createdDate": "2026-04-07T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.finalization-confirms",
+        "german": "Finalisierung bestätigt",
+        "english": "Finalization Confirms",
+        "category": "labels",
+        "createdDate": "2026-05-02T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.final-notes-optional",
+        "german": "Abschliessende Notizen (optional)",
+        "english": "Final Notes (optional)",
+        "category": "labels",
+        "createdDate": "2026-05-02T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.all-review-discussions-complete",
+        "german": "Alle Bewertungsgespräche sind abgeschlossen",
+        "english": "All review discussions are complete",
+        "category": "messages",
+        "createdDate": "2026-05-02T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.employee-confirmed-review-outcome",
+        "german": "Mitarbeiter hat das Bewertungsergebnis bestätigt",
+        "english": "Employee has confirmed the review outcome",
+        "category": "messages",
+        "createdDate": "2026-05-02T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.all-feedback-documented",
+        "german": "Alle Rückmeldungen sind dokumentiert",
+        "english": "All feedback has been documented",
+        "category": "messages",
+        "createdDate": "2026-05-02T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.questionnaire-ready-for-archival",
+        "german": "Fragebogen ist bereit zur Archivierung",
+        "english": "Questionnaire is ready for archival",
+        "category": "messages",
+        "createdDate": "2026-05-02T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.add-final-notes-instruction",
+        "german": "Fügen Sie optionale abschliessende Notizen hinzu, bevor Sie den Fragebogen finalisieren",
+        "english": "Add optional final notes before finalizing the questionnaire",
+        "category": "messages",
+        "createdDate": "2026-05-02T12:00:00.0000000+01:00"
     }
 ]

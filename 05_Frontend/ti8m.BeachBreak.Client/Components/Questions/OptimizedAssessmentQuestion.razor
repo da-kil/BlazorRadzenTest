@@ -5,112 +5,50 @@
 @using ti8m.BeachBreak.Client.Components.Questions
 @inherits CategoryOptimizedTranslatableComponent
 
-@if (!HideHeader)
-{
-    <div class="assessment-question">
-        <header class="question-header">
-            <h3 class="question-title">
-                @Section.GetLocalizedTitleWithFallback(CurrentLanguage)
-                <EditedDuringReviewBadge Response="@Response" />
-            </h3>
+<div class="rating-scale-info">
+    <RadzenIcon Icon="info" Class="me-2" />
+    <strong>Rating Scale:</strong> @GetRatingScaleDescription()
+</div>
 
-            @{
-                var questionDescription = Section.GetLocalizedDescriptionWithFallback(CurrentLanguage);
-            }
-            @if (!string.IsNullOrWhiteSpace(questionDescription))
-            {
-                <p class="question-description">@questionDescription</p>
-            }
-
-            <div class="rating-scale-info">
-                <RadzenIcon Icon="info" Class="me-2" />
-                <strong>Rating Scale:</strong> @GetRatingScaleDescription()
-            </div>
-        </header>
-
-        <div class="evaluations-container">
-        @if (!evaluations.Any())
+<div class="evaluations-container">
+    @if (!evaluations.Any())
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Class="mb-3">
+            <RadzenText TextStyle="TextStyle.Body2">
+                <strong>Configuration Error:</strong> No evaluations are defined for this question. Please edit the template to add evaluations.
+            </RadzenText>
+        </RadzenAlert>
+    }
+    else
+    {
+        @if (evaluations.Any(c => string.IsNullOrWhiteSpace(c.GetLocalizedTitleWithFallback(CurrentLanguage))))
         {
             <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Class="mb-3">
                 <RadzenText TextStyle="TextStyle.Body2">
-                    <strong>Configuration Error:</strong> No evaluations are defined for this question. Please edit the template to add evaluations.
+                    <strong>Incomplete Configuration:</strong> One or more evaluations are missing titles. Please edit the template to complete the evaluation configuration.
                 </RadzenText>
             </RadzenAlert>
         }
-        else
+        @foreach (var evaluation in evaluations)
         {
-            @if (evaluations.Any(c => string.IsNullOrWhiteSpace(c.GetLocalizedTitleWithFallback(CurrentLanguage))))
-            {
-                <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Class="mb-3">
-                    <RadzenText TextStyle="TextStyle.Body2">
-                        <strong>Incomplete Configuration:</strong> One or more evaluations are missing titles. Please edit the template to complete the evaluation configuration.
-                    </RadzenText>
-                </RadzenAlert>
-            }
-            @foreach (var evaluation in evaluations)
-            {
-                var evaluationRating = GetEvaluationRatingDto(evaluation.Key);
-                <EvaluationRatingItem @key="@evaluation.Key"
-                                     Evaluation="@evaluation"
-                                     Rating="@evaluationRating"
-                                     OnRatingChanged="@((rating) => OnEvaluationRatingChanged(evaluation.Key, rating))"
-                                     IsReadOnly="@IsReadOnly"
-                                     RatingScale="@ratingScale"
-                                     ScaleLowLabel="@scaleLowLabel"
-                                     ScaleHighLabel="@scaleHighLabel" />
-            }
+            var evaluationRating = GetEvaluationRatingDto(evaluation.Key);
+            <EvaluationRatingItem @key="@evaluation.Key"
+                                 Evaluation="@evaluation"
+                                 Rating="@evaluationRating"
+                                 OnRatingChanged="@((rating) => OnEvaluationRatingChanged(evaluation.Key, rating))"
+                                 IsReadOnly="@IsReadOnly"
+                                 RatingScale="@ratingScale"
+                                 ScaleLowLabel="@scaleLowLabel"
+                                 ScaleHighLabel="@scaleHighLabel" />
         }
-        </div>
-    </div>
-}
-else
-{
-    <div class="rating-scale-info">
-        <RadzenIcon Icon="info" Class="me-2" />
-        <strong>Rating Scale:</strong> @GetRatingScaleDescription()
-    </div>
-
-    <div class="evaluations-container">
-        @if (!evaluations.Any())
-        {
-            <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Class="mb-3">
-                <RadzenText TextStyle="TextStyle.Body2">
-                    <strong>Configuration Error:</strong> No evaluations are defined for this question. Please edit the template to add evaluations.
-                </RadzenText>
-            </RadzenAlert>
-        }
-        else
-        {
-            @if (evaluations.Any(c => string.IsNullOrWhiteSpace(c.GetLocalizedTitleWithFallback(CurrentLanguage))))
-            {
-                <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Class="mb-3">
-                    <RadzenText TextStyle="TextStyle.Body2">
-                        <strong>Incomplete Configuration:</strong> One or more evaluations are missing titles. Please edit the template to complete the evaluation configuration.
-                    </RadzenText>
-                </RadzenAlert>
-            }
-            @foreach (var evaluation in evaluations)
-            {
-                var evaluationRating = GetEvaluationRatingDto(evaluation.Key);
-                <EvaluationRatingItem @key="@evaluation.Key"
-                                     Evaluation="@evaluation"
-                                     Rating="@evaluationRating"
-                                     OnRatingChanged="@((rating) => OnEvaluationRatingChanged(evaluation.Key, rating))"
-                                     IsReadOnly="@IsReadOnly"
-                                     RatingScale="@ratingScale"
-                                     ScaleLowLabel="@scaleLowLabel"
-                                     ScaleHighLabel="@scaleHighLabel" />
-            }
-        }
-    </div>
-}
+    }
+</div>
 
 @code {
     [Parameter, EditorRequired] public QuestionSection Section { get; set; } = default!;
     [Parameter, EditorRequired] public QuestionResponse Response { get; set; } = default!;
     [Parameter] public EventCallback<QuestionResponse> OnResponseChanged { get; set; }
     [Parameter] public bool IsReadOnly { get; set; } = false;
-    [Parameter] public bool HideHeader { get; set; } = false;
 
     protected override string[] GetRequiredTranslationCategories()
     {

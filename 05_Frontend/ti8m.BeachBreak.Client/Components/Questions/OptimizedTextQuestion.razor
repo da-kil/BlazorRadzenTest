@@ -4,118 +4,54 @@
 @using ti8m.BeachBreak.Client.Components.Shared
 @inherits CategoryOptimizedTranslatableComponent
 
-@if (!HideHeader)
-{
-    <div class="text-question">
-        <header class="question-header">
-            <h3 class="question-title">
-                @Section.GetLocalizedTitleWithFallback(CurrentLanguage)
-                <EditedDuringReviewBadge Response="@Response" />
-            </h3>
+<div class="text-sections">
+    @{
+        var sectionsToRender = textSections.Any() ? textSections : GetTextSectionsFromConfiguration();
+    }
+    @foreach (var section in sectionsToRender)
+    {
+        var sectionKey = $"section_{sectionsToRender.IndexOf(section)}";
+        <div class="text-section-card" @key="@sectionKey">
+            <header class="question-section-header">
+                @{
+                    var sectionTitle = section.GetLocalizedTitle(CurrentLanguage);
+                }
+                <h4 class="question-title @(string.IsNullOrWhiteSpace(sectionTitle) ? "text-danger" : "")">
+                    @sectionTitle
+                    @if (section.IsRequired) { <span class="text-danger">*</span> }
+                </h4>
+            </header>
 
-            @{
-                var questionDescription = Section.GetLocalizedDescriptionWithFallback(CurrentLanguage);
-            }
-            @if (!string.IsNullOrWhiteSpace(questionDescription))
+            @if (!IsReadOnly)
             {
-                <p class="question-description">@questionDescription</p>
+                <RadzenTextArea Value="@GetSectionValue(sectionKey)"
+                              ValueChanged="@((string value) => SetSectionValue(sectionKey, value))"
+                              Placeholder="@GetSectionPlaceholder(section)"
+                              Rows="@GetSectionRows(section)"
+                              Class="w-100"
+                              Disabled="@IsReadOnly" />
             }
-        </header>
-
-        <div class="text-sections">
-        @{
-            var sectionsToRender = textSections.Any() ? textSections : GetTextSectionsFromConfiguration();
-        }
-        @foreach (var section in sectionsToRender)
-        {
-            var sectionKey = $"section_{sectionsToRender.IndexOf(section)}";
-            <div class="text-section-card" @key="@sectionKey">
-                <header class="question-section-header">
-                    @{
-                        var sectionTitle = section.GetLocalizedTitle(CurrentLanguage);
-                    }
-                    <h4 class="question-title @(string.IsNullOrWhiteSpace(sectionTitle) ? "text-danger" : "")">
-                        @sectionTitle
-                        @if (section.IsRequired) { <span class="text-danger">*</span> }
-                    </h4>
-                </header>
-
-                @if (!IsReadOnly)
-                {
-                    <RadzenTextArea Value="@GetSectionValue(sectionKey)"
-                                  ValueChanged="@((string value) => SetSectionValue(sectionKey, value))"
-                                  Placeholder="@GetSectionPlaceholder(section)"
-                                  Rows="@GetSectionRows(section)"
-                                  Class="w-100"
-                                  Disabled="@IsReadOnly" />
-                }
-                else if (!string.IsNullOrEmpty(GetSectionValue(sectionKey)))
-                {
-                    <div class="readonly-text p-3 rounded theme-aware-bg">
-                        @GetSectionValue(sectionKey)
-                    </div>
-                }
-                else
-                {
-                    <div class="no-response p-3 rounded text-muted theme-aware-bg">
-                        <em>@T("messages.no-response-provided")</em>
-                    </div>
-                }
-            </div>
-        }
-    </div>
+            else if (!string.IsNullOrEmpty(GetSectionValue(sectionKey)))
+            {
+                <div class="readonly-text p-3 rounded theme-aware-bg">
+                    @GetSectionValue(sectionKey)
+                </div>
+            }
+            else
+            {
+                <div class="no-response p-3 rounded text-muted theme-aware-bg">
+                    <em>@T("messages.no-response-provided")</em>
+                </div>
+            }
+        </div>
+    }
 </div>
-}
-else
-{
-    <div class="text-sections">
-        @{
-            var sectionsToRenderNoHeader = textSections.Any() ? textSections : GetTextSectionsFromConfiguration();
-        }
-        @foreach (var textSection in sectionsToRenderNoHeader)
-        {
-            var sectionKey = $"section_{sectionsToRenderNoHeader.IndexOf(textSection)}";
-            <div class="text-section-card" @key="@sectionKey">
-                <header class="question-section-header">
-                    @{
-                        var textSectionTitle = textSection.GetLocalizedTitle(CurrentLanguage);
-                    }
-                    <h4 class="question-title @(string.IsNullOrWhiteSpace(textSectionTitle) ? "text-danger" : "")">
-                        @textSectionTitle
-                        @if (textSection.IsRequired) { <span class="text-danger">*</span> }
-                    </h4>
-                </header>
-                @if (!IsReadOnly)
-                {
-                    <RadzenTextArea Value="@GetSectionValue(sectionKey)"
-                                  ValueChanged="@((string value) => SetSectionValue(sectionKey, value))"
-                                  Placeholder="@GetSectionPlaceholder(textSection)"
-                                  Rows="@GetSectionRows(textSection)"
-                                  Class="w-100" />
-                }
-                else if (!string.IsNullOrEmpty(GetSectionValue(sectionKey)))
-                {
-                    <div class="readonly-text p-3 rounded theme-aware-bg">
-                        @GetSectionValue(sectionKey)
-                    </div>
-                }
-                else
-                {
-                    <div class="no-response p-3 rounded text-muted theme-aware-bg">
-                        <em>@T("messages.no-response-provided")</em>
-                    </div>
-                }
-            </div>
-        }
-    </div>
-}
 
 @code {
     [Parameter, EditorRequired] public QuestionSection Section { get; set; } = default!;
     [Parameter, EditorRequired] public QuestionResponse Response { get; set; } = default!;
     [Parameter] public EventCallback<QuestionResponse> OnResponseChanged { get; set; }
     [Parameter] public bool IsReadOnly { get; set; } = false;
-    [Parameter] public bool HideHeader { get; set; } = false;
 
     protected override string[] GetRequiredTranslationCategories()
     {

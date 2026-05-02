@@ -38,7 +38,6 @@
     [Parameter, EditorRequired] public QuestionResponse Response { get; set; } = default!;
     [Parameter] public EventCallback<QuestionResponse> OnResponseChanged { get; set; }
     [Parameter] public bool IsReadOnly { get; set; } = false;
-    [Parameter] public bool HideHeader { get; set; } = false;
     [Parameter] public Guid AssignmentId { get; set; }
     [Parameter] public ApplicationRole CurrentUserRole { get; set; } = ApplicationRole.Employee;
     [Parameter] public WorkflowState AssignmentWorkflowState { get; set; } = WorkflowState.EmployeeInProgress;
@@ -134,8 +133,7 @@
         <OptimizedAssessmentQuestion Section="@Section"
                                     Response="@Response"
                                     OnResponseChanged="@OnResponseChanged"
-                                    IsReadOnly="@IsReadOnly"
-                                    HideHeader="@HideHeader" />
+                                    IsReadOnly="@IsReadOnly" />
     };
 
     private RenderFragment RenderTextQuestionOptimized() => __builder =>
@@ -143,8 +141,7 @@
         <OptimizedTextQuestion Section="@Section"
                               Response="@Response"
                               OnResponseChanged="@OnResponseChanged"
-                              IsReadOnly="@IsReadOnly"
-                              HideHeader="@HideHeader" />
+                              IsReadOnly="@IsReadOnly" />
     };
 
     private RenderFragment RenderGoalQuestionOptimized() => __builder =>
@@ -154,7 +151,6 @@
                               Response="@Response"
                               OnResponseChanged="@OnResponseChanged"
                               IsReadOnly="@IsReadOnly"
-                              HideHeader="@HideHeader"
                               AssignmentId="@AssignmentId"
                               CurrentUserRole="@CurrentUserRole"
                               AssignmentWorkflowState="@AssignmentWorkflowState"
@@ -165,7 +161,6 @@
     private RenderFragment RenderEmployeeFeedbackOptimized() => __builder =>
     {
         <OptimizedEmployeeFeedbackQuestion Section="@Section"
-                                          HideHeader="@HideHeader"
                                           AssignmentId="@AssignmentId"
                                           AllowLinking="@AllowLinking" />
     };
@@ -175,8 +170,7 @@
         <OptimizedMultipleChoiceQuestion Section="@Section"
                                         Response="@Response"
                                         OnResponseChanged="@OnResponseChanged"
-                                        IsReadOnly="@IsReadOnly"
-                                        HideHeader="@HideHeader" />
+                                        IsReadOnly="@IsReadOnly" />
     };
 
     private RenderFragment RenderBinaryOptimized() => __builder =>
@@ -184,8 +178,7 @@
         <OptimizedBinaryQuestion Section="@Section"
                                 Response="@Response"
                                 OnResponseChanged="@OnResponseChanged"
-                                IsReadOnly="@IsReadOnly"
-                                HideHeader="@HideHeader" />
+                                IsReadOnly="@IsReadOnly" />
     };
 
     private RenderFragment RenderUnsupportedQuestion() => __builder =>

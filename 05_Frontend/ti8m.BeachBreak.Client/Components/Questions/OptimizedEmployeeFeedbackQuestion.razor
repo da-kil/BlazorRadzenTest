@@ -9,30 +9,7 @@
 @inject DialogService DialogService
 @inherits CategoryOptimizedTranslatableComponent
 
-@if (!HideHeader)
-{
-    <div class="feedback-question">
-        <header class="question-header">
-            <h3 class="question-title">
-                @Section.GetLocalizedTitleWithFallback(CurrentLanguage)
-            </h3>
-
-            @{
-                var questionDescription = Section.GetLocalizedDescriptionWithFallback(CurrentLanguage);
-            }
-            @if (!string.IsNullOrWhiteSpace(questionDescription))
-            {
-                <p class="question-description">@questionDescription</p>
-            }
-        </header>
-
-        @RenderFeedbackContent()
-    </div>
-}
-else
-{
-    @RenderFeedbackContent()
-}
+@RenderFeedbackContent()
 
 @code {
     protected override string[] GetRequiredTranslationCategories()
@@ -181,7 +158,6 @@ else
     };
 
     [Parameter, EditorRequired] public QuestionSection Section { get; set; } = default!;
-    [Parameter] public bool HideHeader { get; set; } = false;
     [Parameter] public Guid AssignmentId { get; set; }
     [Parameter] public bool AllowLinking { get; set; } = false;
 

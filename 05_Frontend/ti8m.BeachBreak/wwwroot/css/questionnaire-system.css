@@ -895,10 +895,17 @@
 }
 
 /* Difference visualization styles */
-.evaluation-comparison-card.has-rating-difference {
+.evaluation-comparison-card.has-rating-difference,
+.evaluation-comparison-card.has-answer-difference {
     border-left: 4px solid var(--rz-warning);
     padding-left: 1rem;
     background: rgba(var(--rz-warning-rgb), 0.05);
+}
+
+/* Per-choice difference highlight in MultipleChoice review */
+.choice-item.choice-answer-differs {
+    border-color: var(--rz-warning);
+    background: rgba(var(--rz-warning-rgb), 0.08);
 }
 
 .difference-indicator {
