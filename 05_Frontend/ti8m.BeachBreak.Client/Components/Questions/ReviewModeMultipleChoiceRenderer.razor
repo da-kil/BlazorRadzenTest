@@ -1,6 +1,7 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Models.DTOs
+@using ti8m.BeachBreak.Client.Components.Shared
 
 @if (!questions.Any())
 {
@@ -17,19 +18,12 @@ else
         var employeeSelections = GetSelections(EmployeeResponse, question.Key);
         var managerSelections = GetSelections(ManagerResponse, question.Key);
         var hasDifference = !new HashSet<string>(employeeSelections).SetEquals(managerSelections);
+        var level = hasDifference ? DifferenceLevel.Significant : DifferenceLevel.Match;
         var lang = CurrentLanguage == Language.German ? "de" : "en";
         var qTitle = question.GetLocalizedTitleWithFallback(lang);
         var choices = question.Choices.OrderBy(c => c.Order).ToList();
 
-        <div class="evaluation-comparison-card @(hasDifference ? "has-answer-difference" : "")" @key="@question.Key">
-            @if (hasDifference)
-            {
-                <div class="difference-indicator">
-                    <RadzenIcon Icon="compare_arrows" Class="me-1" />
-                    <span class="difference-text">Selections differ</span>
-                </div>
-            }
-
+        <div class="evaluation-comparison-card" @key="@question.Key">
             @if (!string.IsNullOrWhiteSpace(qTitle))
             {
                 <div class="question-item-title mb-2">@qTitle</div>
@@ -43,7 +37,7 @@ else
             }
 
             <div class="side-by-side-view">
-                <div class="answer-column employee @(hasDifference ? "has-difference" : "")">
+                <div class="answer-column employee">
                     <div class="answer-header">
                         <span class="answer-label">
                             <RadzenIcon Icon="person" Style="font-size: 1rem;" />
@@ -75,7 +69,11 @@ else
                     </div>
                 </div>
 
-                <div class="answer-column manager @(hasDifference ? "has-difference" : "")">
+                <div class="difference-icon-column">
+                    <DifferenceIndicatorIcon Level="@level" />
+                </div>
+
+                <div class="answer-column manager">
                     <div class="answer-header">
                         <span class="answer-label">
                             <RadzenIcon Icon="supervisor_account" Style="font-size: 1rem;" />

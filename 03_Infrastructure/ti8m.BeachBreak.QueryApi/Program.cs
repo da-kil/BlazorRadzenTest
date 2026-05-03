@@ -119,12 +119,14 @@ public class Program
         {
             options.SerializerOptions.PropertyNamingPolicy = null; // null means PascalCase
             options.SerializerOptions.PropertyNameCaseInsensitive = false; // Strict PascalCase enforcement
+            options.SerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
         });
 
         builder.Services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(options =>
         {
             options.JsonSerializerOptions.PropertyNamingPolicy = null; // null means PascalCase
             options.JsonSerializerOptions.PropertyNameCaseInsensitive = false; // Strict PascalCase enforcement
+            options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
         });
 
         var app = builder.Build();

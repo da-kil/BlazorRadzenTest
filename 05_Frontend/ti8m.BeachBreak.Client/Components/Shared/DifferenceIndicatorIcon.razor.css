@@ -1,0 +1,41 @@
+.diff-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.diff-icon-circle {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 1;
+}
+
+.diff-icon-circle .rz-icon {
+    font-size: 2rem;
+    color: white;
+}
+
+.diff-label {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    text-align: center;
+    line-height: 1.2;
+    position: relative;
+    z-index: 1;
+}
+
+.diff-indicator-match .diff-icon-circle    { background: #4CAF50; }
+.diff-indicator-slight .diff-icon-circle   { background: #FF9800; }
+.diff-indicator-significant .diff-icon-circle { background: #F44336; }
+
+.diff-indicator-match .diff-label    { color: #4CAF50; }
+.diff-indicator-slight .diff-label   { color: #FF9800; }
+.diff-indicator-significant .diff-label { color: #F44336; }

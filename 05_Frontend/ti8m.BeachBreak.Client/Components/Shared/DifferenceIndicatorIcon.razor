@@ -1,0 +1,26 @@
+@using ti8m.BeachBreak.Client.Models
+
+<div class="diff-indicator diff-indicator-@Level.ToString().ToLower()">
+    <div class="diff-icon-circle">
+        <RadzenIcon Icon="@GetIcon()" />
+    </div>
+    <span class="diff-label">@GetLabel()</span>
+</div>
+
+@code {
+    [Parameter] public DifferenceLevel Level { get; set; } = DifferenceLevel.Match;
+
+    private string GetIcon() => Level switch
+    {
+        DifferenceLevel.Significant => "sentiment_very_dissatisfied",
+        DifferenceLevel.Slight      => "sentiment_neutral",
+        _                           => "sentiment_very_satisfied"
+    };
+
+    private string GetLabel() => Level switch
+    {
+        DifferenceLevel.Significant => "Differs",
+        DifferenceLevel.Slight      => "Slight diff",
+        _                           => "Same"
+    };
+}

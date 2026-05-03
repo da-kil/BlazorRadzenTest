@@ -25,25 +25,22 @@ else
     {
         var employeeRating = AssessmentConfigurationHelper.GetEvaluationRatingDto(EmployeeResponse, evaluation.Key);
         var managerRating = AssessmentConfigurationHelper.GetEvaluationRatingDto(ManagerResponse, evaluation.Key);
-        var hasDifference = employeeRating.Rating != managerRating.Rating;
+        var absoluteDeviation = Math.Abs(employeeRating.Rating - managerRating.Rating);
+        var deviationPercent = ratingScale > 1
+            ? (double)absoluteDeviation / (ratingScale - 1) * 100
+            : 0;
+        var level = deviationPercent == 0 ? DifferenceLevel.Match
+            : deviationPercent <= 20 ? DifferenceLevel.Slight
+            : DifferenceLevel.Significant;
 
-        <!-- Each evaluation gets its own comparison card -->
-        <div class="evaluation-comparison-card @(hasDifference ? "has-rating-difference" : "")">
-            @if (hasDifference)
-            {
-                <div class="difference-indicator">
-                    <RadzenIcon Icon="compare_arrows" Class="me-1" />
-                    <span class="difference-text">Rating Difference: @employeeRating.Rating vs @managerRating.Rating stars</span>
-                </div>
-            }
+        <div class="evaluation-comparison-card">
             <div class="side-by-side-view">
-                <!-- Employee Rating -->
-                <div class="answer-column employee @(hasDifference ? "has-difference" : "")">
+                <div class="answer-column employee">
                     <div class="answer-header">
                         <span class="answer-label">
                             <RadzenIcon Icon="person" Style="font-size: 1rem;" />
                             Employee's Answer
-                            @if (hasDifference)
+                            @if (level != DifferenceLevel.Match)
                             {
                                 <RadzenBadge Text="@($"{employeeRating.Rating} ★")"
                                            Class="rating-badge employee-rating"
@@ -63,13 +60,16 @@ else
                     </div>
                 </div>
 
-                <!-- Manager Rating -->
-                <div class="answer-column manager @(hasDifference ? "has-difference" : "")">
+                <div class="difference-icon-column">
+                    <DifferenceIndicatorIcon Level="@level" />
+                </div>
+
+                <div class="answer-column manager">
                     <div class="answer-header">
                         <span class="answer-label">
                             <RadzenIcon Icon="supervisor_account" Style="font-size: 1rem;" />
                             Manager's Answer
-                            @if (hasDifference)
+                            @if (level != DifferenceLevel.Match)
                             {
                                 <RadzenBadge Text="@($"{managerRating.Rating} ★")"
                                            Class="rating-badge manager-rating"

@@ -58,27 +58,7 @@ public class MartenProjectionRebuilder : IProjectionRebuilder
 
         logger.LogInformation("Deleting all snapshots for projection {ProjectionName}", projectionName);
 
-        await using var session = store.LightweightSession();
-
-        // Delete all documents of this type
-        var documentType = projection.DocumentType;
-
-        // Use reflection to call session.DeleteWhere<T>(x => true)
-        var deleteWhereMethod = typeof(IDocumentSession)
-            .GetMethods()
-            .First(m => m.Name == "DeleteWhere" && m.IsGenericMethod && m.GetParameters().Length == 1);
-
-        var genericMethod = deleteWhereMethod.MakeGenericMethod(documentType);
-
-        // Create expression: x => true (delete all)
-        var parameter = System.Linq.Expressions.Expression.Parameter(documentType, "x");
-        var body = System.Linq.Expressions.Expression.Constant(true);
-        var lambdaType = typeof(Func<,>).MakeGenericType(documentType, typeof(bool));
-        var lambda = System.Linq.Expressions.Expression.Lambda(lambdaType, body, parameter);
-
-        genericMethod.Invoke(session, new object[] { lambda });
-
-        await session.SaveChangesAsync(ct);
+        await store.Advanced.Clean.DeleteDocumentsByTypeAsync(projection.DocumentType, ct);
 
         logger.LogInformation("Successfully deleted all snapshots for projection {ProjectionName}", projectionName);
     }

@@ -1,6 +1,7 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Models.DTOs
+@using ti8m.BeachBreak.Client.Components.Shared
 
 @if (!items.Any())
 {
@@ -16,23 +17,13 @@ else
     {
         var employeeSelection = GetSelection(EmployeeResponse, item.Key);
         var managerSelection = GetSelection(ManagerResponse, item.Key);
-        var hasDifference = employeeSelection != managerSelection;
+        var level = employeeSelection != managerSelection ? DifferenceLevel.Significant : DifferenceLevel.Match;
         var lang = CurrentLanguage == Language.German ? "de" : "en";
         var optionALabel = (lang == "de" && !string.IsNullOrWhiteSpace(item.OptionALabelGerman)) ? item.OptionALabelGerman : item.OptionALabelEnglish;
         var optionBLabel = (lang == "de" && !string.IsNullOrWhiteSpace(item.OptionBLabelGerman)) ? item.OptionBLabelGerman : item.OptionBLabelEnglish;
         var itemTitle = item.GetLocalizedTitleWithFallback(lang);
 
-        <div class="evaluation-comparison-card @(hasDifference ? "has-answer-difference" : "")" @key="@item.Key">
-            @if (hasDifference)
-            {
-                var empLabel = employeeSelection == "A" ? optionALabel : (employeeSelection == "B" ? optionBLabel : "—");
-                var mgrLabel = managerSelection == "A" ? optionALabel : (managerSelection == "B" ? optionBLabel : "—");
-                <div class="difference-indicator">
-                    <RadzenIcon Icon="compare_arrows" Class="me-1" />
-                    <span class="difference-text">@empLabel · @mgrLabel</span>
-                </div>
-            }
-
+        <div class="evaluation-comparison-card" @key="@item.Key">
             @if (!string.IsNullOrWhiteSpace(itemTitle))
             {
                 <div class="item-title mb-2">@itemTitle</div>
@@ -46,7 +37,7 @@ else
             }
 
             <div class="side-by-side-view">
-                <div class="answer-column employee @(hasDifference ? "has-difference" : "")">
+                <div class="answer-column employee">
                     <div class="answer-header">
                         <span class="answer-label">
                             <RadzenIcon Icon="person" Style="font-size: 1rem;" />
@@ -67,7 +58,11 @@ else
                     </div>
                 </div>
 
-                <div class="answer-column manager @(hasDifference ? "has-difference" : "")">
+                <div class="difference-icon-column">
+                    <DifferenceIndicatorIcon Level="@level" />
+                </div>
+
+                <div class="answer-column manager">
                     <div class="answer-header">
                         <span class="answer-label">
                             <RadzenIcon Icon="supervisor_account" Style="font-size: 1rem;" />
