@@ -118,7 +118,7 @@ stages:
                   -f 03_Infrastructure/ti8m.BeachBreak.QueryApi/Dockerfile \
                   .
                 curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
-                trivy image "$(acrLoginServer)/$(imageRepository)/queryapi:$(tag)" --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1
+                trivy image "$(acrLoginServer)/$(imageRepository)/commandapi:$(tag)" --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1
                 docker push $(acrLoginServer)/$(imageRepository)/queryapi:$(tag)
                 docker push $(acrLoginServer)/$(imageRepository)/queryapi:latest
 
@@ -141,7 +141,7 @@ stages:
                   -f 05_Frontend/ti8m.BeachBreak/Dockerfile \
                   .
                 curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
-                trivy image "$(acrLoginServer)/$(imageRepository)/frontend:$(tag)" --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1
+                trivy image "$(acrLoginServer)/$(imageRepository)/commandapi:$(tag)" --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1
                 docker push $(acrLoginServer)/$(imageRepository)/frontend:$(tag)
                 docker push $(acrLoginServer)/$(imageRepository)/frontend:latest
 
