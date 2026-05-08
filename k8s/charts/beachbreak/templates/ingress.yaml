@@ -8,6 +8,8 @@ metadata:
     {{- include "beachbreak.labels" . | nindent 4 }}
   {{- with .Values.ingress.annotations }}
   annotations:
+    appgw.ingress.kubernetes.io/health-probe-path: /health
+    appgw.ingress.kubernetes.io/health-probe-status-codes: "200-399,404"
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:

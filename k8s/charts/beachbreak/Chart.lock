@@ -1,0 +1,12 @@
+dependencies:
+- name: beachbreak-commandapi
+  repository: file://../beachbreak-commandapi
+  version: 1.0.0
+- name: beachbreak-queryapi
+  repository: file://../beachbreak-queryapi
+  version: 1.0.0
+- name: beachbreak-frontend
+  repository: file://../beachbreak-frontend
+  version: 1.0.0
+digest: sha256:bc0f42b2772d686e4d392e344b433e0e75a34b72e8c3ee81b82d1a5be41250a3
+generated: "2026-05-08T13:22:43.8899832+02:00"

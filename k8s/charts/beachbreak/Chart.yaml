@@ -10,15 +10,16 @@ maintainers:
     email: dev@ti8m.ch
 
 dependencies:
-  - name: postgresql
-    version: "15.5.x"
-    repository: "https://charts.bitnami.com/bitnami"
-    condition: postgresql.enabled
-    tags:
-      - database
+#  - name: postgresql
+#    version: "15.5.x"
+#    repository: "https://charts.bitnami.com/bitnami"
+#    condition: postgresql.enabled
+#    tags:
+#      - database
 
   - name: beachbreak-commandapi
     version: "1.0.0"
+    repository: "file://../beachbreak-commandapi"
     condition: commandapi.enabled
     tags:
       - api
@@ -26,6 +27,7 @@ dependencies:
 
   - name: beachbreak-queryapi
     version: "1.0.0"
+    repository: "file://../beachbreak-queryapi"
     condition: queryapi.enabled
     tags:
       - api
@@ -33,6 +35,7 @@ dependencies:
 
   - name: beachbreak-frontend
     version: "1.0.0"
+    repository: "file://../beachbreak-frontend"
     condition: frontend.enabled
     tags:
       - frontend

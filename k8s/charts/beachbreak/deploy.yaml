@@ -1,0 +1,993 @@
+---
+# Source: beachbreak/templates/networkpolicy.yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: beachbreak
+  namespace: beachbreak
+  labels:
+    helm.sh/chart: beachbreak-1.0.0
+    app.kubernetes.io/name: beachbreak
+    app.kubernetes.io/instance: beachbreak
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: beachbreak
+      app.kubernetes.io/instance: beachbreak
+
+  policyTypes:
+    - Ingress
+    - Egress
+
+  ingress:
+    # Allow traffic from ingress controller
+    -
+      from:
+      - namespaceSelector:
+          matchLabels:
+            name: ingress-nginx
+
+    # Allow inter-service communication within namespace
+    - from:
+      - namespaceSelector:
+          matchLabels:
+            name: default
+      ports:
+      - protocol: TCP
+        port: 8080
+
+  egress:
+    # Allow DNS resolution
+    - to: []
+      ports:
+      - protocol: TCP
+        port: 53
+      - protocol: UDP
+        port: 53
+
+    # Allow outbound connections defined in values
+    -
+      ports:
+      - port: 5432
+        protocol: TCP
+      - port: 53
+        protocol: TCP
+      - port: 53
+        protocol: UDP
+      to: []
+
+    # Allow connection to database
+    - to:
+      - podSelector:
+          matchLabels:
+            app.kubernetes.io/name: postgresql
+      ports:
+      - protocol: TCP
+        port: 5432
+
+    # Allow HTTPS for external services (Azure AD, etc.)
+    - to: []
+      ports:
+      - protocol: TCP
+        port: 443
+---
+# Source: beachbreak/templates/poddisruptionbudget.yaml
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: beachbreak
+  namespace: beachbreak
+  labels:
+    helm.sh/chart: beachbreak-1.0.0
+    app.kubernetes.io/name: beachbreak
+    app.kubernetes.io/instance: beachbreak
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: beachbreak
+      app.kubernetes.io/instance: beachbreak
+---
+# Source: beachbreak/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: beachbreak
+  namespace: beachbreak
+  labels:
+    helm.sh/chart: beachbreak-1.0.0
+    app.kubernetes.io/name: beachbreak
+    app.kubernetes.io/instance: beachbreak
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+automountServiceAccountToken: false
+---
+# Source: beachbreak/templates/secret.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: beachbreak-secrets
+  namespace: beachbreak
+  labels:
+    helm.sh/chart: beachbreak-1.0.0
+    app.kubernetes.io/name: beachbreak
+    app.kubernetes.io/instance: beachbreak
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+type: Opaque
+data:
+  # Azure Active Directory Secrets (base64 encoded)
+  azure-ad-tenant-id: "eW91ci10ZW5hbnQtaWQ="
+  azure-ad-client-id: "eW91ci1jbGllbnQtaWQ="
+  azure-ad-client-secret: "eW91ci1jbGllbnQtc2VjcmV0"
+  azure-ad-audience: "YXBpOi8veW91ci1jbGllbnQtaWQ="
+  azure-ad-scope: "YXBpOi8veW91ci1jbGllbnQtaWQvLmRlZmF1bHQ="
+
+  # Database Connection String
+  database-connection-string: "SG9zdD1iZWFjaGJyZWFrLXBvc3RncmVzcWw7UG9ydD01NDMyO0RhdGFiYXNlPWJlYWNoYnJlYWtkYjtVc2VybmFtZT1iZWFjaGJyZWFrO1Bhc3N3b3JkPXlvdXItc2VjdXJlLXBhc3N3b3JkO0luY2x1ZGUgRXJyb3IgRGV0YWlsPXRydWU7"
+
+  # Additional Database Secrets
+  database-password: "eW91ci1zZWN1cmUtcGFzc3dvcmQ="
+
+  # JWT Configuration (optional - for custom JWT handling)
+  jwt-secret-key: "SHd1MERLN2tkdlpDSGVDbXBPZEFXRndEdTgwVVRCNEgzYzFCWHd1cTRTNE5ZY3JrSXdXQVRZYnByVFgzWFd0Vw=="
+
+  # Encryption Keys (for sensitive data in database)
+  encryption-key: "S2hWUmpMSUFxVXB3NlRVNTJMSDhNQzNtck55NlZkZ0E="
+---
+# Source: beachbreak/templates/secret.yaml
+# PostgreSQL specific secrets (if using embedded PostgreSQL)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: beachbreak-postgresql-secrets
+  namespace: beachbreak
+  labels:
+    helm.sh/chart: beachbreak-1.0.0
+    app.kubernetes.io/name: beachbreak
+    app.kubernetes.io/instance: beachbreak
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+type: Opaque
+data:
+  postgres-password: "YWRtaW4tcGFzc3dvcmQtY2hhbmdlLW1l"
+  password: "eW91ci1zZWN1cmUtcGFzc3dvcmQ="
+  username: "YmVhY2hicmVhaw=="
+---
+# Source: beachbreak/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: beachbreak-config
+  namespace: beachbreak
+  labels:
+    helm.sh/chart: beachbreak-1.0.0
+    app.kubernetes.io/name: beachbreak
+    app.kubernetes.io/instance: beachbreak
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+data:
+  # Azure Active Directory Configuration (non-sensitive)
+  azure-ad-instance: "https://login.microsoftonline.com/"
+  azure-ad-domain: "your-domain.onmicrosoft.com"
+
+  # Service Discovery Configuration
+  command-api-service: "beachbreak-commandapi"
+  query-api-service: "beachbreak-queryapi"
+  command-api-port: "80"
+  query-api-port: "80"
+
+  # Database Configuration (non-sensitive)
+  database-host: "beachbreak-postgresql"
+  database-port: "5432"
+  database-name: "beachbreakdb"
+  database-username: "beachbreak"
+
+  # Application Configuration
+  aspnetcore-environment: "Production"
+  aspnetcore-urls: "http://+:8080"
+
+  # CORS Configuration
+  cors-allowed-origins: "*"
+
+  # Logging Configuration
+  logging-level: "Information"
+  logging-console: "true"
+
+  # Health Check Configuration
+  health-check-path: "/health"
+  alive-check-path: "/alive"
+
+  # API Versioning
+  api-version: "v1"
+
+  # OpenTelemetry Configuration
+  otel-service-name: "beachbreak"
+  otel-service-version: "1.0.0"
+---
+# Source: beachbreak/templates/rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: beachbreak
+  namespace: beachbreak
+  labels:
+    helm.sh/chart: beachbreak-1.0.0
+    app.kubernetes.io/name: beachbreak
+    app.kubernetes.io/instance: beachbreak
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+rules:
+  # Allow reading ConfigMaps and Secrets
+  - apiGroups: [""]
+    resources: ["configmaps", "secrets"]
+    verbs: ["get", "list"]
+
+  # Allow reading Services for service discovery
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["get", "list"]
+
+  # Allow reading Endpoints for service discovery
+  - apiGroups: [""]
+    resources: ["endpoints"]
+    verbs: ["get", "list"]
+
+  # Additional rules from values
+---
+# Source: beachbreak/templates/rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: beachbreak
+  namespace: beachbreak
+  labels:
+    helm.sh/chart: beachbreak-1.0.0
+    app.kubernetes.io/name: beachbreak
+    app.kubernetes.io/instance: beachbreak
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: beachbreak
+subjects:
+- kind: ServiceAccount
+  name: beachbreak
+  namespace: beachbreak
+---
+# Source: beachbreak/charts/beachbreak-commandapi/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: beachbreak-beachbreak-commandapi
+  namespace: beachbreak
+  labels:
+    helm.sh/chart: beachbreak-commandapi-1.0.0
+    app.kubernetes.io/name: beachbreak-commandapi
+    app.kubernetes.io/instance: beachbreak
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: command-api
+    app.kubernetes.io/part-of: beachbreak
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "80"
+    prometheus.io/path: "/metrics"
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: beachbreak-commandapi
+    app.kubernetes.io/instance: beachbreak
+---
+# Source: beachbreak/charts/beachbreak-frontend/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: beachbreak-beachbreak-frontend
+  namespace: beachbreak
+  labels:
+    helm.sh/chart: beachbreak-frontend-1.0.0
+    app.kubernetes.io/name: beachbreak-frontend
+    app.kubernetes.io/instance: beachbreak
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/part-of: beachbreak
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "80"
+    prometheus.io/path: "/metrics"
+spec:
+  type: ClusterIP
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: beachbreak-frontend
+    app.kubernetes.io/instance: beachbreak
+---
+# Source: beachbreak/charts/beachbreak-queryapi/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: beachbreak-beachbreak-queryapi
+  namespace: beachbreak
+  labels:
+    helm.sh/chart: beachbreak-queryapi-1.0.0
+    app.kubernetes.io/name: beachbreak-queryapi
+    app.kubernetes.io/instance: beachbreak
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: query-api
+    app.kubernetes.io/part-of: beachbreak
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "80"
+    prometheus.io/path: "/metrics"
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: beachbreak-queryapi
+    app.kubernetes.io/instance: beachbreak
+---
+# Source: beachbreak/charts/beachbreak-commandapi/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: beachbreak-beachbreak-commandapi
+  namespace: beachbreak
+  labels:
+    helm.sh/chart: beachbreak-commandapi-1.0.0
+    app.kubernetes.io/name: beachbreak-commandapi
+    app.kubernetes.io/instance: beachbreak
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: command-api
+    app.kubernetes.io/part-of: beachbreak
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: beachbreak-commandapi
+      app.kubernetes.io/instance: beachbreak
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        prometheus.io/path: /metrics
+        prometheus.io/port: "8080"
+        prometheus.io/scrape: "true"
+      labels:
+        helm.sh/chart: beachbreak-commandapi-1.0.0
+        app.kubernetes.io/name: beachbreak-commandapi
+        app.kubernetes.io/instance: beachbreak
+        app.kubernetes.io/version: "1.0.0"
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/component: command-api
+        app.kubernetes.io/part-of: beachbreak
+#        app.kubernetes.io/component: command-api
+#        app.kubernetes.io/part-of: beachbreak
+    spec:
+      serviceAccountName: default
+      securityContext:
+        fsGroup: 10001
+        runAsNonRoot: true
+        runAsUser: 10001
+      terminationGracePeriodSeconds: 30
+
+      containers:
+        - name: beachbreak-commandapi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            #fsGroup: 10001
+            readOnlyRootFilesystem: false
+            runAsNonRoot: true
+            runAsUser: 10001
+          image: acrbasicbasiszrh001.azurecr.io/ti8m-beach-break/backend-command:1.0.0
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+
+          env:
+            # Basic ASP.NET Core configuration
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Production"
+            - name: ASPNETCORE_URLS
+              value: "http://+:8080"
+
+            # Azure Active Directory Configuration
+            - name: AzureAd__Instance
+              valueFrom:
+                configMapKeyRef:
+                  name: beachbreak-config
+                  key: azure-ad-instance
+            - name: AzureAd__Domain
+              valueFrom:
+                configMapKeyRef:
+                  name: beachbreak-config
+                  key: azure-ad-domain
+            - name: AzureAd__TenantId
+              valueFrom:
+                secretKeyRef:
+                  name: beachbreak-secrets
+                  key: azure-ad-tenant-id
+            - name: AzureAd__ClientId
+              valueFrom:
+                secretKeyRef:
+                  name: beachbreak-secrets
+                  key: azure-ad-client-id
+            - name: AzureAd__ClientSecret
+              valueFrom:
+                secretKeyRef:
+                  name: beachbreak-secrets
+                  key: azure-ad-client-secret
+            - name: AzureAd__Audience
+              valueFrom:
+                secretKeyRef:
+                  name: beachbreak-secrets
+                  key: azure-ad-audience
+            - name: AzureAd__Scope
+              valueFrom:
+                secretKeyRef:
+                  name: beachbreak-secrets
+                  key: azure-ad-scope
+
+            # Database Connection
+            - name: ConnectionStrings__beachbreakdb
+              valueFrom:
+                secretKeyRef:
+                  name: beachbreak-secrets
+                  key: database-connection-string
+
+            # Additional environment variables
+#          startupProbe:
+#            initialDelaySeconds: 30
+#            periodSeconds: 10
+#            timeoutSeconds: 5
+#            failureThreshold: 30
+#
+#          livenessProbe:
+#            initialDelaySeconds: 60
+#            periodSeconds: 30
+#            timeoutSeconds: 5
+#            failureThreshold: 3
+#
+#          readinessProbe:
+#            initialDelaySeconds: 30
+#            periodSeconds: 10
+#            timeoutSeconds: 5
+#            failureThreshold: 3
+
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 250m
+              memory: 256Mi
+---
+# Source: beachbreak/charts/beachbreak-frontend/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: beachbreak-beachbreak-frontend
+  namespace: beachbreak
+  labels:
+    helm.sh/chart: beachbreak-frontend-1.0.0
+    app.kubernetes.io/name: beachbreak-frontend
+    app.kubernetes.io/instance: beachbreak
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/part-of: beachbreak
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: beachbreak-frontend
+      app.kubernetes.io/instance: beachbreak
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        prometheus.io/path: /metrics
+        prometheus.io/port: "8080"
+        prometheus.io/scrape: "true"
+      labels:
+        helm.sh/chart: beachbreak-frontend-1.0.0
+        app.kubernetes.io/name: beachbreak-frontend
+        app.kubernetes.io/instance: beachbreak
+        app.kubernetes.io/version: "1.0.0"
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/component: frontend
+        app.kubernetes.io/part-of: beachbreak
+#        app.kubernetes.io/component: frontend
+#        app.kubernetes.io/part-of: beachbreak
+    spec:
+      serviceAccountName: default
+      securityContext:
+        fsGroup: 10001
+        runAsNonRoot: true
+        runAsUser: 10001
+      terminationGracePeriodSeconds: 30
+
+      containers:
+        - name: beachbreak-frontend
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+           # fsGroup: 10001
+            readOnlyRootFilesystem: false
+            runAsNonRoot: true
+            runAsUser: 10001
+          image: acrbasicbasiszrh001.azurecr.io/ti8m-beach-break/frontend:1.0.0
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+
+          env:
+            # Basic ASP.NET Core configuration
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Production"
+            - name: ASPNETCORE_URLS
+              value: "http://+:8080"
+
+            # Azure Active Directory OIDC Configuration
+            - name: AzureAd__Instance
+              valueFrom:
+                configMapKeyRef:
+                  name: beachbreak-config
+                  key: azure-ad-instance
+            - name: AzureAd__Domain
+              valueFrom:
+                configMapKeyRef:
+                  name: beachbreak-config
+                  key: azure-ad-domain
+            - name: AzureAd__TenantId
+              valueFrom:
+                secretKeyRef:
+                  name: beachbreak-secrets
+                  key: azure-ad-tenant-id
+            - name: AzureAd__ClientId
+              valueFrom:
+                secretKeyRef:
+                  name: beachbreak-secrets
+                  key: azure-ad-client-id
+            - name: AzureAd__ClientSecret
+              valueFrom:
+                secretKeyRef:
+                  name: beachbreak-secrets
+                  key: azure-ad-client-secret
+
+            # Service Discovery (replaces Aspire in Kubernetes)
+            - name: services__CommandApi__https__0
+              value: "http://beachbreak-beachbreak-commandapi:80"
+            - name: services__QueryApi__https__0
+              value: "http://beachbreak-beachbreak-queryapi:80"
+
+            # Additional frontend-specific environment variables
+            - name: ASPNETCORE_FORWARDEDHEADERS_ENABLED
+              value: "true"
+#          startupProbe:
+#            path: /alive
+#            port: 8080
+#            initialDelaySeconds: 45
+#            periodSeconds: 10
+#            timeoutSeconds: 5
+#            failureThreshold: 30
+#
+#          livenessProbe:
+#            path: /alive
+#            port: 8080
+#            initialDelaySeconds: 60
+#            periodSeconds: 30
+#            timeoutSeconds: 10
+#            failureThreshold: 3
+#
+#          readinessProbe:
+#            path: /health
+#            port: 8080
+#            initialDelaySeconds: 30
+#            periodSeconds: 10
+#            timeoutSeconds: 10
+#            failureThreshold: 3
+
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 250m
+              memory: 256Mi
+---
+# Source: beachbreak/charts/beachbreak-queryapi/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: beachbreak-beachbreak-queryapi
+  namespace: beachbreak
+  labels:
+    helm.sh/chart: beachbreak-queryapi-1.0.0
+    app.kubernetes.io/name: beachbreak-queryapi
+    app.kubernetes.io/instance: beachbreak
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: query-api
+    app.kubernetes.io/part-of: beachbreak
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: beachbreak-queryapi
+      app.kubernetes.io/instance: beachbreak
+  strategy:
+    rollingUpdate:
+      maxSurge: 50%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        prometheus.io/path: /metrics
+        prometheus.io/port: "8080"
+        prometheus.io/scrape: "true"
+      labels:
+        helm.sh/chart: beachbreak-queryapi-1.0.0
+        app.kubernetes.io/name: beachbreak-queryapi
+        app.kubernetes.io/instance: beachbreak
+        app.kubernetes.io/version: "1.0.0"
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/component: query-api
+        app.kubernetes.io/part-of: beachbreak
+    spec:
+      serviceAccountName: default
+      securityContext:
+        fsGroup: 10001
+        runAsNonRoot: true
+        runAsUser: 10001
+      terminationGracePeriodSeconds: 30
+
+      containers:
+        - name: beachbreak-queryapi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            readOnlyRootFilesystem: false
+            runAsNonRoot: true
+            runAsUser: 10001
+          image: acrbasicbasiszrh001.azurecr.io/ti8m-beach-break/backend-query:1.0.0
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+
+          env:
+            # Basic ASP.NET Core configuration
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Production"
+            - name: ASPNETCORE_URLS
+              value: "http://+:8080"
+
+            # Azure Active Directory Configuration
+            - name: AzureAd__Instance
+              valueFrom:
+                configMapKeyRef:
+                  name: beachbreak-config
+                  key: azure-ad-instance
+            - name: AzureAd__Domain
+              valueFrom:
+                configMapKeyRef:
+                  name: beachbreak-config
+                  key: azure-ad-domain
+            - name: AzureAd__TenantId
+              valueFrom:
+                secretKeyRef:
+                  name: beachbreak-secrets
+                  key: azure-ad-tenant-id
+            - name: AzureAd__ClientId
+              valueFrom:
+                secretKeyRef:
+                  name: beachbreak-secrets
+                  key: azure-ad-client-id
+            - name: AzureAd__ClientSecret
+              valueFrom:
+                secretKeyRef:
+                  name: beachbreak-secrets
+                  key: azure-ad-client-secret
+            - name: AzureAd__Audience
+              valueFrom:
+                secretKeyRef:
+                  name: beachbreak-secrets
+                  key: azure-ad-audience
+            - name: AzureAd__Scope
+              valueFrom:
+                secretKeyRef:
+                  name: beachbreak-secrets
+                  key: azure-ad-scope
+
+            # Database Connection
+            - name: ConnectionStrings__beachbreakdb
+              valueFrom:
+                secretKeyRef:
+                  name: beachbreak-secrets
+                  key: database-connection-string
+
+            # Additional environment variables
+#          startupProbe:
+#            path: /alive
+#            port: 8080
+#            initialDelaySeconds: 20
+#            periodSeconds: 5
+#            timeoutSeconds: 3
+#            failureThreshold: 20
+#
+#          livenessProbe:
+#            path: /alive
+#            port: 8080
+#            initialDelaySeconds: 30
+#            periodSeconds: 30
+#            timeoutSeconds: 5
+#            failureThreshold: 3
+#
+#          readinessProbe:
+#            path: /health
+#            port: 8080
+#            initialDelaySeconds: 15
+#            periodSeconds: 10
+#            timeoutSeconds: 5
+#            failureThreshold: 3
+
+          resources:
+            limits:
+              cpu: 250m
+              memory: 256Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+---
+# Source: beachbreak/charts/beachbreak-commandapi/templates/hpa.yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: beachbreak-beachbreak-commandapi
+  namespace: beachbreak
+  labels:
+    helm.sh/chart: beachbreak-commandapi-1.0.0
+    app.kubernetes.io/name: beachbreak-commandapi
+    app.kubernetes.io/instance: beachbreak
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: command-api
+    app.kubernetes.io/part-of: beachbreak
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: beachbreak-beachbreak-commandapi
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 15
+      - type: Pods
+        value: 2
+        periodSeconds: 15
+      selectPolicy: Max
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+      selectPolicy: Min
+---
+# Source: beachbreak/charts/beachbreak-frontend/templates/hpa.yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: beachbreak-beachbreak-frontend
+  namespace: beachbreak
+  labels:
+    helm.sh/chart: beachbreak-frontend-1.0.0
+    app.kubernetes.io/name: beachbreak-frontend
+    app.kubernetes.io/instance: beachbreak
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/part-of: beachbreak
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: beachbreak-beachbreak-frontend
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 15
+      - type: Pods
+        value: 2
+        periodSeconds: 15
+      selectPolicy: Max
+    scaleDown:
+      stabilizationWindowSeconds: 600  # Longer for frontend to handle user sessions
+      policies:
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+      selectPolicy: Min
+---
+# Source: beachbreak/charts/beachbreak-queryapi/templates/hpa.yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: beachbreak-beachbreak-queryapi
+  namespace: beachbreak
+  labels:
+    helm.sh/chart: beachbreak-queryapi-1.0.0
+    app.kubernetes.io/name: beachbreak-queryapi
+    app.kubernetes.io/instance: beachbreak
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: query-api
+    app.kubernetes.io/part-of: beachbreak
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: beachbreak-beachbreak-queryapi
+  minReplicas: 2
+  maxReplicas: 15
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 60
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 70
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 180  # Faster scaling for read workloads
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 15
+      - type: Pods
+        value: 4  # Scale more aggressively for queries
+        periodSeconds: 15
+      selectPolicy: Max
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+      selectPolicy: Min
+---
+# Source: beachbreak/templates/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: beachbreak
+  namespace: beachbreak
+  labels:
+    helm.sh/chart: beachbreak-1.0.0
+    app.kubernetes.io/name: beachbreak
+    app.kubernetes.io/instance: beachbreak
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+    ingressClassName: azure-application-gateway
+    appgw.ingress.kubernetes.io/rewrite-target: /
+    appgw.ingress.kubernetes.io/health-probe-status-codes: "200-399,500,404"
+    appgw.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: azure-application-gateway
+  tls:
+    - hosts:
+        - "beachbreak.report.ti8m.ch"
+      secretName: beachbreak-tls
+  rules:
+    - host: beachbreak.report.ti8m.ch
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: beachbreak-beachbreak-frontend
+                port:
+                  number: 80
+          - path: /commandapi
+            pathType: Prefix
+            backend:
+              service:
+                name: beachbreak-beachbreak-commandapi
+                port:
+                  number: 80
+          - path: /queryapi
+            pathType: Prefix
+            backend:
+              service:
+                name: beachbreak-beachbreak-queryapi
+                port:
+                  number: 80

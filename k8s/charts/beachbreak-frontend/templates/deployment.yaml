@@ -17,12 +17,11 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
-        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
         {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
       labels:
+        azure.workload.identity/use: "true"
         {{- include "beachbreak-frontend.labels" . | nindent 8 }}
         {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
@@ -32,7 +31,7 @@ spec:
       imagePullSecrets:
         {{- toYaml .Values.global.imagePullSecrets | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "beachbreak-frontend.serviceAccountName" . }}
+      serviceAccountName: sa-{{ include "beachbreak-frontend.fullname" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
@@ -54,11 +53,24 @@ spec:
               protocol: TCP
 
           env:
+            - name: Storage:DataProtection
+              value: "https://sabbstoragexpedevswn01.blob.core.windows.net"
             # Basic ASP.NET Core configuration
             - name: ASPNETCORE_ENVIRONMENT
               value: "Production"
             - name: ASPNETCORE_URLS
               value: "http://+:{{ .Values.service.targetPort }}"
+            # Monitoring Configuration
+            - name: APPLICATIONINSIGHTS_CONNECTION_STRING
+              value: "InstrumentationKey=d41aeeb5-0117-4711-864a-1931654a1d92;IngestionEndpoint=https://switzerlandnorth-0.in.applicationinsights.azure.com/;LiveEndpoint=https://switzerlandnorth.livediagnostics.monitor.azure.com/;ApplicationId=e33b457e-286c-4341-8722-0e117d36bc05"
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
 
             # Azure Active Directory OIDC Configuration
             - name: AzureAd__Instance
@@ -66,6 +78,11 @@ spec:
                 configMapKeyRef:
                   name: {{ .Release.Name }}-beachbreak-config
                   key: azure-ad-instance
+            - name: AzureAd__Scope
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Release.Name }}-beachbreak-config
+                  key: azure-ad-scope
             - name: AzureAd__Domain
               valueFrom:
                 configMapKeyRef:
@@ -79,19 +96,19 @@ spec:
             - name: AzureAd__ClientId
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Release.Name }}-beachbreak-secrets
-                  key: azure-ad-client-id
+                  name: app-reg-secrets
+                  key: app-reg-client-id
             - name: AzureAd__ClientSecret
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Release.Name }}-beachbreak-secrets
-                  key: azure-ad-client-secret
+                  name: app-reg-secrets
+                  key: app-reg-client-secret
 
             # Service Discovery (replaces Aspire in Kubernetes)
             - name: services__CommandApi__https__0
-              value: "http://{{ .Release.Name }}-beachbreak-commandapi:80"
+              value: "http://beachbreak-commandapi:80"
             - name: services__QueryApi__https__0
-              value: "http://{{ .Release.Name }}-beachbreak-queryapi:80"
+              value: "http://beachbreak-queryapi:80"
 
             # Additional frontend-specific environment variables
             {{- range .Values.env }}
@@ -117,7 +134,8 @@ spec:
           {{- if .Values.healthChecks.enabled }}
           {{- if .Values.startupProbe.enabled }}
           startupProbe:
-            {{- toYaml .Values.startupProbe.httpGet | nindent 12 }}
+            httpGet:
+            {{- toYaml .Values.startupProbe.httpGet | nindent 14 }}
             initialDelaySeconds: {{ .Values.startupProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.startupProbe.periodSeconds }}
             timeoutSeconds: {{ .Values.startupProbe.timeoutSeconds }}
@@ -125,14 +143,16 @@ spec:
           {{- end }}
 
           livenessProbe:
-            {{- toYaml .Values.healthChecks.livenessProbe.httpGet | nindent 12 }}
+            httpGet:
+            {{- toYaml .Values.healthChecks.livenessProbe.httpGet | nindent 14 }}
             initialDelaySeconds: {{ .Values.healthChecks.livenessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.healthChecks.livenessProbe.periodSeconds }}
             timeoutSeconds: {{ .Values.healthChecks.livenessProbe.timeoutSeconds }}
             failureThreshold: {{ .Values.healthChecks.livenessProbe.failureThreshold }}
 
           readinessProbe:
-            {{- toYaml .Values.healthChecks.readinessProbe.httpGet | nindent 12 }}
+            httpGet:
+            {{- toYaml .Values.healthChecks.readinessProbe.httpGet | nindent 14 }}
             initialDelaySeconds: {{ .Values.healthChecks.readinessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.healthChecks.readinessProbe.periodSeconds }}
             timeoutSeconds: {{ .Values.healthChecks.readinessProbe.timeoutSeconds }}
@@ -142,8 +162,16 @@ spec:
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
 
-          {{- if .Values.volumeMounts }}
           volumeMounts:
+            - mountPath: /cache
+              name: cache-volume
+{{/*            - name: secrets-store-postgres*/}}
+{{/*              mountPath: "/mnt/secrets-store-postgres"*/}}
+{{/*              readOnly: true*/}}
+            - name: secrets-store-app-reg
+              mountPath: "/mnt/secrets-store-app-reg"
+              readOnly: true
+          {{- if .Values.volumeMounts }}
             {{- toYaml .Values.volumeMounts | nindent 12 }}
           {{- end }}
 
@@ -151,8 +179,23 @@ spec:
         {{- toYaml .Values.sidecars | nindent 8 }}
         {{- end }}
 
-      {{- if .Values.volumes }}
       volumes:
+        - name: cache-volume
+          emptyDir:
+            sizeLimit: 500Mi
+{{/*        - name: secrets-store-postgres*/}}
+{{/*          csi:*/}}
+{{/*            driver: secrets-store.csi.k8s.io*/}}
+{{/*            readOnly: true*/}}
+{{/*            volumeAttributes:*/}}
+{{/*              secretProviderClass: "azure-kvsecrets-postgres"*/}}
+        - name: secrets-store-app-reg
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: "azure-kvsecrets-app-reg"
+      {{- if .Values.volumes }}
         {{- toYaml .Values.volumes | nindent 8 }}
       {{- end }}
 

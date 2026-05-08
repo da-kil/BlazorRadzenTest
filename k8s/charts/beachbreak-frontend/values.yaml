@@ -2,14 +2,18 @@
 # BeachBreak Frontend Configuration
 # =========================================
 
+# Global configuration
+global:
+  imagePullSecrets: []
+
 # Image configuration
 image:
-  repository: beachbreak/frontend
-  tag: "latest"
-  pullPolicy: IfNotPresent
+  repository: ti8m-beach-break/frontend
+  tag: "1.0.0"
+  pullPolicy: Always
 
 # Deployment configuration
-replicaCount: 2
+replicaCount: 1
 nameOverride: ""
 fullnameOverride: ""
 
@@ -26,20 +30,20 @@ resources:
     memory: "256Mi"
     cpu: "250m"
   limits:
-    memory: "512Mi"
-    cpu: "500m"
+    memory: "1G"
+    cpu: "1"
 
 # Autoscaling
 autoscaling:
   enabled: true
-  minReplicas: 2
-  maxReplicas: 10
+  minReplicas: 1
+  maxReplicas: 1
   targetCPUUtilizationPercentage: 70
   targetMemoryUtilizationPercentage: 80
 
 # Health checks
 healthChecks:
-  enabled: true
+  enabled: false #TODO set to true after
   livenessProbe:
     httpGet:
       path: /alive
@@ -57,11 +61,21 @@ healthChecks:
     timeoutSeconds: 10
     failureThreshold: 3
 
+# Probes startup configuration
+startupProbe:
+  enabled: false #TODO set to true after
+  httpGet:
+    path: /alive
+    port: 8080
+  initialDelaySeconds: 45
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 30
+
 # Security configuration
 securityContext:
   runAsNonRoot: true
   runAsUser: 10001
-  fsGroup: 10001
   allowPrivilegeEscalation: false
   readOnlyRootFilesystem: false
   capabilities:
@@ -84,10 +98,7 @@ podAnnotations:
   prometheus.io/port: "8080"
   prometheus.io/path: "/metrics"
 
-# Pod labels
-podLabels:
-  app.kubernetes.io/component: frontend
-  app.kubernetes.io/part-of: beachbreak
+workloadClientID: "cb20d272-6d73-4987-ac22-2467d3a6cdfd"
 
 # Node selection
 nodeSelector: {}
@@ -131,17 +142,6 @@ metrics:
   enabled: true
   port: 8080
   path: /metrics
-
-# Probes startup configuration
-startupProbe:
-  enabled: true
-  httpGet:
-    path: /alive
-    port: 8080
-  initialDelaySeconds: 45
-  periodSeconds: 10
-  timeoutSeconds: 5
-  failureThreshold: 30
 
 # Rolling update strategy
 strategy:

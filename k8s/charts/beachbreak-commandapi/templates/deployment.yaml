@@ -17,8 +17,6 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
-        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
         {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -54,11 +52,27 @@ spec:
               protocol: TCP
 
           env:
+            - name: ConnectionStrings__beachbreakdb
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secrets
+                  key: postgres-conn-string
             # Basic ASP.NET Core configuration
             - name: ASPNETCORE_ENVIRONMENT
               value: "Production"
             - name: ASPNETCORE_URLS
               value: "http://+:{{ .Values.service.targetPort }}"
+            # Monitoring Configuration
+            - name: APPLICATIONINSIGHTS_CONNECTION_STRING
+              value: "InstrumentationKey=d41aeeb5-0117-4711-864a-1931654a1d92;IngestionEndpoint=https://switzerlandnorth-0.in.applicationinsights.azure.com/;LiveEndpoint=https://switzerlandnorth.livediagnostics.monitor.azure.com/;ApplicationId=e33b457e-286c-4341-8722-0e117d36bc05"
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
 
             # Azure Active Directory Configuration
             - name: AzureAd__Instance
@@ -79,13 +93,13 @@ spec:
             - name: AzureAd__ClientId
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Release.Name }}-beachbreak-secrets
-                  key: azure-ad-client-id
+                  name: app-reg-secrets
+                  key: app-reg-client-id
             - name: AzureAd__ClientSecret
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Release.Name }}-beachbreak-secrets
-                  key: azure-ad-client-secret
+                  name: app-reg-secrets
+                  key: app-reg-client-secret
             - name: AzureAd__Audience
               valueFrom:
                 secretKeyRef:
@@ -96,13 +110,6 @@ spec:
                 secretKeyRef:
                   name: {{ .Release.Name }}-beachbreak-secrets
                   key: azure-ad-scope
-
-            # Database Connection
-            - name: ConnectionStrings__beachbreakdb
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Release.Name }}-beachbreak-secrets
-                  key: database-connection-string
 
             # Additional environment variables
             {{- range .Values.env }}
@@ -128,7 +135,8 @@ spec:
           {{- if .Values.healthChecks.enabled }}
           {{- if .Values.startupProbe.enabled }}
           startupProbe:
-            {{- toYaml .Values.startupProbe.httpGet | nindent 12 }}
+            httpGet:
+            {{- toYaml .Values.startupProbe.httpGet | nindent 14 }}
             initialDelaySeconds: {{ .Values.startupProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.startupProbe.periodSeconds }}
             timeoutSeconds: {{ .Values.startupProbe.timeoutSeconds }}
@@ -136,14 +144,16 @@ spec:
           {{- end }}
 
           livenessProbe:
-            {{- toYaml .Values.healthChecks.livenessProbe.httpGet | nindent 12 }}
+            httpGet:
+            {{- toYaml .Values.healthChecks.livenessProbe.httpGet | nindent 14 }}
             initialDelaySeconds: {{ .Values.healthChecks.livenessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.healthChecks.livenessProbe.periodSeconds }}
             timeoutSeconds: {{ .Values.healthChecks.livenessProbe.timeoutSeconds }}
             failureThreshold: {{ .Values.healthChecks.livenessProbe.failureThreshold }}
 
           readinessProbe:
-            {{- toYaml .Values.healthChecks.readinessProbe.httpGet | nindent 12 }}
+            httpGet:
+            {{- toYaml .Values.healthChecks.readinessProbe.httpGet | nindent 14 }}
             initialDelaySeconds: {{ .Values.healthChecks.readinessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.healthChecks.readinessProbe.periodSeconds }}
             timeoutSeconds: {{ .Values.healthChecks.readinessProbe.timeoutSeconds }}
@@ -153,8 +163,14 @@ spec:
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
 
-          {{- if .Values.volumeMounts }}
           volumeMounts:
+            - name: secrets-store-postgres
+              mountPath: "/mnt/secrets-store-postgres"
+              readOnly: true
+            - name: secrets-store-app-reg
+              mountPath: "/mnt/secrets-store-app-reg"
+              readOnly: true
+          {{- if .Values.volumeMounts }}
             {{- toYaml .Values.volumeMounts | nindent 12 }}
           {{- end }}
 
@@ -162,8 +178,20 @@ spec:
         {{- toYaml .Values.sidecars | nindent 8 }}
         {{- end }}
 
-      {{- if .Values.volumes }}
       volumes:
+        - name: secrets-store-postgres
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: "azure-kvsecrets-postgres"
+        - name: secrets-store-app-reg
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: "azure-kvsecrets-app-reg"
+      {{- if .Values.volumes }}
         {{- toYaml .Values.volumes | nindent 8 }}
       {{- end }}
 

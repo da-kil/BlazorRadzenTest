@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "beachbreak.fullname" . }}-config
+  name: {{ .Release.Name }}-{{ include "beachbreak.fullname" . }}-config
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "beachbreak.labels" . | nindent 4 }}
@@ -9,6 +9,7 @@ data:
   # Azure Active Directory Configuration (non-sensitive)
   azure-ad-instance: {{ .Values.global.azureAd.instance | quote }}
   azure-ad-domain: {{ .Values.global.azureAd.domain | quote }}
+  azure-ad-scope: {{ .Values.global.azureAd.scope | quote }}
 
   # Service Discovery Configuration
   command-api-service: {{ .Values.global.serviceDiscovery.commandApiService | quote }}
@@ -19,11 +20,11 @@ data:
   # Database Configuration (non-sensitive)
   database-host: {{ .Values.global.database.host | quote }}
   database-port: {{ .Values.global.database.port | quote }}
-  database-name: {{ .Values.global.database.name | quote }}
-  database-username: {{ .Values.global.database.username | quote }}
+{{/*  database-name: {{ .Values.global.database.name | quote }}*/}}
+{{/*  database-username: {{ .Values.global.database.username | quote }}*/}}
 
   # Application Configuration
-  aspnetcore-environment: "Production"
+  aspnetcore-environment: "Development"
   aspnetcore-urls: "http://+:8080"
 
   # CORS Configuration
